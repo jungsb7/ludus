@@ -1,0 +1,2465 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LVDVS — 검투사 양성소</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Noto+Sans+KR:wght@400;500;700&family=Noto+Serif+KR:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --umbra:#16110c;        /* 배경: 횃불 꺼진 석조 */
+  --stone:#241c12;        /* 패널 */
+  --stone-hi:#3a2e1d;     /* 경계 */
+  --parchment:#e8dcc0;    /* 본문 */
+  --parch-dim:#a8987a;
+  --gold:#d4a017;         /* 월계관 금 */
+  --blood:#a4161a;        /* 피 */
+  --sand:#c9a566;         /* 경기장 모래 */
+  --green:#6a8f4e;
+  --font-ui:'Noto Sans KR',sans-serif;
+  --font-serif:'Noto Serif KR',serif;
+  --font-roman:'Cinzel',serif;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--umbra);color:var(--parchment);font-family:var(--font-ui);font-size:14px;line-height:1.55;
+  background-image:radial-gradient(ellipse 80% 50% at 50% -10%, rgba(212,160,23,.06), transparent 60%);min-height:100vh}
+::selection{background:var(--gold);color:var(--umbra)}
+
+/* ── 헤더 ── */
+header{border-bottom:1px solid var(--stone-hi);padding:14px 20px;display:flex;align-items:center;gap:18px;flex-wrap:wrap}
+.brand{display:flex;align-items:baseline;gap:10px}
+.brand h1{font-family:var(--font-roman);font-weight:900;font-size:26px;letter-spacing:.14em;color:var(--gold);text-shadow:0 0 24px rgba(212,160,23,.25)}
+.brand .sub{font-size:12px;color:var(--parch-dim)}
+.hstats{display:flex;gap:8px;margin-left:auto;flex-wrap:wrap}
+.hstat{background:var(--stone);border:1px solid var(--stone-hi);padding:5px 12px;border-radius:3px;display:flex;gap:7px;align-items:baseline}
+.hstat .k{font-size:11px;color:var(--parch-dim)}
+.hstat .v{font-weight:700;color:var(--gold);font-variant-numeric:tabular-nums}
+.hstat .v.neg{color:var(--blood)}
+button{font-family:var(--font-ui);cursor:pointer;background:var(--stone);color:var(--parchment);border:1px solid var(--stone-hi);
+  padding:7px 14px;border-radius:3px;font-size:13px;transition:border-color .15s,background .15s}
+button:hover{border-color:var(--gold)}
+button:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+button:disabled{opacity:.4;cursor:not-allowed}
+button.primary{background:linear-gradient(180deg,#8a6a12,#6d5310);border-color:var(--gold);color:#fff;font-weight:700}
+button.primary:hover{background:linear-gradient(180deg,#a37e15,#8a6a12)}
+button.danger{border-color:#6b1114;color:#e08a8c}
+button.danger:hover{background:#3a1112}
+button.sm{padding:3px 9px;font-size:12px}
+
+/* ── 내비 (제거됨 — 이동은 이미지 클릭) ── */
+nav{display:none}
+
+main{max-width:1060px;margin:0 auto;padding:20px}
+.screen{display:none}
+.screen.on{display:block}
+h2{font-family:var(--font-serif);font-weight:600;font-size:19px;margin-bottom:4px}
+h2 .rn{font-family:var(--font-roman);color:var(--gold);font-size:15px;margin-right:8px;letter-spacing:.1em}
+.lede{color:var(--parch-dim);font-size:13px;margin-bottom:16px}
+.panel{background:var(--stone);border:1px solid var(--stone-hi);border-radius:4px;padding:14px 16px;margin-bottom:12px}
+.panel h3{font-size:14px;font-weight:700;color:var(--gold);margin-bottom:10px;letter-spacing:.03em}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.spread{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.dim{color:var(--parch-dim)}.small{font-size:12px}
+.gold{color:var(--gold)}.red{color:#e08a8c}.grn{color:#9dc183}
+hr{border:none;border-top:1px solid var(--stone-hi);margin:10px 0}
+
+/* ── 검투사 카드/능력치 ── */
+.gcard{background:var(--stone);border:1px solid var(--stone-hi);border-radius:4px;padding:12px 14px;cursor:pointer;transition:border-color .15s}
+.gcard:hover{border-color:var(--gold)}
+.gcard.sel{border-color:var(--gold);box-shadow:0 0 0 1px var(--gold) inset}
+.gname{font-family:var(--font-serif);font-weight:600;font-size:16px}
+.gclass{font-size:12px;color:var(--parch-dim)}
+.tag{display:inline-block;font-size:11px;border:1px solid var(--stone-hi);border-radius:3px;padding:1px 7px;margin:2px 3px 0 0;color:var(--parch-dim)}
+.tag.hurt{border-color:#6b1114;color:#e08a8c}
+.tag.star{border-color:var(--gold);color:var(--gold)}
+.statgrid{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin:8px 0 4px}
+.stat{text-align:center}
+.stat .lbl{font-size:11px;color:var(--parch-dim)}
+.stat .num{font-weight:700;font-size:16px;font-variant-numeric:tabular-nums}
+.stat .num.lo{color:#b0776f}.stat .num.md{color:var(--parchment)}.stat .num.hi{color:var(--gold)}
+.bar{height:5px;background:#100c08;border-radius:2px;overflow:hidden;margin-top:3px}
+.bar i{display:block;height:100%;border-radius:2px}
+.bar.hp i{background:linear-gradient(90deg,#7a1518,#c33)}
+.bar.cond i{background:linear-gradient(90deg,#4e6a3a,#7fa35c)}
+select{background:var(--umbra);color:var(--parchment);border:1px solid var(--stone-hi);border-radius:3px;padding:5px 8px;font-family:var(--font-ui);font-size:13px}
+select:focus-visible{outline:2px solid var(--gold)}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;color:var(--parch-dim);font-weight:500;font-size:12px;padding:5px 8px;border-bottom:1px solid var(--stone-hi)}
+td{padding:7px 8px;border-bottom:1px solid rgba(58,46,29,.5)}
+
+/* ── 아레나 ── */
+#arenaWrap{position:relative;border:2px solid var(--stone-hi);border-radius:4px;overflow:hidden;background:#0e0a06;
+  box-shadow:0 0 0 1px #0a0704, inset 0 0 60px rgba(0,0,0,.6)}
+#arenaCv{display:block;width:100%;height:auto}
+.arena-ctl{display:flex;gap:8px;align-items:center;margin:10px 0;flex-wrap:wrap}
+#combatLog{background:var(--stone);border:1px solid var(--stone-hi);border-radius:4px;padding:12px 14px;height:190px;overflow-y:auto;
+  font-family:var(--font-serif);font-size:13.5px;line-height:1.7}
+#combatLog p{margin-bottom:2px}
+#combatLog .sys{color:var(--parch-dim);font-style:italic}
+#combatLog .hit{color:#e8b0a8}
+#combatLog .crit{color:#ff6b5e;font-weight:600}
+#combatLog .crowd{color:var(--gold)}
+#combatLog .grn{color:#9dc183}
+
+/* ── 모달 ── */
+#modalBack{position:fixed;inset:0;background:rgba(8,5,2,.8);display:none;align-items:center;justify-content:center;z-index:50;padding:20px}
+#modalBack.on{display:flex}
+#modal{background:var(--stone);border:1px solid var(--gold);border-radius:5px;max-width:520px;width:100%;padding:22px 24px;max-height:85vh;overflow-y:auto;
+  box-shadow:0 20px 60px rgba(0,0,0,.7)}
+#modal h3{font-family:var(--font-serif);font-size:18px;color:var(--gold);margin-bottom:10px}
+#modal .body{font-family:var(--font-serif);font-size:14px;margin-bottom:16px;white-space:pre-line}
+#modal .acts{display:flex;gap:8px;flex-direction:column}
+#modal .acts button{text-align:left;padding:10px 14px}
+textarea{width:100%;background:var(--umbra);color:var(--parchment);border:1px solid var(--stone-hi);border-radius:3px;padding:8px;font-size:12px;font-family:monospace;min-height:90px}
+
+.notice{border-left:3px solid var(--gold);padding:8px 12px;background:rgba(212,160,23,.06);margin-bottom:12px;font-size:13px}
+.weeklog{font-family:var(--font-serif);font-size:13px;max-height:180px;overflow-y:auto}
+.weeklog p{padding:2px 0;border-bottom:1px dashed rgba(58,46,29,.4)}
+
+/* ── 양성소 전경(맵) ── */
+#mapWrap{border:2px solid var(--stone-hi);border-radius:4px;overflow:hidden;background:#0e0a06;box-shadow:0 0 0 1px #0a0704, inset 0 0 60px rgba(0,0,0,.5)}
+#mapWrap svg{display:block;width:100%;height:auto}
+.bld{cursor:pointer;outline:none}
+.bld .glow{opacity:0;transition:opacity .25s}
+.bld:hover .glow,.bld:focus-visible .glow{opacity:1}
+.bld .plate{fill:#241c12;stroke:rgba(212,160,23,.45);transition:stroke .2s,fill .2s}
+.bld:hover .plate,.bld:focus-visible .plate{stroke:#d4a017;fill:#2e2416}
+.bld .plateTxt{fill:#e8dcc0;transition:fill .2s}
+.bld:hover .plateTxt,.bld:focus-visible .plateTxt{fill:#ffd97a}
+.flame{animation:flick 1.6s infinite alternate ease-in-out;transform-origin:center 100%;transform-box:fill-box}
+.flame.f2{animation-duration:2.1s;animation-delay:.4s}
+@keyframes flick{from{opacity:.65;transform:scaleY(.9)}to{opacity:1;transform:scaleY(1.12)}}
+.banner{animation:sway 4.5s infinite alternate ease-in-out;transform-origin:50% 0;transform-box:fill-box}
+@keyframes sway{from{transform:rotate(-3deg)}to{transform:rotate(3deg)}}
+.smoke{animation:rise 7s infinite linear;transform-box:fill-box}
+@keyframes rise{0%{opacity:0;transform:translateY(6px)}25%{opacity:.3}100%{opacity:0;transform:translateY(-34px)}}
+.trainArm{animation:chop 1.3s infinite ease-in-out;transform-origin:0% 50%;transform-box:fill-box}
+@keyframes chop{0%,100%{transform:rotate(-30deg)}45%{transform:rotate(38deg)}55%{transform:rotate(34deg)}}
+#backToMap{margin-bottom:12px}
+/* ── 초상화 ── */
+.pt{display:block;flex:none;aspect-ratio:3/4;border:1px solid var(--stone-hi);border-radius:4px;overflow:hidden;background:#14100a}
+.pt svg,.pt img{display:block;width:100%;height:100%;object-fit:cover}
+.pt-s{width:46px}.pt-m{width:74px}.pt-l{width:106px}
+
+/* ── 주간 신문 (악타 디우르나) ── */
+#paperBack{position:fixed;inset:0;background:rgba(8,5,2,.92);display:none;align-items:center;justify-content:center;z-index:48;padding:16px}
+#paperBack.on{display:flex}
+#paperPhase{position:absolute;text-align:center;color:#a8987a;font-family:var(--font-serif);font-size:16px;letter-spacing:.3em;animation:phaseFade 1.15s ease-in-out forwards}
+@keyframes phaseFade{0%{opacity:0}22%{opacity:1}66%{opacity:1}100%{opacity:0}}
+#paper{position:relative;background:linear-gradient(175deg,#f0e5c9,#e4d6b4 55%,#d8c69e);color:#241c10;max-width:580px;width:100%;border-radius:2px;
+ box-shadow:0 30px 90px rgba(0,0,0,.85), inset 0 0 50px rgba(120,90,40,.12);padding:22px 28px 18px;max-height:88vh;overflow-y:auto;
+ transform-origin:top center;animation:unroll .55s .8s ease-out backwards}
+@keyframes unroll{from{opacity:0;transform:translateY(-22px) scaleY(.55)}to{opacity:1;transform:none}}
+#paper .mast{font-family:var(--font-roman);font-weight:900;font-size:30px;letter-spacing:.2em;text-align:center;border-bottom:3px double #241c10;padding-bottom:6px}
+#paper .dateline{display:flex;justify-content:space-between;font-size:11px;color:#5a4a30;border-bottom:1px solid #a89468;padding:5px 2px;margin-bottom:10px}
+#paper h4{font-family:var(--font-serif);font-size:12px;letter-spacing:.25em;color:#7a2020;border-bottom:1px solid #c4b088;padding-bottom:3px;margin:12px 0 7px}
+#paper .item{margin-bottom:9px}
+#paper .item .h{font-family:var(--font-serif);font-weight:600;font-size:14.5px;line-height:1.45}
+#paper .item .s{font-size:12px;color:#5a4a30;font-style:italic}
+#paper .goalbox{border:1.5px solid #7a2020;padding:7px 10px;margin-top:8px;font-size:12.5px;color:#5a1616;background:rgba(122,32,32,.05)}
+#paper .stamp{position:absolute;right:20px;bottom:56px;border:2px solid rgba(164,22,26,.55);color:rgba(164,22,26,.6);border-radius:4px;
+ font-family:var(--font-roman);font-size:10px;letter-spacing:.2em;padding:3px 8px;transform:rotate(-9deg);pointer-events:none}
+#paperClose{display:block;margin:14px auto 0;background:#241c10;color:#e8dcc0;border-color:#241c10;font-weight:700;padding:9px 26px}
+#paperClose:hover{background:#3a2c18;border-color:#3a2c18}
+@media(prefers-reduced-motion:reduce){#paper{animation:none}#paperPhase{animation:none;opacity:0}}
+
+/* ── 인트로 (바로의 안내) ── */
+#introBack{position:fixed;inset:0;background:radial-gradient(ellipse 90% 70% at 50% 30%,rgba(30,20,10,.55),rgba(8,5,2,.96));display:none;align-items:center;justify-content:center;z-index:60;padding:18px}
+#introBack.on{display:flex}
+#introBox{background:linear-gradient(180deg,#241c12,#1c150d);border:1px solid var(--gold);border-radius:6px;max-width:680px;width:100%;box-shadow:0 24px 80px rgba(0,0,0,.8),0 0 40px rgba(212,160,23,.08);overflow:hidden;animation:introIn .5s ease-out}
+@keyframes introIn{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+#introHead{display:flex;justify-content:space-between;align-items:center;padding:10px 16px;border-bottom:1px solid var(--stone-hi)}
+#introHead .t{font-family:var(--font-roman);letter-spacing:.18em;color:var(--gold);font-size:13px}
+#introBody{display:flex;gap:0;min-height:250px}
+#introPortrait{flex:0 0 170px;background:#14100a;border-right:1px solid var(--stone-hi);display:flex;flex-direction:column}
+#introPortrait svg{display:block;width:100%;height:auto}
+#introName{padding:8px 10px;border-top:1px solid var(--stone-hi);text-align:center}
+#introName .n{font-family:var(--font-serif);font-weight:600;color:var(--gold);font-size:15px}
+#introName .r{font-size:11px;color:var(--parch-dim)}
+#introTextWrap{flex:1;padding:20px 22px;display:flex;flex-direction:column}
+#introText{font-family:var(--font-serif);font-size:15px;line-height:1.85;flex:1;white-space:pre-line}
+#introText .cursor{display:inline-block;width:8px;background:var(--gold);opacity:.7;animation:blink 1s steps(1) infinite;height:1em;vertical-align:-2px}
+@keyframes blink{50%{opacity:0}}
+#introActs{display:flex;gap:8px;justify-content:flex-end;margin-top:14px}
+#introStepDots{display:flex;gap:5px;align-items:center;margin-right:auto}
+#introStepDots i{width:7px;height:7px;border-radius:50%;background:var(--stone-hi)}
+#introStepDots i.on{background:var(--gold)}
+@media(max-width:600px){#introBody{flex-direction:column}#introPortrait{flex:none;border-right:none;border-bottom:1px solid var(--stone-hi);display:grid;grid-template-columns:110px 1fr}#introPortrait svg{max-width:110px}#introName{border-top:none;text-align:left;align-self:center}}
+@media(prefers-reduced-motion:reduce){#introBox{animation:none}#introText .cursor{animation:none}}
+/* ── 훈련 애니메이션 ── */
+.tAnim{background:#17110b;border:1px solid var(--stone-hi);border-radius:4px;margin-top:10px;overflow:hidden}
+.tAnim svg{display:block;width:100%;max-width:340px;height:auto;margin:0 auto}
+.tCap{font-size:11px;color:var(--parch-dim);padding:4px 10px;border-top:1px solid var(--stone-hi);text-align:center}
+.amLift{animation:amlift 1.8s infinite ease-in-out;transform-box:fill-box}
+@keyframes amlift{0%,100%{transform:translateY(0)}45%,60%{transform:translateY(-13px)}}
+.amChop{animation:chop 1.3s infinite ease-in-out;transform-origin:0 50%;transform-box:fill-box}
+.amDash{animation:amdash 2.8s infinite ease-in-out;transform-box:fill-box}
+@keyframes amdash{0%,100%{transform:translateX(0)}50%{transform:translateX(84px)}}
+.amBob{animation:ambob .8s infinite ease-in-out;transform-box:fill-box}
+@keyframes ambob{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+.amBreathe{animation:ambreathe 3.2s infinite ease-in-out;transform-box:fill-box}
+@keyframes ambreathe{0%,100%{transform:scale(1)}50%{transform:scale(1.045)}}
+.amZz{animation:amzz 2.6s infinite;transform-box:fill-box}
+.amZz2{animation:amzz 2.6s 1.3s infinite;opacity:0;transform-box:fill-box}
+@keyframes amzz{0%{opacity:0;transform:translate(0,0)}25%{opacity:.85}100%{opacity:0;transform:translate(11px,-17px)}}
+.amSwap{animation:amswap 1.7s infinite ease-in-out;transform-origin:0 50%;transform-box:fill-box}
+@keyframes amswap{0%,42%{transform:rotate(-26deg)}58%,100%{transform:rotate(24deg)}}
+@media(prefers-reduced-motion:reduce){.flame,.banner,.smoke,.trainArm,.amLift,.amChop,.amDash,.amBob,.amBreathe,.amZz,.amZz2,.amSwap{animation:none!important}}
+@media(max-width:820px){.grid2,.grid3{grid-template-columns:1fr}.brand h1{font-size:20px}main{padding:12px}}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand"><h1>LVDVS</h1><span class="sub">검투사 양성소 · 서기 80년, 로마</span></div>
+  <div class="hstats">
+    <div class="hstat"><span class="k">주차</span><span class="v" id="hWeek">1</span></div>
+    <div class="hstat"><span class="k">데나리우스</span><span class="v" id="hMoney">500</span></div>
+    <div class="hstat"><span class="k">명성</span><span class="v" id="hRep">5</span></div>
+    <div class="hstat"><span class="k">검투사</span><span class="v" id="hCount">2/4</span></div>
+  </div>
+  <button class="primary" id="btnNextWeek">다음 주 ▸</button>
+</header>
+
+<nav id="nav" style="display:none"></nav>
+
+<main>
+  <div id="backToMap" style="display:none"><button class="sm">◂ 양성소 전경</button></div>
+
+  <!-- 전경(맵) -->
+  <section class="screen on" id="screen-map">
+    <h2><span class="rn">LVDVS</span>양성소 전경</h2>
+    <p class="lede">해질녘의 루두스. 건물을 눌러 들어가라.</p>
+    <div id="mapWrap">
+    <svg viewBox="0 0 1000 540" xmlns="http://www.w3.org/2000/svg" aria-label="양성소 전경 지도">
+      <defs>
+        <linearGradient id="gSky" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#100b07"/><stop offset=".45" stop-color="#241709"/>
+          <stop offset=".8" stop-color="#5a3a1c"/><stop offset="1" stop-color="#8a5526"/>
+        </linearGradient>
+        <linearGradient id="gSand" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#a8834e"/><stop offset=".35" stop-color="#c9a566"/>
+          <stop offset=".8" stop-color="#b28d54"/><stop offset="1" stop-color="#96733f"/>
+        </linearGradient>
+        <linearGradient id="gRoof" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#a3563a"/><stop offset=".55" stop-color="#8a4a2e"/><stop offset="1" stop-color="#5e3018"/></linearGradient>
+        <linearGradient id="gWall" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#71604a"/><stop offset=".6" stop-color="#5c4b34"/><stop offset="1" stop-color="#463822"/></linearGradient>
+        <linearGradient id="gCol" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#b8a683"/><stop offset=".55" stop-color="#a08d66"/><stop offset="1" stop-color="#6e5c3e"/></linearGradient>
+        <radialGradient id="gGlow" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#ffd97a" stop-opacity=".26"/><stop offset="1" stop-color="#ffd97a" stop-opacity="0"/></radialGradient>
+        <radialGradient id="gSun" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#f0a848" stop-opacity=".5"/><stop offset=".5" stop-color="#c97e34" stop-opacity=".22"/><stop offset="1" stop-color="#c97e34" stop-opacity="0"/></radialGradient>
+        <radialGradient id="gWindow" cx=".5" cy=".5" r=".6"><stop offset="0" stop-color="#ffce7a"/><stop offset="1" stop-color="#b8742e"/></radialGradient>
+        <radialGradient id="gFire" cx=".5" cy=".7" r=".7"><stop offset="0" stop-color="#ffd97a" stop-opacity=".55"/><stop offset="1" stop-color="#ff8a2a" stop-opacity="0"/></radialGradient>
+      </defs>
+
+      <!-- ═══ 하늘 ═══ -->
+      <rect width="1000" height="312" fill="url(#gSky)"/>
+      <g fill="#e8dcc0"><circle cx="96" cy="42" r="1.4" opacity=".55"/><circle cx="176" cy="88" r="1" opacity=".35"/><circle cx="292" cy="36" r="1.2" opacity=".5"/><circle cx="452" cy="62" r="1" opacity=".4"/><circle cx="548" cy="30" r="1.3" opacity=".45"/><circle cx="640" cy="74" r="1" opacity=".3"/><circle cx="60" cy="128" r="1" opacity=".25"/></g>
+      <ellipse cx="845" cy="240" rx="230" ry="120" fill="url(#gSun)"/>
+      <!-- 구름 (역광) -->
+      <g>
+        <path d="M120 92 q34 -16 76 -8 q46 -8 84 4 q-18 12 -74 10 q-56 6 -86 -6 Z" fill="#17100a"/>
+        <path d="M132 96 q40 6 70 3 q40 4 72 -2" stroke="#8a5526" stroke-width="1.6" fill="none" opacity=".5"/>
+        <path d="M520 60 q30 -12 66 -6 q36 -6 62 4 q-20 10 -64 8 q-44 5 -64 -6 Z" fill="#150e08"/>
+        <path d="M700 128 q26 -10 58 -4 q30 -4 50 4 q-16 8 -52 6 q-38 4 -56 -6 Z" fill="#17100a" opacity=".8"/>
+      </g>
+      <!-- 새 떼 -->
+      <g stroke="#0f0a06" stroke-width="1.6" fill="none" stroke-linecap="round">
+        <path d="M368 84 l7 -4 l7 4"/><path d="M388 76 l6 -3 l6 3"/><path d="M352 96 l5 -3 l5 3"/>
+      </g>
+
+      <!-- ═══ 원경: 로마 스카이라인 ═══ -->
+      <!-- 수도교 (좌) -->
+      <g fill="#1c130b">
+        <rect x="0" y="212" width="332" height="10"/>
+        <rect x="0" y="222" width="332" height="26"/>
+      </g>
+      <g fill="#241709">
+        <path d="M18 248 v-16 a10 10 0 0 1 20 0 v16 Z"/><path d="M62 248 v-16 a10 10 0 0 1 20 0 v16 Z"/>
+        <path d="M106 248 v-16 a10 10 0 0 1 20 0 v16 Z"/><path d="M150 248 v-16 a10 10 0 0 1 20 0 v16 Z"/>
+        <path d="M194 248 v-16 a10 10 0 0 1 20 0 v16 Z"/><path d="M238 248 v-16 a10 10 0 0 1 20 0 v16 Z"/>
+        <path d="M282 248 v-16 a10 10 0 0 1 20 0 v16 Z"/>
+      </g>
+      <!-- 신전 (중앙 뒤) -->
+      <g fill="#1c130b">
+        <polygon points="356,206 412,188 468,206"/>
+        <rect x="362" y="206" width="100" height="6"/>
+        <rect x="368" y="212" width="6" height="34"/><rect x="384" y="212" width="6" height="34"/><rect x="400" y="212" width="6" height="34"/><rect x="416" y="212" width="6" height="34"/><rect x="432" y="212" width="6" height="34"/><rect x="448" y="212" width="6" height="34"/>
+        <rect x="360" y="246" width="104" height="6"/>
+      </g>
+      <!-- 우산소나무 -->
+      <g fill="#141b0c">
+        <path d="M512 252 l3 -34 l3 34 Z"/><ellipse cx="515" cy="214" rx="26" ry="10"/><ellipse cx="504" cy="220" rx="14" ry="6"/>
+        <path d="M666 252 l3 -30 l3 30 Z"/><ellipse cx="669" cy="220" rx="22" ry="9"/>
+        <path d="M300 250 l2.5 -26 l2.5 26 Z"/><ellipse cx="302" cy="222" rx="18" ry="7"/>
+      </g>
+      <!-- 콜로세움 (우, 2층 아치) -->
+      <g>
+        <path d="M724 252 q116 -74 232 0 Z" fill="#221809"/>
+        <rect x="724" y="206" width="232" height="46" rx="8" fill="#241a0c"/>
+        <rect x="724" y="204" width="232" height="5" rx="2" fill="#33240f"/>
+        <g fill="#150e07">
+          <rect x="740" y="214" width="9" height="13" rx="4.5"/><rect x="760" y="211" width="9" height="14" rx="4.5"/><rect x="780" y="209" width="9" height="15" rx="4.5"/><rect x="800" y="208" width="9" height="15" rx="4.5"/><rect x="820" y="207" width="9" height="15" rx="4.5"/><rect x="840" y="207" width="9" height="15" rx="4.5"/><rect x="860" y="207" width="9" height="15" rx="4.5"/><rect x="880" y="208" width="9" height="15" rx="4.5"/><rect x="900" y="209" width="9" height="15" rx="4.5"/><rect x="920" y="211" width="9" height="14" rx="4.5"/><rect x="938" y="214" width="9" height="13" rx="4.5"/>
+          <rect x="752" y="232" width="8" height="14" rx="4"/><rect x="774" y="230" width="8" height="15" rx="4"/><rect x="796" y="229" width="8" height="16" rx="4"/><rect x="818" y="228" width="8" height="16" rx="4"/><rect x="840" y="228" width="8" height="16" rx="4"/><rect x="862" y="228" width="8" height="16" rx="4"/><rect x="884" y="229" width="8" height="16" rx="4"/><rect x="906" y="230" width="8" height="15" rx="4"/><rect x="926" y="232" width="8" height="14" rx="4"/>
+        </g>
+        <!-- 벨라리움 돛대 -->
+        <g stroke="#33240f" stroke-width="2"><line x1="756" y1="206" x2="756" y2="196"/><line x1="800" y1="205" x2="800" y2="194"/><line x1="844" y1="204" x2="844" y2="193"/><line x1="888" y1="205" x2="888" y2="194"/><line x1="928" y1="206" x2="928" y2="196"/></g>
+      </g>
+      <!-- 언덕 능선 -->
+      <path d="M0 252 Q140 232 300 248 Q470 262 640 250 Q820 240 1000 252 L1000 312 L0 312 Z" fill="#2a1c0e"/>
+
+      <!-- ═══ 사이프러스 (성벽 뒤) ═══ -->
+      <g fill="#131a0b">
+        <path d="M34 306 q-10 -34 8 -74 q18 40 8 74 Z"/>
+        <path d="M64 306 q-8 -28 7 -60 q15 32 7 60 Z"/>
+      </g>
+
+      <!-- ═══ 외벽 (석재) ═══ -->
+      <rect x="0" y="256" width="1000" height="52" fill="url(#gWall)"/>
+      <!-- 기와 갓돌 -->
+      <g fill="#8a4126">
+        <path d="M0 250 h1000 v8 h-1000 Z"/>
+      </g>
+      <g fill="#5e3018"><rect x="0" y="256" width="1000" height="2"/></g>
+      <g stroke="#3a2c18" stroke-width="1.4" opacity=".8">
+        <line x1="24" y1="250" x2="24" y2="257"/><line x1="72" y1="250" x2="72" y2="257"/><line x1="120" y1="250" x2="120" y2="257"/><line x1="168" y1="250" x2="168" y2="257"/><line x1="216" y1="250" x2="216" y2="257"/><line x1="264" y1="250" x2="264" y2="257"/><line x1="312" y1="250" x2="312" y2="257"/><line x1="360" y1="250" x2="360" y2="257"/><line x1="408" y1="250" x2="408" y2="257"/><line x1="456" y1="250" x2="456" y2="257"/><line x1="504" y1="250" x2="504" y2="257"/><line x1="552" y1="250" x2="552" y2="257"/><line x1="600" y1="250" x2="600" y2="257"/><line x1="648" y1="250" x2="648" y2="257"/><line x1="696" y1="250" x2="696" y2="257"/><line x1="744" y1="250" x2="744" y2="257"/>
+      </g>
+      <!-- 석재 블록 줄눈 -->
+      <g stroke="#3a2c18" stroke-width="1" opacity=".45">
+        <line x1="0" y1="272" x2="1000" y2="272"/><line x1="0" y1="289" x2="1000" y2="289"/>
+        <line x1="40" y1="258" x2="40" y2="272"/><line x1="104" y1="258" x2="104" y2="272"/><line x1="168" y1="258" x2="168" y2="272"/><line x1="232" y1="258" x2="232" y2="272"/><line x1="296" y1="258" x2="296" y2="272"/><line x1="360" y1="258" x2="360" y2="272"/><line x1="424" y1="258" x2="424" y2="272"/><line x1="488" y1="258" x2="488" y2="272"/><line x1="552" y1="258" x2="552" y2="272"/><line x1="616" y1="258" x2="616" y2="272"/><line x1="680" y1="258" x2="680" y2="272"/><line x1="744" y1="258" x2="744" y2="272"/>
+        <line x1="72" y1="272" x2="72" y2="289"/><line x1="136" y1="272" x2="136" y2="289"/><line x1="200" y1="272" x2="200" y2="289"/><line x1="264" y1="272" x2="264" y2="289"/><line x1="328" y1="272" x2="328" y2="289"/><line x1="392" y1="272" x2="392" y2="289"/><line x1="456" y1="272" x2="456" y2="289"/><line x1="520" y1="272" x2="520" y2="289"/><line x1="584" y1="272" x2="584" y2="289"/><line x1="648" y1="272" x2="648" y2="289"/><line x1="712" y1="272" x2="712" y2="289"/>
+        <line x1="40" y1="289" x2="40" y2="305"/><line x1="104" y1="289" x2="104" y2="305"/><line x1="168" y1="289" x2="168" y2="305"/><line x1="232" y1="289" x2="232" y2="305"/><line x1="296" y1="289" x2="296" y2="305"/><line x1="360" y1="289" x2="360" y2="305"/><line x1="424" y1="289" x2="424" y2="305"/><line x1="488" y1="289" x2="488" y2="305"/><line x1="552" y1="289" x2="552" y2="305"/><line x1="616" y1="289" x2="616" y2="305"/><line x1="680" y1="289" x2="680" y2="305"/><line x1="744" y1="289" x2="744" y2="305"/>
+      </g>
+      <!-- 금·이끼 -->
+      <path d="M338 258 q4 12 -2 20 q6 10 2 18" stroke="#33270f" stroke-width="1.6" fill="none" opacity=".7"/>
+      <g fill="#2e330f" opacity=".5"><ellipse cx="90" cy="300" rx="16" ry="5"/><ellipse cx="410" cy="302" rx="12" ry="4"/><ellipse cx="700" cy="299" rx="14" ry="4.5"/></g>
+      <!-- 벽걸이 방패 장식 -->
+      <g>
+        <circle cx="440" cy="276" r="11" fill="#7a2a24" stroke="#3a1a14" stroke-width="1.5"/>
+        <path d="M440 265 a11 11 0 0 1 0 22 Z" fill="#8a3a2e"/>
+        <circle cx="440" cy="276" r="3" fill="#d4a017"/>
+        <circle cx="560" cy="276" r="11" fill="#3e5a6a" stroke="#1c2a32" stroke-width="1.5"/>
+        <path d="M560 265 a11 11 0 0 0 0 22 Z" fill="#2e4654"/>
+        <circle cx="560" cy="276" r="3" fill="#b8a04a"/>
+      </g>
+      <!-- 벽 위 고양이 -->
+      <g fill="#0f0a06">
+        <ellipse cx="716" cy="246" rx="9" ry="5"/>
+        <circle cx="726" cy="241" r="4.5"/>
+        <polygon points="723,238 724.5,233 727,237.5"/><polygon points="727,237.5 729.5,233.5 730.5,238"/>
+        <path d="M707 246 q-8 -2 -8 -12" stroke="#0f0a06" stroke-width="2.6" fill="none" stroke-linecap="round"/>
+      </g>
+      <!-- 벽 횃불 ×2 -->
+      <g>
+        <ellipse cx="252" cy="258" rx="26" ry="20" fill="url(#gFire)"/>
+        <path d="M248 262 l3 22 h2 l3 -22 Z" fill="#3a2a16"/><rect x="246" y="260" width="12" height="4" rx="2" fill="#5a4326"/>
+        <g class="flame"><ellipse cx="252" cy="254" rx="5.5" ry="9" fill="#e8862a"/><ellipse cx="252" cy="251" rx="2.6" ry="4.8" fill="#ffd97a"/></g>
+      </g>
+      <g>
+        <ellipse cx="622" cy="258" rx="26" ry="20" fill="url(#gFire)"/>
+        <path d="M618 262 l3 22 h2 l3 -22 Z" fill="#3a2a16"/><rect x="616" y="260" width="12" height="4" rx="2" fill="#5a4326"/>
+        <g class="flame f2"><ellipse cx="622" cy="254" rx="5.5" ry="9" fill="#e8862a"/><ellipse cx="622" cy="251" rx="2.6" ry="4.8" fill="#ffd97a"/></g>
+      </g>
+
+      <!-- ═══ 마당 ═══ -->
+      <rect x="0" y="304" width="1000" height="236" fill="url(#gSand)"/>
+      <!-- 수레바퀴 자국 (정문에서) -->
+      <g stroke="#8a6a3c" stroke-width="3" fill="none" opacity=".5">
+        <path d="M846 312 Q800 380 748 440 Q700 496 640 534"/>
+        <path d="M866 314 Q822 384 772 446 Q726 500 668 538"/>
+      </g>
+      <!-- 훈련 원 -->
+      <ellipse cx="480" cy="418" rx="172" ry="46" fill="none" stroke="#7a5a2e" stroke-width="3.5" opacity=".6"/>
+      <ellipse cx="480" cy="418" rx="150" ry="38" fill="none" stroke="#8a6a3c" stroke-width="1.6" opacity=".5"/>
+      <ellipse cx="480" cy="420" rx="108" ry="26" fill="#a07f48" opacity=".5"/>
+      <!-- 갈퀴 자국 -->
+      <g stroke="#8a6a3c" stroke-width="1.2" fill="none" opacity=".45">
+        <path d="M392 442 q88 16 176 0"/><path d="M400 452 q80 14 160 0"/><path d="M412 462 q68 12 136 0"/>
+      </g>
+      <!-- 자갈·풀·소품 -->
+      <g fill="#7a5f36"><circle cx="150" cy="486" r="2.2"/><circle cx="160" cy="492" r="1.6"/><circle cx="332" cy="352" r="2"/><circle cx="912" cy="470" r="2.4"/><circle cx="922" cy="464" r="1.5"/><circle cx="560" cy="510" r="2"/></g>
+      <g stroke="#5a5a22" stroke-width="1.4" fill="none" opacity=".8">
+        <path d="M118 312 l-3 -8 M121 312 l0 -9 M124 312 l3 -8"/>
+        <path d="M962 316 l-3 -8 M965 316 l0 -9 M968 316 l3 -8"/>
+        <path d="M676 312 l-2 -7 M679 312 l0 -8 M682 312 l2 -7"/>
+      </g>
+      <!-- 떨어진 목검 -->
+      <g transform="rotate(18 585 458)"><rect x="566" y="456" width="34" height="4" rx="2" fill="#8a6a44"/><rect x="562" y="454" width="7" height="8" rx="2" fill="#5a4326"/></g>
+
+      <!-- ═══ 우물 (경기 계약 간판이 있던 자리) ═══ -->
+      <g>
+        <ellipse cx="252" cy="490" rx="34" ry="10" fill="rgba(40,25,10,.3)"/>
+        <path d="M223 481 a29 9 0 0 1 58 0 l0 -24 a29 9 0 0 0 -58 0 Z" fill="#6e5c42"/>
+        <ellipse cx="252" cy="457" rx="29" ry="9" fill="#463822"/>
+        <ellipse cx="252" cy="457" rx="21" ry="6" fill="#17100a"/>
+        <g stroke="#3a2c18" stroke-width="1" opacity=".6"><line x1="228" y1="468" x2="276" y2="468"/><line x1="237" y1="459" x2="237" y2="481"/><line x1="267" y1="459" x2="267" y2="481"/></g>
+        <line x1="228" y1="455" x2="228" y2="421" stroke="#5a4326" stroke-width="5"/>
+        <line x1="276" y1="455" x2="276" y2="421" stroke="#5a4326" stroke-width="5"/>
+        <polygon points="219,423 252,408 285,423" fill="#8a4a2e"/>
+        <g stroke="#5e3018" stroke-width="1" opacity=".6"><line x1="230" y1="418" x2="252" y2="411"/><line x1="274" y1="418" x2="252" y2="411"/></g>
+        <line x1="252" y1="423" x2="252" y2="447" stroke="#c9b489" stroke-width="1.6"/>
+        <rect x="246" y="445" width="12" height="9" rx="1.5" fill="#6e5230"/>
+        <ellipse cx="252" cy="450" rx="5" ry="1.6" fill="#3a2a16"/>
+      </g>
+
+      <!-- 상단 정보 -->
+      <text id="mapWeekTxt" x="18" y="30" font-family="'Noto Serif KR',serif" font-size="16" fill="#e8dcc0">제 1주 · 명성 5</text>
+      <text x="18" y="50" font-family="Cinzel,serif" font-size="10" letter-spacing="3" fill="#a8987a">ROMA · ANNO LXXX</text>
+      <line x1="18" y1="58" x2="150" y2="58" stroke="#5a4a30" stroke-width="1"/>
+
+      <!-- ◆ 집무실 (양성소 현황) -->
+      <g class="bld" data-s="ludus" tabindex="0" role="button" aria-label="집무실 — 재정과 소식">
+        <title>집무실 — 재정과 지난 주 소식</title>
+        <ellipse class="glow" cx="152" cy="286" rx="140" ry="100" fill="url(#gGlow)"/>
+        <ellipse cx="156" cy="326" rx="110" ry="12" fill="rgba(30,18,6,.35)"/>
+        <!-- 별채 -->
+        <rect x="38" y="252" width="52" height="72" fill="#5c4b34"/>
+        <rect x="34" y="244" width="60" height="12" rx="2" fill="#6e3720"/>
+        <rect x="52" y="278" width="18" height="16" fill="#221606"/><line x1="61" y1="278" x2="61" y2="294" stroke="#463822" stroke-width="1.6"/>
+        <!-- 본채 -->
+        <g class="smoke"><circle cx="196" cy="164" r="5" fill="#c9b18a" opacity=".32"/><circle cx="203" cy="151" r="7" fill="#c9b18a" opacity=".22"/><circle cx="210" cy="138" r="9" opacity=".12" fill="#c9b18a"/></g>
+        <rect x="186" y="146" width="16" height="34" fill="#463822"/><rect x="184" y="142" width="20" height="6" rx="1.5" fill="#5e3018"/>
+        <rect x="66" y="206" width="182" height="118" fill="url(#gWall)"/>
+        <!-- 모서리 귀돌 -->
+        <g fill="#7a684e"><rect x="66" y="212" width="10" height="9"/><rect x="66" y="230" width="10" height="9"/><rect x="66" y="248" width="10" height="9"/><rect x="238" y="212" width="10" height="9"/><rect x="238" y="230" width="10" height="9"/><rect x="238" y="248" width="10" height="9"/></g>
+        <g stroke="#3a2c18" stroke-width=".9" opacity=".35"><line x1="66" y1="240" x2="248" y2="240"/><line x1="66" y1="270" x2="248" y2="270"/><line x1="66" y1="298" x2="248" y2="298"/></g>
+        <!-- 지붕 (기와 골) -->
+        <polygon points="50,208 152,146 258,208" fill="url(#gRoof)"/>
+        <g stroke="#5e3018" stroke-width="1.6" fill="none" opacity=".85">
+          <path d="M64 200 L152 148 L246 200"/>
+          <path d="M80 190 L152 152 L228 190"/>
+          <path d="M98 180 L152 156 L212 180"/>
+        </g>
+        <g stroke="#5e3018" stroke-width="1.3" opacity=".7">
+          <line x1="86" y1="200" x2="152" y2="162"/><line x1="108" y1="200" x2="152" y2="172"/><line x1="130" y1="200" x2="152" y2="184"/>
+          <line x1="218" y1="200" x2="152" y2="162"/><line x1="196" y1="200" x2="152" y2="172"/><line x1="174" y1="200" x2="152" y2="184"/>
+        </g>
+        <rect x="146" y="142" width="12" height="7" rx="2" fill="#b8742e"/>
+        <line x1="50" y1="208" x2="258" y2="208" stroke="#3a2510" stroke-width="3"/>
+        <!-- 문 (아치·계단·경첩) -->
+        <path d="M124 324 L124 254 Q152 234 180 254 L180 324 Z" fill="#7a684e"/>
+        <path d="M129 324 L129 257 Q152 240 175 257 L175 324 Z" fill="#241608"/>
+        <path d="M132 324 L132 259 Q152 244 172 259 L172 324 Z" fill="#3a2712"/>
+        <g stroke="#241608" stroke-width="1.4"><line x1="142" y1="250" x2="142" y2="324"/><line x1="152" y1="246" x2="152" y2="324"/><line x1="162" y1="250" x2="162" y2="324"/></g>
+        <g fill="#8a7454"><rect x="132" y="272" width="40" height="4" rx="1"/><rect x="132" y="300" width="40" height="4" rx="1"/></g>
+        <circle cx="152" cy="288" r="3.5" fill="#b8a04a"/><circle cx="152" cy="288" r="1.5" fill="#6e5230"/>
+        <rect x="118" y="324" width="68" height="5" fill="#8a7454"/><rect x="112" y="329" width="80" height="5" fill="#6e5c42"/>
+        <!-- 월계관 -->
+        <circle cx="152" cy="228" r="8" fill="none" stroke="#6a7a3a" stroke-width="3"/>
+        <circle cx="146" cy="222" r="1.4" fill="#8a9a4a"/><circle cx="158" cy="222" r="1.4" fill="#8a9a4a"/><circle cx="144" cy="232" r="1.4" fill="#8a9a4a"/><circle cx="160" cy="232" r="1.4" fill="#8a9a4a"/>
+        <!-- 창 ×2 (덧문 + 불빛) -->
+        <g>
+          <rect x="82" y="232" width="30" height="26" fill="#241608"/>
+          <rect x="84" y="234" width="26" height="22" fill="url(#gWindow)"/>
+          <line x1="97" y1="234" x2="97" y2="256" stroke="#241608" stroke-width="2"/><line x1="84" y1="245" x2="110" y2="245" stroke="#241608" stroke-width="2"/>
+          <rect x="74" y="232" width="7" height="26" fill="#4a3018"/><g stroke="#2e1c0c" stroke-width="1"><line x1="76" y1="236" x2="79" y2="236"/><line x1="76" y1="242" x2="79" y2="242"/><line x1="76" y1="248" x2="79" y2="248"/></g>
+        </g>
+        <g>
+          <rect x="196" y="232" width="30" height="26" fill="#241608"/>
+          <rect x="198" y="234" width="26" height="22" fill="url(#gWindow)"/>
+          <line x1="211" y1="234" x2="211" y2="256" stroke="#241608" stroke-width="2"/><line x1="198" y1="245" x2="224" y2="245" stroke="#241608" stroke-width="2"/>
+          <rect x="227" y="232" width="7" height="26" fill="#4a3018"/><g stroke="#2e1c0c" stroke-width="1"><line x1="229" y1="236" x2="232" y2="236"/><line x1="229" y1="242" x2="232" y2="242"/><line x1="229" y1="248" x2="232" y2="248"/></g>
+        </g>
+        <!-- 문가 횃불 + 화분 -->
+        <g><ellipse cx="108" cy="268" rx="18" ry="14" fill="url(#gFire)"/><rect x="106" y="268" width="4" height="18" fill="#3a2a16"/><g class="flame f2"><ellipse cx="108" cy="264" rx="4.5" ry="7" fill="#e8862a"/><ellipse cx="108" cy="262" rx="2" ry="3.6" fill="#ffd97a"/></g></g>
+        <g><path d="M192 318 l4 -12 h10 l4 12 Z" fill="#8a5a34"/><path d="M197 306 q4 -10 -2 -16 M201 306 q0 -12 0 -16 M205 306 q-4 -10 2 -16" stroke="#4a6a2a" stroke-width="1.8" fill="none"/></g>
+        <text x="152" y="218" text-anchor="middle" font-family="Cinzel,serif" font-size="8" letter-spacing="2" fill="#c9b489" opacity=".8">TABLINVM</text>
+        <rect class="plate" x="94" y="336" width="116" height="26" rx="4"/>
+        <circle cx="102" cy="349" r="2" fill="#d4a017" opacity=".7"/><circle cx="202" cy="349" r="2" fill="#d4a017" opacity=".7"/>
+        <text class="plateTxt" x="152" y="354" text-anchor="middle" font-family="'Noto Sans KR',sans-serif" font-size="14" font-weight="700">집무실</text>
+      </g>
+
+      <!-- ◆ 훈련장 (검투사) -->
+      <g class="bld" data-s="roster" tabindex="0" role="button" aria-label="훈련장 — 검투사 관리">
+        <title>훈련장 — 검투사와 훈련 배정</title>
+        <ellipse class="glow" cx="492" cy="296" rx="170" ry="100" fill="url(#gGlow)"/>
+        <ellipse cx="492" cy="310" rx="120" ry="10" fill="rgba(30,18,6,.3)"/>
+        <!-- 내부 -->
+        <rect x="394" y="228" width="196" height="80" fill="#1c1309"/>
+        <!-- 내부 무기 거치대 실루엣 -->
+        <g stroke="#0f0a05" stroke-width="3"><line x1="498" y1="304" x2="498" y2="256"/><line x1="512" y1="304" x2="512" y2="250"/><line x1="526" y1="304" x2="526" y2="258"/><line x1="490" y1="288" x2="534" y2="288"/></g>
+        <g stroke="#0f0a05" stroke-width="2.4"><line x1="548" y1="304" x2="548" y2="262"/><circle cx="548" cy="258" r="5" fill="#0f0a05"/></g>
+        <!-- 엔타블러처 + 치상 장식 -->
+        <rect x="384" y="210" width="216" height="20" fill="url(#gWall)"/>
+        <rect x="384" y="208" width="216" height="5" fill="#8a4126"/>
+        <g fill="#3a2c18"><rect x="392" y="224" width="5" height="5"/><rect x="404" y="224" width="5" height="5"/><rect x="416" y="224" width="5" height="5"/><rect x="428" y="224" width="5" height="5"/><rect x="440" y="224" width="5" height="5"/><rect x="452" y="224" width="5" height="5"/><rect x="464" y="224" width="5" height="5"/><rect x="476" y="224" width="5" height="5"/><rect x="488" y="224" width="5" height="5"/><rect x="500" y="224" width="5" height="5"/><rect x="512" y="224" width="5" height="5"/><rect x="524" y="224" width="5" height="5"/><rect x="536" y="224" width="5" height="5"/><rect x="548" y="224" width="5" height="5"/><rect x="560" y="224" width="5" height="5"/><rect x="572" y="224" width="5" height="5"/><rect x="584" y="224" width="5" height="5"/></g>
+        <!-- 기둥 ×6 (주초·주두·플루팅) -->
+        <g>
+          <g transform="translate(398,0)"><rect x="0" y="230" width="14" height="70" fill="url(#gCol)"/><line x1="4" y1="234" x2="4" y2="296" stroke="#6e5c3e" stroke-width="1.2" opacity=".7"/><line x1="9" y1="234" x2="9" y2="296" stroke="#6e5c3e" stroke-width="1.2" opacity=".7"/><rect x="-3" y="228" width="20" height="6" fill="#b8a683"/><rect x="-1" y="224" width="16" height="5" fill="#a08d66"/><rect x="-3" y="300" width="20" height="8" fill="#8a7857"/></g>
+          <g transform="translate(436,0)"><rect x="0" y="230" width="14" height="70" fill="url(#gCol)"/><line x1="4" y1="234" x2="4" y2="296" stroke="#6e5c3e" stroke-width="1.2" opacity=".7"/><line x1="9" y1="234" x2="9" y2="296" stroke="#6e5c3e" stroke-width="1.2" opacity=".7"/><rect x="-3" y="228" width="20" height="6" fill="#b8a683"/><rect x="-1" y="224" width="16" height="5" fill="#a08d66"/><rect x="-3" y="300" width="20" height="8" fill="#8a7857"/></g>
+          <g transform="translate(474,0)"><rect x="0" y="230" width="14" height="70" fill="url(#gCol)"/><line x1="4" y1="234" x2="4" y2="296" stroke="#6e5c3e" stroke-width="1.2" opacity=".7"/><line x1="9" y1="234" x2="9" y2="296" stroke="#6e5c3e" stroke-width="1.2" opacity=".7"/><rect x="-3" y="228" width="20" height="6" fill="#b8a683"/><rect x="-1" y="224" width="16" height="5" fill="#a08d66"/><rect x="-3" y="300" width="20" height="8" fill="#8a7857"/></g>
+          <g transform="translate(548,0)"><rect x="0" y="230" width="14" height="70" fill="url(#gCol)"/><line x1="4" y1="234" x2="4" y2="296" stroke="#6e5c3e" stroke-width="1.2" opacity=".7"/><line x1="9" y1="234" x2="9" y2="296" stroke="#6e5c3e" stroke-width="1.2" opacity=".7"/><rect x="-3" y="228" width="20" height="6" fill="#b8a683"/><rect x="-1" y="224" width="16" height="5" fill="#a08d66"/><rect x="-3" y="300" width="20" height="8" fill="#8a7857"/></g>
+          <g transform="translate(586,0)"><rect x="0" y="230" width="14" height="70" fill="url(#gCol)"/><line x1="4" y1="234" x2="4" y2="296" stroke="#6e5c3e" stroke-width="1.2" opacity=".7"/><line x1="9" y1="234" x2="9" y2="296" stroke="#6e5c3e" stroke-width="1.2" opacity=".7"/><rect x="-3" y="228" width="20" height="6" fill="#b8a683"/><rect x="-1" y="224" width="16" height="5" fill="#a08d66"/><rect x="-3" y="300" width="20" height="8" fill="#8a7857"/></g>
+        </g>
+        <!-- 팔루스 ×2 (밧줄 감김) -->
+        <g>
+          <rect x="452" y="326" width="11" height="56" rx="4" fill="#5a4326"/>
+          <g stroke="#8a6a44" stroke-width="2.4"><line x1="452" y1="336" x2="463" y2="338"/><line x1="452" y1="342" x2="463" y2="344"/></g>
+          <g stroke="#3a2a16" stroke-width="1.6"><line x1="454" y1="356" x2="461" y2="358"/><line x1="453" y1="364" x2="462" y2="366"/></g>
+        </g>
+        <g>
+          <rect x="544" y="330" width="10" height="50" rx="4" fill="#5a4326"/>
+          <g stroke="#8a6a44" stroke-width="2.2"><line x1="544" y1="340" x2="554" y2="342"/></g>
+        </g>
+        <!-- 훈련 중인 검투사 (애니메이션 유지) -->
+        <g>
+          <ellipse cx="418" cy="380" rx="15" ry="4.5" fill="rgba(40,25,10,.32)"/>
+          <line x1="412" y1="376" x2="406" y2="356" stroke="#c99b72" stroke-width="4" stroke-linecap="round"/>
+          <line x1="422" y1="376" x2="420" y2="356" stroke="#c99b72" stroke-width="4" stroke-linecap="round"/>
+          <rect x="406" y="334" width="16" height="24" rx="4" fill="#8b6f47"/>
+          <rect x="406" y="352" width="16" height="5" fill="#8a2a2a"/>
+          <circle cx="414" cy="328" r="6" fill="#c99b72"/><path d="M408 326 a6 6 0 0 1 12 0 z" fill="#b8a04a"/>
+          <g class="trainArm"><line x1="420" y1="340" x2="434" y2="342" stroke="#c99b72" stroke-width="4" stroke-linecap="round"/><line x1="434" y1="342" x2="452" y2="338" stroke="#c8c8ce" stroke-width="3" stroke-linecap="round"/></g>
+        </g>
+        <!-- 바위 드는 검투사 (정적) -->
+        <g>
+          <ellipse cx="590" cy="382" rx="14" ry="4.5" fill="rgba(40,25,10,.32)"/>
+          <line x1="584" y1="378" x2="580" y2="362" stroke="#b8875e" stroke-width="4" stroke-linecap="round"/>
+          <line x1="596" y1="378" x2="600" y2="362" stroke="#b8875e" stroke-width="4" stroke-linecap="round"/>
+          <rect x="582" y="342" width="16" height="22" rx="4" fill="#5e6468"/>
+          <circle cx="590" cy="336" r="6" fill="#b8875e"/>
+          <line x1="583" y1="346" x2="577" y2="332" stroke="#b8875e" stroke-width="4" stroke-linecap="round"/>
+          <line x1="597" y1="346" x2="603" y2="332" stroke="#b8875e" stroke-width="4" stroke-linecap="round"/>
+          <circle cx="590" cy="326" r="9" fill="#6e6055"/><circle cx="587" cy="323" r="2.2" fill="#5a4e44"/>
+        </g>
+        <!-- 물통·암포라·기대 놓은 방패 -->
+        <g><path d="M394 358 h24 l-2 22 h-20 Z" fill="#5a4326"/><ellipse cx="406" cy="358" rx="12" ry="3.5" fill="#3a2a16"/><g stroke="#3a2a16" stroke-width="1.4"><line x1="395" y1="366" x2="417" y2="366"/><line x1="396" y1="373" x2="416" y2="373"/></g></g>
+        <g><ellipse cx="432" cy="384" rx="8" ry="3" fill="rgba(40,25,10,.3)"/><path d="M425 383 q1 -18 7 -22 q6 4 7 22 Z" fill="#a06a3c"/><rect x="429" y="358" width="6" height="6" fill="#8a5a34"/></g>
+        <g transform="rotate(-8 576 300)"><rect x="570" y="278" width="13" height="30" rx="5" fill="#7a2a24"/><circle cx="576" cy="293" r="2.6" fill="#d4a017"/></g>
+        <g id="mapBadgeInjured" style="display:none"><circle cx="592" cy="216" r="11" fill="#a4161a"/><text x="592" y="220" text-anchor="middle" font-family="'Noto Sans KR',sans-serif" font-size="11" font-weight="700" fill="#fff">0</text></g>
+        <text x="492" y="204" text-anchor="middle" font-family="Cinzel,serif" font-size="8" letter-spacing="2" fill="#c9b489" opacity=".8">PALAESTRA</text>
+        <rect class="plate" x="434" y="388" width="116" height="26" rx="4"/>
+        <circle cx="442" cy="401" r="2" fill="#d4a017" opacity=".7"/><circle cx="542" cy="401" r="2" fill="#d4a017" opacity=".7"/>
+        <text class="plateTxt" x="492" y="406" text-anchor="middle" font-family="'Noto Sans KR',sans-serif" font-size="14" font-weight="700">훈련장</text>
+      </g>
+
+      <!-- ◆ 정문·노예 시장 -->
+      <g class="bld" data-s="city" tabindex="0" role="button" aria-label="도시로 나가기">
+        <title>도시로 나간다</title>
+        <ellipse class="glow" cx="852" cy="296" rx="140" ry="100" fill="url(#gGlow)"/>
+        <ellipse cx="850" cy="312" rx="95" ry="10" fill="rgba(30,18,6,.3)"/>
+        <!-- 문루 -->
+        <rect x="784" y="212" width="136" height="94" fill="url(#gWall)"/>
+        <g fill="#71604a"><rect x="786" y="198" width="16" height="14"/><rect x="812" y="198" width="16" height="14"/><rect x="838" y="198" width="16" height="14"/><rect x="864" y="198" width="16" height="14"/><rect x="890" y="198" width="16" height="14"/></g>
+        <rect x="784" y="210" width="136" height="4" fill="#8a4126"/>
+        <g stroke="#3a2c18" stroke-width=".9" opacity=".4"><line x1="784" y1="238" x2="920" y2="238"/><line x1="784" y1="286" x2="920" y2="286"/><line x1="806" y1="212" x2="806" y2="238"/><line x1="852" y1="212" x2="852" y2="238"/><line x1="898" y1="212" x2="898" y2="238"/></g>
+        <!-- 현판 -->
+        <rect x="826" y="218" width="52" height="16" rx="2" fill="#d9c9a3"/><rect x="826" y="218" width="52" height="16" rx="2" fill="none" stroke="#8a7454" stroke-width="1.4"/>
+        <text x="852" y="230" text-anchor="middle" font-family="Cinzel,serif" font-size="10" letter-spacing="2" fill="#463822">LVDVS</text>
+        <!-- 아치 + 이중 목문 -->
+        <path d="M810 306 L810 252 Q852 224 894 252 L894 306 Z" fill="#8a7454"/>
+        <rect x="846" y="228" width="12" height="10" fill="#a08d66"/>
+        <path d="M816 306 L816 255 Q852 230 888 255 L888 306 Z" fill="#17100a"/>
+        <path d="M820 306 L820 257 Q852 234 884 257 L884 306 Z" fill="#3a2712"/>
+        <line x1="852" y1="236" x2="852" y2="306" stroke="#1c1206" stroke-width="3"/>
+        <g stroke="#241608" stroke-width="1.2" opacity=".8"><line x1="828" y1="250" x2="828" y2="306"/><line x1="838" y1="243" x2="838" y2="306"/><line x1="866" y1="243" x2="866" y2="306"/><line x1="876" y1="250" x2="876" y2="306"/></g>
+        <g fill="#8a7454"><rect x="820" y="262" width="30" height="4" rx="1"/><rect x="854" y="262" width="30" height="4" rx="1"/><rect x="820" y="288" width="30" height="4" rx="1"/><rect x="854" y="288" width="30" height="4" rx="1"/></g>
+        <g fill="#b8a04a"><circle cx="826" cy="270" r="1.4"/><circle cx="834" cy="270" r="1.4"/><circle cx="842" cy="270" r="1.4"/><circle cx="862" cy="270" r="1.4"/><circle cx="870" cy="270" r="1.4"/><circle cx="878" cy="270" r="1.4"/></g>
+        <circle cx="843" cy="278" r="3" fill="#b8a04a"/><circle cx="861" cy="278" r="3" fill="#b8a04a"/>
+        <!-- 걸이 등불 -->
+        <g><ellipse cx="800" cy="252" rx="14" ry="12" fill="url(#gFire)"/><path d="M792 238 h10 l-2 4 h-6 Z" fill="#3a2a16"/><line x1="797" y1="242" x2="797" y2="246" stroke="#3a2a16" stroke-width="1.6"/><rect x="792" y="246" width="10" height="12" rx="2" fill="#241608"/><g class="flame"><ellipse cx="797" cy="253" rx="3" ry="4.5" fill="#ffd97a"/></g></g>
+        <!-- 깃발 -->
+        <g class="banner"><rect x="908" y="188" width="4" height="40" fill="#3a2a18"/><path d="M912 190 L952 197 L936 204 L952 211 L912 218 Z" fill="#7a2020"/><path d="M912 190 L952 197 L912 200 Z" fill="#8a2a2a"/></g>
+        <g id="mapBadgeMarket" style="display:none"><circle cx="914" cy="214" r="11" fill="#d4a017"/><text x="914" y="218" text-anchor="middle" font-family="'Noto Sans KR',sans-serif" font-size="11" font-weight="700" fill="#16110c">0</text></g>
+        <rect class="plate" x="794" y="316" width="116" height="26" rx="4"/>
+        <circle cx="802" cy="329" r="2" fill="#d4a017" opacity=".7"/><circle cx="902" cy="329" r="2" fill="#d4a017" opacity=".7"/>
+        <text class="plateTxt" x="852" y="334" text-anchor="middle" font-family="'Noto Sans KR',sans-serif" font-size="14" font-weight="700">도시로 나가기</text>
+      </g>
+
+      <!-- (경기 계약 간판 제거됨 — 기능은 콜로세움으로 이동) -->
+
+      <!-- ◆ 공방 (시설) -->
+      <g class="bld" data-s="facility" tabindex="0" role="button" aria-label="공방 — 시설과 인력">
+        <title>공방 — 시설 증축 · 인력 고용</title>
+        <ellipse class="glow" cx="672" cy="446" rx="130" ry="82" fill="url(#gGlow)"/>
+        <ellipse cx="668" cy="492" rx="100" ry="9" fill="rgba(30,18,6,.3)"/>
+        <!-- 화덕 (벽돌 + 불) -->
+        <g>
+          <path d="M598 486 L598 424 Q628 404 658 424 L658 486 Z" fill="#6e4a34"/>
+          <g stroke="#4a2e1e" stroke-width="1.2" opacity=".8">
+            <line x1="598" y1="438" x2="658" y2="438"/><line x1="598" y1="452" x2="658" y2="452"/><line x1="598" y1="466" x2="658" y2="466"/><line x1="598" y1="478" x2="658" y2="478"/>
+            <line x1="614" y1="424" x2="614" y2="438"/><line x1="642" y1="424" x2="642" y2="438"/><line x1="606" y1="438" x2="606" y2="452"/><line x1="628" y1="438" x2="628" y2="452"/><line x1="650" y1="438" x2="650" y2="452"/><line x1="614" y1="452" x2="614" y2="466"/><line x1="642" y1="452" x2="642" y2="466"/><line x1="628" y1="466" x2="628" y2="478"/>
+          </g>
+          <rect x="622" y="404" width="12" height="16" fill="#4a2e1e"/>
+          <ellipse cx="628" cy="472" rx="26" ry="18" fill="url(#gFire)"/>
+          <path d="M612 486 L612 462 Q628 450 644 462 L644 486 Z" fill="#1c0f06"/>
+          <g class="flame"><ellipse cx="628" cy="476" rx="9" ry="11" fill="#e8862a"/><ellipse cx="628" cy="472" rx="4.5" ry="6" fill="#ffd97a"/></g>
+          <g fill="#ffd97a" opacity=".8"><circle cx="620" cy="456" r="1.2"/><circle cx="636" cy="452" r="1"/><circle cx="630" cy="446" r="1.1"/></g>
+        </g>
+        <!-- 기대 놓은 스쿠툼 -->
+        <g transform="rotate(-10 586 462)"><rect x="578" y="436" width="16" height="42" rx="6" fill="#7a2a24"/><rect x="580" y="438" width="12" height="38" rx="5" fill="none" stroke="#5a1e18" stroke-width="1.4"/><circle cx="586" cy="457" r="3.4" fill="#d4a017"/></g>
+        <!-- 모루 + 그루터기 -->
+        <g>
+          <ellipse cx="694" cy="484" rx="16" ry="5" fill="rgba(30,18,6,.35)"/>
+          <path d="M684 482 a10 5 0 0 1 20 0 v-14 a10 5 0 0 0 -20 0 Z" fill="#6e5230"/>
+          <g stroke="#4a3520" stroke-width="1" opacity=".7"><path d="M686 470 a9 4 0 0 1 16 0"/></g>
+          <path d="M678 462 l36 0 l-4 -10 l-9 0 l0 -6 q-8 -3 -14 0 l0 6 l-6 0 Z" fill="#3e3e44"/>
+          <path d="M678 462 l10 0 l0 -10 l-4 0 Z" fill="#2c2c32"/>
+        </g>
+        <!-- 작업대 + 공구 -->
+        <g>
+          <rect x="712" y="452" width="66" height="7" rx="2" fill="#6e5636"/>
+          <line x1="718" y1="459" x2="714" y2="486" stroke="#4a3520" stroke-width="4"/><line x1="772" y1="459" x2="776" y2="486" stroke="#4a3520" stroke-width="4"/>
+          <g transform="rotate(-24 728 448)"><line x1="722" y1="450" x2="738" y2="446" stroke="#5a4326" stroke-width="3"/><rect x="736" y="441" width="10" height="9" rx="2" fill="#55555c"/></g>
+          <path d="M752 452 q4 -10 10 -10 M758 452 q2 -9 8 -11" stroke="#55555c" stroke-width="2.2" fill="none"/>
+          <circle cx="770" cy="448" r="2.6" fill="#8a5a34"/>
+        </g>
+        <!-- 비계 + 도르래 -->
+        <g>
+          <line x1="738" y1="486" x2="738" y2="386" stroke="#5a4326" stroke-width="6"/>
+          <line x1="790" y1="486" x2="790" y2="386" stroke="#5a4326" stroke-width="6"/>
+          <line x1="732" y1="394" x2="796" y2="394" stroke="#6e5636" stroke-width="5"/>
+          <line x1="732" y1="432" x2="796" y2="432" stroke="#6e5636" stroke-width="5"/>
+          <line x1="738" y1="432" x2="790" y2="394" stroke="#4a3524" stroke-width="3"/>
+          <line x1="738" y1="394" x2="790" y2="432" stroke="#4a3524" stroke-width="2" opacity=".6"/>
+          <rect x="744" y="426" width="40" height="7" fill="#8a7454"/>
+          <circle cx="764" cy="390" r="5" fill="#3a2a16"/><circle cx="764" cy="390" r="2" fill="#8a7454"/>
+          <line x1="764" y1="395" x2="764" y2="416" stroke="#c9b489" stroke-width="1.6"/>
+          <path d="M761 416 q3 6 6 0" stroke="#8a8a90" stroke-width="2.4" fill="none"/>
+        </g>
+        <!-- 목재 더미 + 암포라 -->
+        <g><rect x="600" y="498" width="44" height="7" rx="3.5" fill="#6e5230"/><rect x="604" y="491" width="36" height="7" rx="3.5" fill="#7a5c36"/><rect x="612" y="484" width="22" height="7" rx="3.5" fill="#6e5230"/><g fill="#4a3520"><circle cx="602" cy="501.5" r="2"/><circle cx="642" cy="501.5" r="2"/><circle cx="606" cy="494.5" r="2"/><circle cx="638" cy="494.5" r="2"/></g></g>
+        <g><ellipse cx="806" cy="486" rx="10" ry="3.5" fill="rgba(30,18,6,.3)"/><path d="M797 485 q1 -22 9 -27 q8 5 9 27 Z" fill="#a06a3c"/><path d="M799 476 q7 4 14 0" stroke="#7a4a28" stroke-width="1.6" fill="none"/><rect x="802" y="454" width="8" height="8" fill="#8a5a34"/><path d="M800 460 q-6 4 -2 10 M812 460 q6 4 2 10" stroke="#8a5a34" stroke-width="2.6" fill="none"/></g>
+        <text x="672" y="380" text-anchor="middle" font-family="Cinzel,serif" font-size="8" letter-spacing="2" fill="#c9b489" opacity=".8">FABRICA</text>
+        <rect class="plate" x="610" y="506" width="124" height="26" rx="4"/>
+        <circle cx="618" cy="519" r="2" fill="#d4a017" opacity=".7"/><circle cx="726" cy="519" r="2" fill="#d4a017" opacity=".7"/>
+        <text class="plateTxt" x="672" y="524" text-anchor="middle" font-family="'Noto Sans KR',sans-serif" font-size="14" font-weight="700">공방</text>
+      </g>
+
+      <!-- 전경 비네트 -->
+      <rect width="1000" height="540" fill="none"/>
+      <path d="M0 0 h1000 v540 h-1000 Z M8 8 v524 h984 V8 Z" fill="rgba(8,5,2,.35)" fill-rule="evenodd"/>
+    </svg>
+    </div>
+  </section>
+
+  <!-- 로마 시내 -->
+  <section class="screen" id="screen-city">
+    <h2><span class="rn">SPQR</span>로마 시내</h2>
+    <p class="lede">해질녘의 거리. 상점과 콜로세움이 당신을 기다린다. 건물을 눌러 들어가라.</p>
+    <div id="cityWrap" style="border:2px solid var(--stone-hi);border-radius:4px;overflow:hidden;background:#0e0a06;box-shadow:0 0 0 1px #0a0704, inset 0 0 60px rgba(0,0,0,.5)">
+    <svg viewBox="0 0 1000 540" xmlns="http://www.w3.org/2000/svg" aria-label="로마 시내 지도">
+      <defs>
+        <linearGradient id="cSky" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#0e0a06"/><stop offset=".45" stop-color="#241709"/>
+          <stop offset=".8" stop-color="#5e3d1d"/><stop offset="1" stop-color="#8a5526"/>
+        </linearGradient>
+        <linearGradient id="cWall" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#6e5c44"/><stop offset="1" stop-color="#463620"/></linearGradient>
+        <linearGradient id="cWall2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7a6448"/><stop offset="1" stop-color="#504028"/></linearGradient>
+        <linearGradient id="cStone" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8a7857"/><stop offset=".6" stop-color="#6e5c40"/><stop offset="1" stop-color="#544629"/></linearGradient>
+        <linearGradient id="cRoad" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4c3e28"/><stop offset="1" stop-color="#6e5c40"/></linearGradient>
+        <radialGradient id="cGlow" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#ffd97a" stop-opacity=".26"/><stop offset="1" stop-color="#ffd97a" stop-opacity="0"/></radialGradient>
+        <radialGradient id="cFire" cx=".5" cy=".7" r=".7"><stop offset="0" stop-color="#ffd97a" stop-opacity=".55"/><stop offset="1" stop-color="#ff8a2a" stop-opacity="0"/></radialGradient>
+        <radialGradient id="cWin" cx=".5" cy=".5" r=".6"><stop offset="0" stop-color="#ffce7a"/><stop offset="1" stop-color="#b8742e"/></radialGradient>
+      </defs>
+
+      <!-- ═══ 하늘 ═══ -->
+      <rect width="1000" height="248" fill="url(#cSky)"/>
+      <g fill="#e8dcc0"><circle cx="110" cy="38" r="1.3" opacity=".5"/><circle cx="250" cy="70" r="1" opacity=".35"/><circle cx="420" cy="30" r="1.2" opacity=".45"/><circle cx="700" cy="52" r="1" opacity=".35"/><circle cx="880" cy="34" r="1.2" opacity=".4"/></g>
+      <ellipse cx="500" cy="212" rx="300" ry="140" fill="url(#cFire)" opacity=".5"/>
+      <g>
+        <path d="M96 78 q30 -13 66 -6 q36 -6 60 4 q-18 10 -60 8 q-44 5 -66 -6 Z" fill="#150e08"/>
+        <path d="M760 96 q26 -11 58 -5 q30 -5 50 4 q-16 9 -52 7 q-38 4 -56 -6 Z" fill="#150e08" opacity=".85"/>
+      </g>
+      <g stroke="#0f0a06" stroke-width="1.5" fill="none" stroke-linecap="round">
+        <path d="M320 64 l6 -4 l6 4"/><path d="M340 56 l5 -3 l5 3"/><path d="M672 72 l5 -3 l5 3"/>
+      </g>
+      <!-- 지평선 지면 -->
+      <rect x="0" y="218" width="1000" height="322" fill="#42351f"/>
+
+      <!-- ═══ 콜로세움 (도로의 끝) ═══ -->
+      <g class="bld" data-s="colosseum" tabindex="0" role="button" aria-label="콜로세움 — 챔피언과 대경기">
+        <title>콜로세움 — 챔피언과 대경기 초청</title>
+        <ellipse class="glow" cx="500" cy="182" rx="200" ry="120" fill="url(#cGlow)"/>
+        <path d="M348 250 L348 148 Q500 92 652 148 L652 250 Z" fill="url(#cStone)"/>
+        <path d="M348 148 Q500 92 652 148 L652 162 Q500 108 348 162 Z" fill="#9a8562"/>
+        <path d="M352 196 Q500 152 648 196" stroke="#463822" stroke-width="3.4" fill="none"/>
+        <path d="M350 222 Q500 182 650 222" stroke="#463822" stroke-width="2" fill="none" opacity=".55"/>
+        <!-- 석재 줄눈 (가로 코스) -->
+        <g stroke="#5c4c30" stroke-width=".8" opacity=".4">
+          <path d="M354 170 Q500 118 646 170" fill="none"/>
+          <path d="M352 183 Q500 135 648 183" fill="none"/>
+          <path d="M351 209 Q500 167 649 209" fill="none"/>
+          <path d="M350 236 Q500 198 650 236" fill="none"/>
+        </g>
+        <!-- 세로 줄눈 (성기게) -->
+        <g stroke="#5c4c30" stroke-width=".8" opacity=".3">
+          <line x1="404" y1="152" x2="400" y2="168"/><line x1="470" y1="136" x2="468" y2="152"/><line x1="540" y1="137" x2="542" y2="153"/><line x1="606" y1="155" x2="610" y2="171"/>
+        </g>
+        <!-- 상단 소창 -->
+        <g fill="#241a0c">
+          <rect x="380" y="150" width="11" height="16" rx="3"/><rect x="416" y="140" width="11" height="16" rx="3"/><rect x="454" y="133" width="11" height="16" rx="3"/><rect x="494" y="130" width="11" height="16" rx="3"/><rect x="534" y="133" width="11" height="16" rx="3"/><rect x="572" y="140" width="11" height="16" rx="3"/><rect x="608" y="150" width="11" height="16" rx="3"/>
+        </g>
+        <!-- 중단 아치 (석재 테두리) -->
+        <g>
+          <path d="M379 242 v-32 a14 14 0 0 1 28 0 v32 Z" fill="#9a8562"/>
+          <path d="M421 238 v-36 a15 15 0 0 1 30 0 v36 Z" fill="#9a8562"/>
+          <path d="M549 238 v-36 a15 15 0 0 1 30 0 v36 Z" fill="#9a8562"/>
+          <path d="M593 242 v-32 a14 14 0 0 1 28 0 v32 Z" fill="#9a8562"/>
+          <path d="M382 242 v-32 a11 11 0 0 1 22 0 v32 Z" fill="#1c1206"/>
+          <path d="M424 238 v-36 a12 12 0 0 1 24 0 v36 Z" fill="#1c1206"/>
+          <path d="M552 238 v-36 a12 12 0 0 1 24 0 v36 Z" fill="#1c1206"/>
+          <path d="M596 242 v-32 a11 11 0 0 1 22 0 v32 Z" fill="#1c1206"/>
+        </g>
+        <!-- 아치 속 항아리 장식 -->
+        <g fill="#463822"><ellipse cx="393" cy="228" rx="4.5" ry="6"/><rect x="390.5" y="220" width="5" height="4" fill="#463822"/><ellipse cx="564" cy="224" rx="4.5" ry="6"/><rect x="561.5" y="216" width="5" height="4" fill="#463822"/></g>
+        <!-- 입구 대아치 (도로가 이어져 들어감) -->
+        <path d="M462 250 v-56 a38 30 0 0 1 76 0 v56 Z" fill="#8a7857"/>
+        <g stroke="#6e5c40" stroke-width="1.2" opacity=".7">
+          <line x1="470" y1="212" x2="463" y2="200"/><line x1="482" y1="200" x2="472" y2="186"/><line x1="518" y1="200" x2="528" y2="186"/><line x1="530" y1="212" x2="537" y2="200"/>
+        </g>
+        <rect x="492" y="160" width="16" height="14" rx="2" fill="#9a8562"/>
+        <rect x="492" y="160" width="16" height="14" rx="2" fill="none" stroke="#6e5c40" stroke-width="1"/>
+        <path d="M468 250 v-52 a32 27 0 0 1 64 0 v52 Z" fill="#0f0a05"/>
+        <path d="M472 250 v-48 a28 24 0 0 1 56 0 v48 Z" fill="#221507"/>
+        <ellipse cx="500" cy="240" rx="22" ry="16" fill="url(#cFire)" opacity=".6"/>
+        <!-- 세로 현수막 -->
+        <g><rect x="404" y="168" width="13" height="58" fill="#7a2020"/><path d="M404 226 L410.5 235 L417 226 Z" fill="#7a2020"/><text x="410.5" text-anchor="middle" font-family="Cinzel,serif" font-size="8.5" fill="#d4a017"><tspan x="410.5" y="182">L</tspan><tspan x="410.5" y="194">V</tspan><tspan x="410.5" y="206">D</tspan><tspan x="410.5" y="218">I</tspan></text></g>
+        <g><rect x="583" y="168" width="13" height="58" fill="#7a2020"/><path d="M583 226 L589.5 235 L596 226 Z" fill="#7a2020"/><text x="589.5" text-anchor="middle" font-family="Cinzel,serif" font-size="8" fill="#d4a017"><tspan x="589.5" y="180">M</tspan><tspan x="589.5" y="190">A</tspan><tspan x="589.5" y="200">G</tspan><tspan x="589.5" y="210">N</tspan><tspan x="589.5" y="220">I</tspan></text></g>
+        <text x="500" y="118" text-anchor="middle" font-family="Cinzel,serif" font-size="10" letter-spacing="3" fill="#e8dcc0" opacity=".9">AMPHITHEATRVM</text>
+        <g stroke="#a8987a" stroke-width="1" opacity=".6"><line x1="432" y1="124" x2="480" y2="124"/><line x1="520" y1="124" x2="568" y2="124"/></g>
+        <circle cx="500" cy="124" r="1.6" fill="#d4a017" opacity=".7"/>
+        <g id="cityColoStar" style="display:none">
+          <rect x="448" y="126" width="104" height="20" rx="10" fill="#d4a017"/>
+          <text x="500" y="140" text-anchor="middle" font-family="'Noto Sans KR',sans-serif" font-size="11" font-weight="700" fill="#16110c">★ 초청장 도착</text>
+        </g>
+        <rect class="plate" x="442" y="256" width="116" height="24" rx="4"/>
+        <text class="plateTxt" x="500" y="273" text-anchor="middle" font-family="'Noto Sans KR',sans-serif" font-size="13" font-weight="700">콜로세움</text>
+        <g id="cityBadgeContracts" style="display:none"><circle cx="558" cy="252" r="11" fill="#a4161a"/><text x="558" y="256" text-anchor="middle" font-family="'Noto Sans KR',sans-serif" font-size="11" font-weight="700" fill="#fff">0</text></g>
+      </g>
+
+      <!-- ═══ 도로 (일점투시) ═══ -->
+      <polygon points="160,540 472,246 528,246 840,540" fill="url(#cRoad)"/>
+      <!-- 인도 -->
+      <polygon points="96,540 160,540 472,246 455,248" fill="#5c4c32"/>
+      <polygon points="904,540 840,540 528,246 545,248" fill="#5c4c32"/>
+      <!-- 포석 가로줄 (원근 간격) -->
+      <g stroke="#33291a" stroke-width="2" opacity=".55">
+        <line x1="202" y1="500" x2="798" y2="500"/><line x1="242" y1="462" x2="758" y2="462"/>
+        <line x1="277" y1="428" x2="723" y2="428"/><line x1="309" y1="398" x2="691" y2="398"/>
+        <line x1="336" y1="372" x2="664" y2="372"/><line x1="359" y1="350" x2="641" y2="350"/>
+        <line x1="378" y1="332" x2="622" y2="332"/><line x1="395" y1="316" x2="605" y2="316"/>
+        <line x1="409" y1="302" x2="591" y2="302"/><line x1="422" y1="290" x2="578" y2="290"/>
+        <line x1="432" y1="280" x2="568" y2="280"/><line x1="442" y1="271" x2="558" y2="271"/>
+        <line x1="450" y1="263" x2="550" y2="263"/><line x1="457" y1="256" x2="543" y2="256"/>
+      </g>
+      <!-- 세로 이음매 (소실점 수렴) -->
+      <g stroke="#33291a" stroke-width="1.6" opacity=".45">
+        <line x1="300" y1="540" x2="484" y2="246"/><line x1="500" y1="540" x2="500" y2="246"/><line x1="700" y1="540" x2="516" y2="246"/>
+      </g>
+      <!-- 수레바퀴 자국 -->
+      <g stroke="#2e2414" stroke-width="4" opacity=".5" fill="none">
+        <path d="M425 540 L493 246"/><path d="M575 540 L507 246"/>
+      </g>
+      <g stroke="#2e2414" stroke-width="2.6" opacity=".4" fill="none">
+        <path d="M452 540 L496 246"/><path d="M548 540 L504 246"/>
+      </g>
+      <!-- 물웅덩이 반사 -->
+      <ellipse cx="588" cy="503" rx="30" ry="6" fill="#e8a54a" opacity=".08"/>
+      <ellipse cx="352" cy="470" rx="22" ry="5" fill="#e8a54a" opacity=".06"/>
+
+      <!-- 건물 접지 그림자 -->
+      <g stroke="rgba(14,9,4,.4)" stroke-width="7" stroke-linecap="round" fill="none">
+        <line x1="54" y1="512" x2="298" y2="352"/>
+        <line x1="946" y1="512" x2="702" y2="352"/>
+      </g>
+      <g stroke="rgba(14,9,4,.3)" stroke-width="4" stroke-linecap="round" fill="none">
+        <line x1="314" y1="358" x2="434" y2="338"/>
+        <line x1="686" y1="358" x2="566" y2="338"/>
+      </g>
+
+      <!-- 도로 위 원경 그림자 (인적 없이 비움) -->
+      <g opacity=".35"><ellipse cx="490" cy="304" rx="8" ry="3" fill="#0e0906"/><ellipse cx="514" cy="312" rx="9" ry="3" fill="#0e0906"/></g>
+
+      <!-- ═══ 우측 원거리 — 타베르나 (장식) ═══ -->
+      <g>
+        <polygon points="688,246 564,262 564,340 688,362" fill="url(#cWall)"/>
+        <polygon points="694,240 560,258 560,264 694,250" fill="#6e3720"/>
+        <g stroke="#3a2c18" stroke-width=".8" opacity=".4"><line x1="688" y1="290" x2="564" y2="300"/><line x1="640" y1="252" x2="640" y2="352"/></g>
+        <rect x="596" y="296" width="22" height="26" fill="#241608"/><rect x="598" y="298" width="18" height="22" fill="url(#cWin)"/>
+        <g>
+          <polygon points="650,272 586,276.3 586,288.5 650,287" fill="#cbb98f" opacity=".92"/>
+          <polygon points="650,272 586,276.3 586,288.5 650,287" fill="none" stroke="#8a7454" stroke-width="1"/>
+          <text x="620" y="283.4" text-anchor="middle" font-family="Cinzel,serif" font-size="7.3" letter-spacing="1.1" fill="#463822" transform="rotate(-1.5 620 280)">TABERNA</text>
+        </g>
+        <g><ellipse cx="576" cy="318" rx="10" ry="8" fill="url(#cFire)"/><rect x="573" y="312" width="6" height="9" rx="1.6" fill="#241608"/><ellipse cx="576" cy="317" rx="1.8" ry="2.8" fill="#ffd97a"/></g>
+        <g stroke="#4a3520" stroke-width="1.6" opacity=".6"><line x1="606" y1="330" x2="606" y2="340"/><line x1="612" y1="330" x2="612" y2="340"/><line x1="606" y1="335" x2="612" y2="335"/></g>
+      </g>
+
+      <!-- ═══ ◆ 노예 상인 (좌측 원거리) ═══ -->
+      <g class="bld" data-s="market" tabindex="0" role="button" aria-label="노예 상인 — 검투사 매물">
+        <title>노예 상인 — 검투사 후보 매물</title>
+        <ellipse class="glow" cx="372" cy="304" rx="88" ry="72" fill="url(#cGlow)"/>
+        <polygon points="312,246 436,262 436,340 312,362" fill="url(#cWall2)"/>
+        <polygon points="306,240 440,258 440,264 306,250" fill="#6e3720"/>
+        <g stroke="#3a2c18" stroke-width=".8" opacity=".4"><line x1="312" y1="292" x2="436" y2="302"/><line x1="368" y1="252" x2="368" y2="354"/></g>
+        <!-- 차양 -->
+        <polygon points="316,296 432,308 426,322 322,312" fill="#8a6a3c"/>
+        <line x1="322" y1="312" x2="426" y2="322" stroke="#54401f" stroke-width="2"/>
+        <!-- 진열 개구 + 소품 (인물 없이) -->
+        <polygon points="320,316 430,326 430,346 320,352" fill="#1c1206"/>
+        <g>
+          <rect x="330" y="330" width="18" height="14" rx="1.5" fill="#5a4326"/><rect x="332" y="332" width="14" height="10" rx="1" fill="#3a2a16"/>
+          <rect x="356" y="326" width="16" height="16" rx="1.5" fill="#6e5636"/>
+          <g stroke="#8a7454" stroke-width="1.6" opacity=".8"><path d="M382 328 q4 8 0 16"/><path d="M388 330 q4 7 0 14"/><circle cx="382" cy="328" r="1.6" fill="#8a7454" stroke="none"/><circle cx="382" cy="344" r="1.6" fill="#8a7454" stroke="none"/></g>
+          <rect x="400" y="332" width="20" height="10" rx="1" fill="#3a2a16"/><g stroke="#5a4326" stroke-width="1"><line x1="403" y1="336" x2="417" y2="336"/><line x1="403" y1="339" x2="417" y2="339"/></g>
+        </g>
+        <g>
+          <polygon points="332,274 412,278.7 412,291.9 332,291" fill="#cbb98f"/>
+          <polygon points="332,274 412,278.7 412,291.9 332,291" fill="none" stroke="#8a7454" stroke-width="1.1"/>
+          <text x="370" y="286.4" text-anchor="middle" font-family="Cinzel,serif" font-size="8.2" letter-spacing="1.3" fill="#463822" transform="rotate(1.5 370 283)">MANCIPIA</text>
+        </g>
+        <g id="cityBadgeSlaves" style="display:none"><circle cx="438" cy="254" r="10" fill="#d4a017"/><text x="438" y="258" text-anchor="middle" font-family="'Noto Sans KR',sans-serif" font-size="10" font-weight="700" fill="#16110c">0</text></g>
+        <rect class="plate" x="326" y="368" width="94" height="22" rx="4"/>
+        <text class="plateTxt" x="373" y="384" text-anchor="middle" font-family="'Noto Sans KR',sans-serif" font-size="12" font-weight="700">노예 상인</text>
+      </g>
+
+      <!-- ═══ ◆ 무기점 (좌측 근거리 · 크게) ═══ -->
+      <g class="bld" data-s="wshop" tabindex="0" role="button" aria-label="무기점 — 검과 창">
+        <title>무기점 — 검·대검·단검·장창</title>
+        <ellipse class="glow" cx="170" cy="360" rx="150" ry="120" fill="url(#cGlow)"/>
+        <polygon points="46,204 302,240 302,352 46,518" fill="url(#cWall2)"/>
+        <polygon points="34,190 308,232 308,244 34,206" fill="#6e3720"/>
+        <g stroke="#54401f" stroke-width="1.4" opacity=".8"><line x1="62" y1="196" x2="62" y2="210"/><line x1="112" y1="203" x2="112" y2="216"/><line x1="162" y1="210" x2="162" y2="223"/><line x1="212" y1="217" x2="212" y2="230"/><line x1="262" y1="225" x2="262" y2="237"/></g>
+        <g stroke="#3a2c18" stroke-width="1" opacity=".35"><line x1="46" y1="280" x2="302" y2="278"/><line x1="130" y1="216" x2="130" y2="462"/><line x1="220" y1="229" x2="220" y2="404"/></g>
+        <!-- 차양 (줄무늬, 원근 수렴) -->
+        <polygon points="52,336 101,326 111,356 66,370" fill="#7a2a24"/>
+        <polygon points="101,326 150,316 156,342 111,356" fill="#a8443a"/>
+        <polygon points="150,316 199,307 202,327 156,342" fill="#7a2a24"/>
+        <polygon points="199,307 248,297 247,313 202,327" fill="#a8443a"/>
+        <polygon points="248,297 298,287 292,299 247,313" fill="#7a2a24"/>
+        <line x1="66" y1="370" x2="292" y2="299" stroke="#4a1a16" stroke-width="2.6"/>
+        <!-- 진열 개구 (무기 실루엣) -->
+        <polygon points="60,377 296,302 296,338 60,474" fill="#1c1206"/>
+        <g stroke-linecap="round">
+          <line x1="86" y1="394" x2="86" y2="460" stroke="#c8c8ce" stroke-width="4"/><line x1="78" y1="404" x2="94" y2="402" stroke="#8a8a90" stroke-width="3"/>
+          <line x1="150" y1="378" x2="150" y2="434" stroke="#c8c8ce" stroke-width="3.4"/><line x1="143" y1="387" x2="157" y2="385" stroke="#8a8a90" stroke-width="2.6"/>
+          <line x1="212" y1="360" x2="212" y2="416" stroke="#8a7448" stroke-width="2.8"/><g stroke="#c8c8ce" stroke-width="1.8"><line x1="212" y1="360" x2="207" y2="352"/><line x1="212" y1="360" x2="217" y2="352"/><line x1="212" y1="362" x2="212" y2="352"/></g>
+          <path d="M254 352 q9 2 12 11" stroke="#c8c8ce" stroke-width="3" fill="none"/>
+        </g>
+        <polygon points="60,474 296,338 296,346 60,488" fill="#5a4326"/>
+        <g transform="rotate(-20 130 468)"><rect x="112" y="466" width="30" height="4" rx="2" fill="#c8c8ce"/><rect x="106" y="463" width="8" height="9" rx="2" fill="#5a4326"/></g>
+        <!-- 걸이 간판 (검) -->
+        <g>
+          <line x1="302" y1="248" x2="332" y2="244" stroke="#3a2a16" stroke-width="4"/>
+          <line x1="330" y1="244" x2="330" y2="256" stroke="#8a7454" stroke-width="2"/>
+          <g transform="rotate(12 330 272)"><rect x="327" y="256" width="6" height="24" rx="2.4" fill="#c8c8ce"/><rect x="323" y="276" width="14" height="5" rx="2" fill="#5a4326"/><rect x="327" y="280" width="6" height="7" rx="2" fill="#6e5230"/></g>
+        </g>
+        <g><ellipse cx="70" cy="396" rx="18" ry="14" fill="url(#cFire)"/><rect x="68" y="396" width="4" height="18" fill="#3a2a16"/><g class="flame f2"><ellipse cx="70" cy="392" rx="4.4" ry="7" fill="#e8862a"/><ellipse cx="70" cy="390" rx="2" ry="3.4" fill="#ffd97a"/></g></g>
+        <g>
+          <polygon points="102,244 198,248.5 198,268.6 102,272" fill="#d9c9a3"/>
+          <polygon points="102,244 198,248.5 198,268.6 102,272" fill="none" stroke="#8a7454" stroke-width="1.6"/>
+          <polygon points="106,247.2 194,251.4 194,266 106,268.8" fill="none" stroke="#b8a683" stroke-width=".8"/>
+          <text x="148" y="262" text-anchor="middle" font-family="Cinzel,serif" font-size="12.5" letter-spacing="3.5" fill="#463822" transform="rotate(0.3 148 258)">ARMA</text>
+          <circle cx="108" cy="249.5" r="1.4" fill="#8a7454"/><circle cx="192" cy="253" r="1.3" fill="#8a7454"/><circle cx="108" cy="266.6" r="1.4" fill="#8a7454"/><circle cx="192" cy="264.4" r="1.3" fill="#8a7454"/>
+        </g>
+        <g id="cityBadgeWeapons" style="display:none"><circle cx="306" cy="238" r="11" fill="#d4a017"/><text x="306" y="242" text-anchor="middle" font-family="'Noto Sans KR',sans-serif" font-size="11" font-weight="700" fill="#16110c">0</text></g>
+        <rect class="plate" x="60" y="492" width="116" height="26" rx="4"/>
+        <circle cx="68" cy="505" r="2" fill="#d4a017" opacity=".7"/><circle cx="168" cy="505" r="2" fill="#d4a017" opacity=".7"/>
+        <text class="plateTxt" x="118" y="510" text-anchor="middle" font-family="'Noto Sans KR',sans-serif" font-size="14" font-weight="700">무기점</text>
+      </g>
+
+      <!-- ═══ ◆ 방어구점 (우측 근거리 · 크게) ═══ -->
+      <g class="bld" data-s="ashop" tabindex="0" role="button" aria-label="방어구점 — 방패">
+        <title>방어구점 — 파르마와 스쿠툼</title>
+        <ellipse class="glow" cx="830" cy="360" rx="150" ry="120" fill="url(#cGlow)"/>
+        <polygon points="954,204 698,240 698,352 954,518" fill="url(#cWall)"/>
+        <polygon points="966,190 692,232 692,244 966,206" fill="#6e3720"/>
+        <g stroke="#54401f" stroke-width="1.4" opacity=".8"><line x1="938" y1="196" x2="938" y2="210"/><line x1="888" y1="203" x2="888" y2="216"/><line x1="838" y1="210" x2="838" y2="223"/><line x1="788" y1="217" x2="788" y2="230"/><line x1="738" y1="225" x2="738" y2="237"/></g>
+        <g stroke="#3a2c18" stroke-width="1" opacity=".35"><line x1="954" y1="280" x2="698" y2="278"/><line x1="870" y1="216" x2="870" y2="462"/><line x1="780" y1="229" x2="780" y2="404"/></g>
+        <!-- 차양 (청록 줄무늬) -->
+        <polygon points="948,336 899,326 889,356 934,370" fill="#2e4654"/>
+        <polygon points="899,326 850,316 844,342 889,356" fill="#3e5a6a"/>
+        <polygon points="850,316 801,307 798,327 844,342" fill="#2e4654"/>
+        <polygon points="801,307 752,297 753,313 798,327" fill="#3e5a6a"/>
+        <polygon points="752,297 702,287 708,299 753,313" fill="#2e4654"/>
+        <line x1="934" y1="370" x2="708" y2="299" stroke="#1c2a32" stroke-width="2.6"/>
+        <!-- 진열: 기대 세운 방패 (원근 축소) -->
+        <g transform="rotate(-7 892 448)"><rect x="874" y="396" width="34" height="86" rx="14" fill="#7a2a24"/><rect x="879" y="401" width="24" height="76" rx="11" fill="none" stroke="#5a1e18" stroke-width="2"/><circle cx="891" cy="439" r="6" fill="#d4a017"/></g>
+        <g transform="rotate(6 806 420)"><circle cx="806" cy="410" r="27" fill="#3e5a6a"/><circle cx="806" cy="410" r="19" fill="none" stroke="#1c2a32" stroke-width="2.4"/><circle cx="806" cy="410" r="6" fill="#b8a04a"/></g>
+        <g transform="rotate(-5 742 380)"><rect x="730" y="348" width="24" height="58" rx="10" fill="#54401f"/><rect x="733" y="351" width="18" height="52" rx="8" fill="none" stroke="#3a2a12" stroke-width="1.6"/><circle cx="742" cy="377" r="4.4" fill="#8a8a90"/></g>
+        <!-- 걸이 간판 (원형 방패) -->
+        <g>
+          <line x1="698" y1="248" x2="668" y2="244" stroke="#3a2a16" stroke-width="4"/>
+          <line x1="670" y1="244" x2="670" y2="256" stroke="#8a7454" stroke-width="2"/>
+          <circle cx="670" cy="270" r="14" fill="#7a2a24" stroke="#3a1a14" stroke-width="2"/><path d="M670 256 a14 14 0 0 1 0 28 Z" fill="#8a3a2e"/><circle cx="670" cy="270" r="4" fill="#d4a017"/>
+        </g>
+        <g><ellipse cx="930" cy="396" rx="18" ry="14" fill="url(#cFire)"/><rect x="928" y="396" width="4" height="18" fill="#3a2a16"/><g class="flame"><ellipse cx="930" cy="392" rx="4.4" ry="7" fill="#e8862a"/><ellipse cx="930" cy="390" rx="2" ry="3.4" fill="#ffd97a"/></g></g>
+        <g>
+          <polygon points="898,244 802,248.5 802,268.6 898,272" fill="#d9c9a3"/>
+          <polygon points="898,244 802,248.5 802,268.6 898,272" fill="none" stroke="#8a7454" stroke-width="1.6"/>
+          <polygon points="894,247.2 806,251.4 806,266 894,268.8" fill="none" stroke="#b8a683" stroke-width=".8"/>
+          <text x="852" y="262" text-anchor="middle" font-family="Cinzel,serif" font-size="12.5" letter-spacing="3.5" fill="#463822" transform="rotate(-0.3 852 258)">SCVTA</text>
+          <circle cx="892" cy="249.5" r="1.4" fill="#8a7454"/><circle cx="808" cy="253" r="1.3" fill="#8a7454"/><circle cx="892" cy="266.6" r="1.4" fill="#8a7454"/><circle cx="808" cy="264.4" r="1.3" fill="#8a7454"/>
+        </g>
+        <g id="cityBadgeShields" style="display:none"><circle cx="694" cy="238" r="11" fill="#d4a017"/><text x="694" y="242" text-anchor="middle" font-family="'Noto Sans KR',sans-serif" font-size="11" font-weight="700" fill="#16110c">0</text></g>
+        <rect class="plate" x="824" y="492" width="116" height="26" rx="4"/>
+        <circle cx="832" cy="505" r="2" fill="#d4a017" opacity=".7"/><circle cx="932" cy="505" r="2" fill="#d4a017" opacity=".7"/>
+        <text class="plateTxt" x="882" y="510" text-anchor="middle" font-family="'Noto Sans KR',sans-serif" font-size="14" font-weight="700">방어구점</text>
+      </g>
+
+      <!-- ═══ 거리 소품 (원근 축소) ═══ -->
+      <!-- 가로등 기둥 (인도 위, 멀수록 작게) -->
+      <g>
+        <line x1="189" y1="465" x2="189" y2="403" stroke="#3a2a16" stroke-width="5"/><ellipse cx="189" cy="400" rx="14" ry="11" fill="url(#cFire)"/><g class="flame"><ellipse cx="189" cy="399" rx="4" ry="6.4" fill="#e8862a"/><ellipse cx="189" cy="397" rx="1.8" ry="3" fill="#ffd97a"/></g>
+        <line x1="279" y1="391" x2="279" y2="349" stroke="#3a2a16" stroke-width="3.6"/><ellipse cx="279" cy="347" rx="9" ry="7" fill="url(#cFire)"/><g class="flame f2"><ellipse cx="279" cy="346" rx="2.8" ry="4.4" fill="#e8862a"/></g>
+        <line x1="358" y1="325" x2="358" y2="297" stroke="#3a2a16" stroke-width="2.6"/><circle cx="358" cy="294" r="2.6" fill="#ffb03a"/>
+        <line x1="811" y1="465" x2="811" y2="403" stroke="#3a2a16" stroke-width="5"/><ellipse cx="811" cy="400" rx="14" ry="11" fill="url(#cFire)"/><g class="flame f2"><ellipse cx="811" cy="399" rx="4" ry="6.4" fill="#e8862a"/><ellipse cx="811" cy="397" rx="1.8" ry="3" fill="#ffd97a"/></g>
+        <line x1="721" y1="391" x2="721" y2="349" stroke="#3a2a16" stroke-width="3.6"/><ellipse cx="721" cy="347" rx="9" ry="7" fill="url(#cFire)"/><g class="flame"><ellipse cx="721" cy="346" rx="2.8" ry="4.4" fill="#e8862a"/></g>
+        <line x1="642" y1="325" x2="642" y2="297" stroke="#3a2a16" stroke-width="2.6"/><circle cx="642" cy="294" r="2.6" fill="#ffb03a"/>
+      </g>
+      <!-- 거리 가로지르는 밧줄 + 등불 -->
+      <path d="M302 254 Q500 284 698 254" stroke="#8a7454" stroke-width="1.6" fill="none"/>
+      <g><line x1="500" y1="269" x2="500" y2="276" stroke="#3a2a16" stroke-width="1.6"/><ellipse cx="500" cy="282" rx="10" ry="9" fill="url(#cFire)"/><rect x="496" y="277" width="8" height="10" rx="2" fill="#241608"/><ellipse cx="500" cy="282" rx="2" ry="3" fill="#ffd97a"/></g>
+      <!-- 도로변 그림자 (인적 없이) -->
+      <ellipse cx="398" cy="460" rx="10" ry="3" fill="#0e0906" opacity=".3"/>
+
+      <!-- ═══ ◂ 돌아가기 (도로 중앙 하단) ═══ -->
+      <g class="bld" data-s="map" tabindex="0" role="button" aria-label="양성소로 돌아가기">
+        <title>양성소로 돌아간다</title>
+        <ellipse class="glow" cx="500" cy="500" rx="100" ry="40" fill="url(#cGlow)"/>
+        <rect class="plate" x="442" y="494" width="116" height="28" rx="5"/>
+        <circle cx="452" cy="508" r="2" fill="#d4a017" opacity=".7"/><circle cx="548" cy="508" r="2" fill="#d4a017" opacity=".7"/>
+        <text class="plateTxt" x="500" y="512.5" text-anchor="middle" font-family="'Noto Sans KR',sans-serif" font-size="14" font-weight="700">◂ 돌아가기</text>
+      </g>
+
+      <!-- 비네트 -->
+      <path d="M0 0 h1000 v540 h-1000 Z M8 8 v524 h984 V8 Z" fill="rgba(8,5,2,.35)" fill-rule="evenodd"/>
+    </svg>
+    </div>
+  </section>
+
+  <!-- 양성소 -->
+  <section class="screen" id="screen-ludus">
+    <h2><span class="rn">I</span>집무실 — 양성소 현황</h2>
+    <p class="lede">당신은 라니스타. 검투사를 사들이고, 단련시키고, 모래 위로 내보낸다. 살아 돌아오면 돈과 명성이, 죽으면 손실이 남는다.</p>
+    <div id="ludusAlert"></div>
+    <div class="grid2">
+      <div class="panel"><h3>재정</h3><div id="financeBox"></div></div>
+      <div class="panel"><h3>지난 주 소식</h3><div class="weeklog" id="weekLog"><p class="dim">아직 소식이 없다. 첫 주를 시작하라.</p></div></div>
+    </div>
+    <div class="panel"><h3>검투사 개요</h3><div id="ludusRoster" class="grid2"></div></div>
+  </section>
+
+  <!-- 검투사 -->
+  <section class="screen" id="screen-roster">
+    <h2><span class="rn">II</span>훈련장 — 검투사 관리</h2>
+    <p class="lede">훈련 종목과 강도를 정하라. 혹독한 훈련은 빠른 성장을 주지만, 부상은 모래 위에서만 나는 것이 아니다.</p>
+    <div class="grid2" style="grid-template-columns:340px 1fr" id="rosterLayout">
+      <div id="rosterList" style="display:flex;flex-direction:column;gap:8px"></div>
+      <div id="rosterDetail" class="panel"><p class="dim">왼쪽에서 검투사를 선택하라.</p></div>
+    </div>
+  </section>
+
+  <!-- 노예 시장 -->
+  <section class="screen" id="screen-market">
+    <h2><span class="rn">III</span>노예 시장</h2>
+    <p class="lede">매주 새 얼굴이 들어온다. 겉으로 보이는 것이 전부는 아니다 — 잠재력은 피로 증명된다. (무기와 방패는 시내의 무기점·방어구점에서)</p>
+    <div id="marketList" class="grid2"></div>
+  </section>
+
+  <!-- 무기점 -->
+  <section class="screen" id="screen-wshop">
+    <h2><span class="rn">✠</span>무기점 — 아르마멘타리움</h2>
+    <p class="lede">벽마다 강철이 걸려 있다. 좋은 검은 비싸고, 싼 검은 이유가 있다. 구입한 장비는 공방의 무기고로 들어간다.</p>
+    <div id="wshopList" class="grid2"></div>
+  </section>
+
+  <!-- 방어구점 -->
+  <section class="screen" id="screen-ashop">
+    <h2><span class="rn">✠</span>방어구점 — 스쿠타리아</h2>
+    <p class="lede">"검은 이기게 하고, 방패는 살아 돌아오게 하지." 주인장의 입버릇이다. 구입한 방패는 공방의 무기고로 들어간다.</p>
+    <div id="ashopList" class="grid2"></div>
+  </section>
+
+  <!-- 콜로세움 -->
+  <section class="screen" id="screen-colosseum">
+    <h2><span class="rn">★</span>콜로세움 — 플라비우스 원형경기장</h2>
+    <p class="lede">8만 관중. 제국의 심장. 이 모래 위에 서는 것이 모든 라니스타의 꿈이다.</p>
+    <div id="coloBox"></div>
+    <h3 style="margin:18px 0 6px;color:var(--gold)">경기 계약</h3>
+    <p class="lede" style="margin-top:0">주최자(에디토르)들의 제안. 출전료는 확정, 승리 상금은 이긴 자의 것. 정찰로 상대를 미리 파악할 수 있다.</p>
+    <div id="contractList" style="display:flex;flex-direction:column;gap:10px"></div>
+  </section>
+
+  <!-- 시설 -->
+  <section class="screen" id="screen-facility">
+    <h2><span class="rn">V</span>공방 — 시설 · 인력</h2>
+    <p class="lede">좋은 훈련장은 좋은 검투사를, 좋은 의무실은 살아있는 검투사를 만든다.</p>
+    <div id="facilityList" class="grid2"></div>
+    <div class="panel"><h3>무기고 <span class="dim small" style="font-weight:400">— 장착은 [훈련장] 화면에서. 판매가는 절반.</span></h3><div id="armoryList" class="grid2"></div></div>
+    <div class="panel"><h3>고용 인력</h3><div id="staffList" class="grid2"></div></div>
+  </section>
+
+
+  <!-- 아레나 -->
+  <section class="screen" id="screen-arena">
+    <h2><span class="rn">✦</span><span id="arenaTitle">경기</span></h2>
+    <div id="arenaWrap"><canvas id="arenaCv" width="960" height="440"></canvas></div>
+    <div class="arena-ctl">
+      <span class="dim small">배속</span>
+      <button class="sm spd on" data-spd="1">1×</button>
+      <button class="sm spd" data-spd="2">2×</button>
+      <button class="sm spd" data-spd="4">4×</button>
+      <button class="sm" id="btnSkip">관전 건너뛰기 ≫</button>
+      <button class="sm" id="btnSound">🔇 효과음</button>
+      <button class="primary" id="btnFightDone" style="margin-left:auto;display:none">결과 확인 ▸</button>
+    </div>
+    <div id="combatLog"></div>
+  </section>
+</main>
+
+<div id="paperBack">
+ <div id="paperPhase">· 한 주가 흐른다 ·</div>
+ <div id="paper">
+  <div class="mast">ACTA DIVRNA</div>
+  <div class="dateline"><span>로마 관보 — 원로원과 시민에게</span><span id="paperDate"></span></div>
+  <div id="paperCols"></div>
+  <div class="stamp">ACTVM · SPQR</div>
+  <button id="paperClose">다음 주로 ▸</button>
+ </div>
+</div>
+<div id="introBack">
+ <div id="introBox">
+  <div id="introHead"><span class="t">LVDVS · ANNO LXXX</span><button class="sm" id="introSkip">건너뛰기 ≫</button></div>
+  <div id="introBody">
+   <div id="introPortrait">
+    <div class="pt" style="width:100%;border:none;border-radius:0;aspect-ratio:auto"><img src="portraits/varro.jpeg" alt="바로 — 늙은 독토르의 초상" style="width:100%;height:100%;object-fit:cover;display:block"></div>
+    <div id="introName"><div class="n">바로</div><div class="r">수석 교관 · 해방노예 (전직 검투사)</div></div>
+   </div>
+   <div id="introTextWrap">
+    <div id="introText"></div>
+    <div id="introActs"><div id="introStepDots"></div></div>
+   </div>
+  </div>
+ </div>
+</div>
+<div id="modalBack"><div id="modal"><h3 id="mTitle"></h3><div class="body" id="mBody"></div><div class="acts" id="mActs"></div></div></div>
+
+<script>
+'use strict';
+/* ═══════════ 데이터 ═══════════ */
+const NAMES=['타우루스','페록스','바르바투스','아퀼라','우르수스','루푸스','막시무스','카르포포루스','베루스','프리스쿠스','테트라이테스','아스투르','간니쿠스','오이노마우스','바토','브레누스','발레리우스','칼리두스','사기타','풀케르','아트락스','도미투스','문두스','크레스켄스','플람마','콜룸부스','트리톤','네메시스','스쿠르라','히포리투스','아마조니우스','펠릭스','인빅투스','글라우쿠스','메텔루스','다레이오스'];
+const ORIGINS=[
+ {n:'트라키아 전쟁 포로',b:{wil:2,str:1}},{n:'갈리아 부족 전사',b:{str:2,sta:1}},
+ {n:'게르마니아 포로',b:{str:2,wil:1}},{n:'빚에 팔린 자유민',b:{skl:1}},
+ {n:'몰락한 군단병 출신',b:{skl:2,wil:1}},{n:'누미디아 사냥꾼',b:{spd:2,skl:1}},
+ {n:'그리스 검술 노예',b:{skl:2,spd:1}},{n:'자원 입소자(아욱토라투스)',b:{wil:2,skl:1}}];
+const CLASSES={
+ murmillo:{n:'무르밀로',desc:'대형 방패 스쿠툼과 글라디우스. 단단한 정면 승부.',shield:'large',weapon:'gladius',color:'#8b6f47',bias:{str:2,sta:1,spd:-1}},
+ thraex:{n:'트라키아식',desc:'굽은 검 시카와 소형 방패. 방패 위를 노리는 변칙.',shield:'small',weapon:'sica',color:'#7a4a8a',bias:{skl:2,spd:1,sta:-1}},
+ retiarius:{n:'레티아리우스',desc:'그물과 삼지창. 갑옷 없이 거리와 속도로 싸운다.',shield:'none',weapon:'trident',color:'#3e6b7a',bias:{spd:2,skl:1,str:-1}},
+ secutor:{n:'세쿠토르',desc:'민무늬 투구의 추격자. 레티아리우스의 숙적.',shield:'large',weapon:'gladius',color:'#5e6468',bias:{sta:2,str:1,skl:-1}}};
+const COUNTER={thraex:'murmillo',murmillo:'retiarius',retiarius:'secutor',secutor:'thraex'};
+const WEAPONS={gladius:{n:'글라디우스',dmg:15,reach:64,wind:.30},sica:{n:'시카',dmg:13,reach:58,wind:.26,crit:.05},trident:{n:'삼지창',dmg:16,reach:92,wind:.38}};
+/* ═══════════ 초상화 ═══════════
+   나중에 JPG로 교체하려면: PORTRAIT_IMG.enabled=true 로 바꾸고
+   base 경로에 p0.jpg ~ p7.jpg, hermes.jpg 파일을 두면 된다.
+   (프레임은 3:4 세로, object-fit:cover라 4:3 이미지도 잘려 들어간다) */
+const PORTRAIT_IMG={enabled:true,base:'portraits/',ext:'.jpeg'};
+function faceSvg(o){
+ const sk=o.skin,hc=o.hair,bc=o.bc||hc;
+ const jaw=o.jaw==='sq'
+  ?'M32 56 Q32 28 60 28 Q88 28 88 56 Q88 82 80 92 Q70 100 60 100 Q50 100 40 92 Q32 82 32 56 Z'
+  :'M35 58 Q35 30 60 30 Q85 30 85 58 Q85 80 77 91 Q68 99 60 99 Q52 99 43 91 Q35 80 35 58 Z';
+ let hair='';
+ if(o.hs==='short')hair=`<path d="M31 56 Q29 24 60 22 Q91 24 89 56 Q89 38 60 32 Q31 38 31 56 Z" fill="${hc}"/>`;
+ else if(o.hs==='curl')hair=`<g fill="${hc}"><circle cx="38" cy="34" r="8"/><circle cx="48" cy="28" r="8"/><circle cx="60" cy="26" r="8"/><circle cx="72" cy="28" r="8"/><circle cx="82" cy="34" r="8"/><circle cx="33" cy="45" r="6"/><circle cx="87" cy="45" r="6"/></g>`;
+ else if(o.hs==='long')hair=`<path d="M31 56 Q29 24 60 22 Q91 24 89 56 Q89 38 60 32 Q31 38 31 56 Z" fill="${hc}"/><path d="M30 48 Q26 84 34 105 L45 100 Q37 78 37 52 Z" fill="${hc}"/><path d="M90 48 Q94 84 86 105 L75 100 Q83 78 83 52 Z" fill="${hc}"/>`;
+ else if(o.hs==='knot')hair=`<path d="M31 56 Q29 24 60 22 Q91 24 89 56 Q89 38 60 32 Q31 38 31 56 Z" fill="${hc}"/><circle cx="87" cy="27" r="9" fill="${hc}"/><circle cx="87" cy="27" r="3.6" fill="rgba(0,0,0,.28)"/>`;
+ else if(o.hs==='band')hair=`<path d="M31 54 Q29 26 60 24 Q91 26 89 54 Q89 36 60 31 Q31 36 31 54 Z" fill="${hc}"/><rect x="33" y="41" width="54" height="7" rx="3" fill="#5a4326"/>`;
+ const bald=o.hs==='bald'?`<ellipse cx="51" cy="36" rx="10" ry="5" fill="#fff" opacity=".1"/>`:'';
+ let beard='';
+ if(o.beard==='full')beard=`<path d="M40 74 Q60 112 80 74 Q80 96 60 103 Q40 96 40 74 Z" fill="${bc}"/>`;
+ else if(o.beard==='stub')beard=`<path d="M42 76 Q60 100 78 76 Q76 90 60 95 Q44 90 42 76 Z" fill="${bc}" opacity=".35"/>`;
+ else if(o.beard==='must')beard=`<path d="M47 80 Q60 89 73 80 Q66 77 60 78.5 Q54 77 47 80 Z" fill="${bc}"/>`;
+ const mouth=o.beard==='full'?`<path d="M52 87 Q60 91 68 87" stroke="#2a1c10" stroke-width="2" fill="none" stroke-linecap="round"/>`
+  :`<path d="M50 87 Q60 ${o.smile?93:85} 70 87" stroke="#6e4630" stroke-width="2.5" fill="none" stroke-linecap="round"/>`;
+ let scar='';
+ if(o.scar==='brow')scar=`<line x1="69" y1="43" x2="79" y2="61" stroke="#8a5a44" stroke-width="2.6" stroke-linecap="round" opacity=".85"/>`;
+ if(o.scar==='cheek')scar=`<line x1="40" y1="66" x2="48" y2="83" stroke="#8a5a44" stroke-width="2.4" stroke-linecap="round" opacity=".85"/>`;
+ const nose=o.bent?`<path d="M60 58 Q55 66 61 71 Q56 76 55 78 Q61 82 66 79" stroke="#a06a46" stroke-width="2.4" fill="none" stroke-linecap="round"/>`
+  :`<path d="M60 58 Q58 70 55 77 Q60 81 66 78" stroke="#a06a46" stroke-width="2.4" fill="none" stroke-linecap="round"/>`;
+ const by=o.fierce?3:0;
+ return `<svg viewBox="0 0 120 160" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <rect width="120" height="160" fill="#1b1409"/>
+  <ellipse cx="60" cy="52" rx="52" ry="46" fill="#d4a017" opacity=".05"/>
+  <path d="M14 160 Q22 112 50 104 L70 104 Q98 112 106 160 Z" fill="${o.garm}"/>
+  <line x1="34" y1="128" x2="86" y2="128" stroke="rgba(0,0,0,.25)" stroke-width="3"/>
+  <rect x="50" y="84" width="20" height="24" fill="${sk}"/>
+  <path d="${jaw}" fill="${sk}"/>
+  ${hair}${bald}
+  <path d="M31 58 Q25 54 29 66 Q31 72 35 70 Z" fill="${sk}"/><path d="M89 58 Q95 54 91 66 Q89 72 85 70 Z" fill="${sk}"/>
+  <path d="M42 ${56+by} Q49 ${51+by} 55 55" stroke="${bc}" stroke-width="3" fill="none" stroke-linecap="round"/>
+  <path d="M65 55 Q71 ${51+by} 78 ${56+by}" stroke="${bc}" stroke-width="3" fill="none" stroke-linecap="round"/>
+  <ellipse cx="49" cy="62" rx="4" ry="3" fill="#241608"/><circle cx="49.8" cy="61.2" r="1" fill="#fff" opacity=".8"/>
+  <ellipse cx="71" cy="62" rx="4" ry="3" fill="#241608"/><circle cx="71.8" cy="61.2" r="1" fill="#fff" opacity=".8"/>
+  ${nose}${beard}${mouth}${scar}${o.ring?'<circle cx="90" cy="71" r="3" fill="#d4a017"/>':''}
+ </svg>`;
+}
+const PORTRAITS=[
+ {skin:'#c99b72',hair:'#2a1c10',hs:'short',beard:'none',scar:'none',jaw:'r',garm:'#6e4a2a'},
+ {skin:'#b8875e',hair:'#1a1410',hs:'bald',beard:'full',scar:'brow',jaw:'sq',garm:'#4a3018',fierce:1},
+ {skin:'#c99b72',hair:'#4a3018',hs:'curl',beard:'stub',scar:'none',jaw:'r',garm:'#5e6468',smile:1},
+ {skin:'#d8ab7e',hair:'#b89a55',hs:'long',beard:'must',scar:'none',jaw:'r',garm:'#3e6b7a'},
+ {skin:'#8a6244',hair:'#1a1410',hs:'short',beard:'none',scar:'none',jaw:'r',garm:'#7a4a8a',ring:1,smile:1},
+ {skin:'#d8ab7e',hair:'#8a4a2e',hs:'curl',beard:'full',scar:'cheek',jaw:'sq',garm:'#6e4a2a',fierce:1},
+ {skin:'#c99b72',hair:'#7a5a30',hs:'knot',beard:'stub',scar:'none',jaw:'sq',garm:'#4a3018',bent:1,fierce:1},
+ {skin:'#b8875e',hair:'#2a1c10',hs:'band',beard:'must',scar:'cheek',jaw:'r',garm:'#8a2a2a'}];
+const HERMES_FACE={skin:'#d8ab7e',hair:'#c9a53a',hs:'short',beard:'none',scar:'none',jaw:'sq',garm:'#d4a017',smile:1};
+function portraitHtml(pid,szCls){
+ if(PORTRAIT_IMG.enabled){
+  const f=pid==='hermes'?'hermes':'p'+((+pid||0)%PORTRAITS.length);
+  return `<span class="pt ${szCls||''}"><img src="${PORTRAIT_IMG.base}${f}${PORTRAIT_IMG.ext}" alt=""></span>`;
+ }
+ const o=pid==='hermes'?HERMES_FACE:PORTRAITS[(+pid||0)%PORTRAITS.length];
+ return `<span class="pt ${szCls||''}">${faceSvg(o)}</span>`;
+}
+
+const WCATS={sword:{n:'검',vis:'gladius'},great:{n:'대검',vis:'spatha'},dagger:{n:'단검',vis:'pugio'},spear:{n:'장창',vis:'trident'},shield:{n:'방패',vis:null}};
+const TALENTS=['sword','great','dagger','spear'];
+const GRADES=[{n:'조악한',c:'#9a8f7a'},{n:'',c:'#e8dcc0'},{n:'정교한',c:'#8fbc6a'},{n:'명품',c:'#d4a017'},{n:'전설 —',c:'#b06ad0'}];
+const CATBASE={
+ sword:{noun:'글라디우스',dmg:4,crit:0.012,price:42},
+ great:{noun:'스파타',dmg:6.5,reach:7,wind:0.05,price:58},
+ dagger:{noun:'푸기오',dmg:2.5,crit:0.035,wind:-0.05,price:36},
+ spear:{noun:'하스타',dmg:4,reach:12,price:52},
+ shield:{noun:'스쿠툼',block:0.06,price:46}};
+const GRADE_MULT=[0.5,1,1.7,2.5];
+const ORIGINWORDS=['히스파니아','노리쿰','갈리아','캄파니아','에트루리아','폼페이'];
+const LEGENDARIES=[
+ {name:'스키피오의 글라디우스',cat:'sword',dmg:11,crit:0.06,desc:'자마의 벌판에서 카르타고를 꺾었다는 검.'},
+ {name:'마르스의 분노',cat:'great',dmg:16,reach:9,wind:0.06,desc:'신전에서 사라진 봉헌검. 피를 마실수록 가벼워진다.'},
+ {name:'네메시스의 송곳니',cat:'dagger',dmg:6,crit:0.13,wind:-0.09,desc:'복수의 여신에게 바쳐진 단검. 급소를 스스로 찾는다.'},
+ {name:'넵투누스의 삼지창',cat:'spear',dmg:11,reach:18,desc:'폭풍의 바다에서 건져 올렸다는 창. 소금기가 가시지 않는다.'},
+ {name:'아이기스의 조각',cat:'shield',block:0.20,desc:'신화의 방패 조각을 박아 넣었다. 칼날이 미끄러진다.'}];
+const TRAITS=[
+ {id:'showman',n:'쇼맨십',d:'관중 열기가 빠르게 오른다'},{id:'brutal',n:'잔인함',d:'치명타 확률 증가'},
+ {id:'coward',n:'소심함',d:'궁지에 몰리면 위축된다'},{id:'iron',n:'강철 몸',d:'훈련·경기 부상 확률 감소'},
+ {id:'loyal',n:'충성심',d:'탈출을 꾀하지 않는다'},{id:'hothead',n:'다혈질',d:'공격적이지만 허점이 생긴다'},
+ {id:'veteran',n:'백전노장',d:'궁지에서도 침착하다'},{id:'crowd_fav',n:'관중의 연인',d:'패배해도 자비 판정에 유리하다'}];
+const STATKEYS=[['str','근력'],['skl','기술'],['spd','속도'],['sta','체력'],['wil','투지']];
+const TIERS=[
+ {n:'시골 장터 경기',minRep:0,purse:[40,80],opp:[0.75,0.95],repW:2,fameW:1},
+ {n:'지방 도시 축제',minRep:12,purse:[90,160],opp:[0.9,1.1],repW:3,fameW:2},
+ {n:'속주 대경기',minRep:30,purse:[180,320],opp:[1.05,1.25],repW:5,fameW:3},
+ {n:'콜로세움 흥행전',minRep:55,purse:[400,650],opp:[1.2,1.45],repW:8,fameW:5}];
+const FACS={
+ train:{n:'훈련장',d:'훈련 성장 속도',lv:['모래 마당','목검 훈련장','전문 팔루스 훈련장'],cost:[0,220,520],eff:[1,1.25,1.5]},
+ med:{n:'의무실',d:'회복 속도·부상 위험 감소',lv:['짚단 침상','의무실','그리스 의사의 진료소'],cost:[0,180,450],eff:[1,1.4,1.9]},
+ barrack:{n:'숙소',d:'수용 인원',lv:['좁은 감방(4명)','증축 숙소(6명)','회랑 숙소(8명)'],cost:[0,260,600],eff:[4,6,8]},
+ kitchen:{n:'주방',d:'주간 컨디션 회복',lv:['보리죽','보리와 콩 스튜','전속 요리사'],cost:[0,150,380],eff:[10,16,24]}};
+const STAFF={
+ doctor:{n:'의사',d:'부상 회복 +1주 단축, 훈련 부상 위험 절반',wage:25},
+ trainer:{n:'수석 교관(독토르)',d:'훈련 성장 확률 +30%',wage:35}};
+
+/* ═══════════ 상태 ═══════════ */
+let S=null;
+function newState(){return{week:1,money:500,rep:5,gladiators:[],market:[],contracts:[],armory:[],wmarket:[],newsBuf:[],newsSeen:[],
+ champ:{name:'헤르메스',epithet:'콜로세움의 총아',wins:24,defeated:false,heir:null},
+ fac:{train:0,med:0,barrack:0,kitchen:0},staff:{doctor:false,trainer:false},
+ log:[],chron:[],nextId:1,colosseumDone:false,usedNames:[]};}
+
+/* ═══════════ 유틸 ═══════════ */
+const R=(a,b)=>a+Math.random()*(b-a);
+const RI=(a,b)=>Math.floor(R(a,b+1));
+const pick=a=>a[RI(0,a.length-1)];
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const fmt=n=>Math.round(n).toLocaleString('ko-KR');
+const $=id=>document.getElementById(id);
+function statCls(v){return v>=14?'hi':v>=8?'md':'lo';}
+
+/* ═══════════ 검투사 생성 ═══════════ */
+/* 출신별 어울리는 초상 후보 (지리·외형 대략 일치).
+   p0 젊은신참 · p1 대머리흑수염 · p2 곱슬인기남 · p3 금발갈리아
+   p4 누미디아(금귀걸이) · p5 적갈색수염 · p6 수에비상투 · p7 머리띠·콧수염 */
+const ORIGIN_PIDS={
+ '트라키아 전쟁 포로':[1,7,6],
+ '갈리아 부족 전사':[3,5,6],
+ '게르마니아 포로':[6,3,1],
+ '빚에 팔린 자유민':[0,2,7],
+ '몰락한 군단병 출신':[0,7,2],
+ '누미디아 사냥꾼':[4],
+ '그리스 검술 노예':[2,0,7],
+ '자원 입소자(아욱토라투스)':[0,2,7,5]};
+function pidForOrigin(originName){
+ const pool=ORIGIN_PIDS[originName];
+ return pool&&pool.length?pick(pool):RI(0,7);
+}
+function freshName(){const pool=NAMES.filter(n=>!S.usedNames.includes(n));const n=pool.length?pick(pool):pick(NAMES)+' '+RI(2,9)+'세';S.usedNames.push(n);return n;}
+function genGladiator(quality){ // quality 0.7~1.4
+ const clsKey=pick(Object.keys(CLASSES)),cls=CLASSES[clsKey],org=pick(ORIGINS);
+ const g={id:S.nextId++,name:freshName(),cls:clsKey,origin:org.n,age:RI(18,31),
+  str:0,skl:0,spd:0,sta:0,wil:0,pot:0,fame:0,wins:0,losses:0,kills:0,
+  cond:100,injury:0,train:'balanced',intensity:1,traits:[],hist:[],
+  talent:pick(TALENTS),talentKnown:false,aptTrain:0,weapon:null,shield:null,pid:pidForOrigin(org.n)};
+ for(const[k]of STATKEYS){let v=RI(4,9)+Math.round(R(0,4)*quality);v+=(cls.bias[k]||0)+(org.b[k]||0);g[k]=clamp(v,3,17);}
+ g.pot=clamp(Math.round((g.str+g.skl+g.spd+g.sta+g.wil)*R(1.15,1.45)*quality/1),40,95); // 능력치 총합 상한
+ const tn=Math.random()<.55?1:Math.random()<.5?2:0;
+ const tpool=[...TRAITS];
+ for(let i=0;i<tn;i++){const t=tpool.splice(RI(0,tpool.length-1),1)[0];g.traits.push(t.id);}
+ return g;
+}
+function statSum(g){return g.str+g.skl+g.spd+g.sta+g.wil;}
+function gValue(g){return Math.round(statSum(g)*4.5+g.fame*8+g.wins*10)+ (g.age<24?30:0);}
+function maxHp(g){return 100+g.sta*7+g.str*2;}
+function hasTrait(g,t){return g.traits.includes(t);}
+function traitName(id){const t=TRAITS.find(t=>t.id===id);return t?t.n:id;}
+function powerScore(g){return statSum(g)+g.fame*0.5;}
+
+/* ═══════════ 장비 ═══════════ */
+function genItem(cat,grade){
+ const b=CATBASE[cat],m=GRADE_MULT[grade];
+ return{id:'i'+(S.nextId++),cat,grade,
+  name:(GRADES[grade].n?GRADES[grade].n+' ':'')+pick(ORIGINWORDS)+' '+b.noun,
+  dmg:+(((b.dmg||0)*m).toFixed(1)),reach:Math.round((b.reach||0)*(grade>=2?1.25:1)),
+  wind:b.wind||0,crit:+(((b.crit||0)*m).toFixed(3)),block:+(((b.block||0)*m).toFixed(3)),
+  price:Math.round(b.price*[0.5,1,2.3,4.5][grade]*R(0.9,1.15))};
+}
+function itemStatTxt(it){
+ const p=[];
+ if(it.dmg)p.push('피해 +'+it.dmg);
+ if(it.reach)p.push('간격 +'+it.reach);
+ if(it.crit)p.push('치명 +'+Math.round(it.crit*100)+'%');
+ if(it.block)p.push('방어 +'+Math.round(it.block*100)+'%');
+ if(it.wind)p.push(it.wind<0?'빠른 채비':'묵직한 채비');
+ return p.join(' · ')||'—';
+}
+function itemNameHtml(it){return `<span style="color:${GRADES[it.grade].c};font-weight:700">${it.name}</span>`;}
+function effWeapon(g){
+ const base=WEAPONS[CLASSES[g.cls].weapon];
+ const it=g.weapon;
+ if(!it)return{n:base.n,dmg:base.dmg,reach:base.reach,wind:base.wind,crit:base.crit||0,vis:CLASSES[g.cls].weapon,matched:null};
+ const matched=g.talent===it.cat,k=matched?1:0.55;
+ return{n:it.name,dmg:base.dmg+(it.dmg||0)*k,reach:base.reach+Math.round((it.reach||0)*k),
+  wind:Math.max(0.16,base.wind+(it.wind||0)+(matched?0:0.05)),
+  crit:(base.crit||0)+(it.crit||0)*k+(matched?0.02:0),vis:WCATS[it.cat].vis,matched};
+}
+function equipItem(g,slot,itemId){
+ if(g[slot]){S.armory.push(g[slot]);g[slot]=null;}
+ if(itemId){const i=S.armory.findIndex(x=>x.id===itemId);if(i>=0)g[slot]=S.armory.splice(i,1)[0];}
+ renderAll();
+}
+function ownedLegendNames(){
+ return new Set([...S.armory,...S.gladiators.flatMap(g=>[g.weapon,g.shield].filter(Boolean)),
+  ...S.contracts.filter(c=>c.reward).map(c=>c.reward)].map(i=>i.name));
+}
+/* ═══════════ 시장·계약 생성 ═══════════ */
+function refreshMarket(){
+ S.market=[];const n=RI(3,4);
+ for(let i=0;i<n;i++){const q=R(0.7,1.0+S.rep/120);const g=genGladiator(q);g.price=Math.round(gValue(g)*R(0.9,1.2));S.market.push(g);}
+ S.wmarket=[];
+ const roll=()=>{const r=Math.random();let gr=r<0.30?0:r<0.72?1:r<0.92?2:3;if(gr===3&&S.rep<25)gr=2;return gr;};
+ const wn=RI(2,3),sn=RI(1,2);
+ for(let i=0;i<wn;i++)S.wmarket.push(genItem(pick(TALENTS),roll()));
+ for(let i=0;i<sn;i++)S.wmarket.push(genItem('shield',roll()));
+}
+function genOpponent(mult,tier=0){
+ const base=S.gladiators.length?S.gladiators.reduce((a,g)=>a+statSum(g),0)/S.gladiators.length:45;
+ const target=base*mult;
+ let g=genGladiator(1);let tries=0;
+ while(Math.abs(statSum(g)-target)>7&&tries++<25)g=genGladiator(clamp(target/50,0.6,1.6));
+ g.fame=RI(0,Math.round(S.rep/3));g.wins=RI(0,5);g.losses=RI(0,3);
+ if(tier>=1&&Math.random()<0.2+tier*0.2){
+  const cat=pick(TALENTS);
+  g.weapon=genItem(cat,RI(0,Math.min(3,tier)));g.talent=cat;g.talentKnown=true;
+ }
+ g.id=-RI(1000,99999);return g;
+}
+function refreshContracts(){
+ S.contracts=[];
+ const avail=TIERS.map((t,i)=>i).filter(i=>S.rep>=TIERS[i].minRep&&(i<3||S.colosseumDone));
+ const n=RI(2,3);
+ for(let k=0;k<n;k++){
+  const ti=pick(avail),t=TIERS[ti];
+  const opp=genOpponent(R(t.opp[0],t.opp[1]),ti);
+  S.contracts.push({id:'c'+RI(1e4,1e5),tier:ti,tName:t.n,fee:Math.round(R(t.purse[0],t.purse[1])*0.35),
+   purse:Math.round(R(t.purse[0],t.purse[1])),opp,scouted:false,scoutCost:Math.round(15+ti*15)});
+ }
+ // 특별 흥행전 — 전설 장비를 상품으로 건 경기
+ if(S.rep>=15&&Math.random()<0.3){
+  const pool=LEGENDARIES.filter(L=>!ownedLegendNames().has(L.name));
+  if(pool.length){
+   const L=pick(pool);
+   const ti=clamp(Math.floor(S.rep/18),1,2),t=TIERS[ti];
+   const opp=genOpponent(R(t.opp[1],t.opp[1]+0.15),ti+1);
+   S.contracts.push({id:'c'+RI(1e4,1e5),tier:ti,tName:'⚔ 특별 흥행전 — '+t.n,
+    fee:Math.round(t.purse[0]*0.3),purse:Math.round(t.purse[0]*0.7),opp,scouted:false,
+    scoutCost:25+ti*15,special:true,reward:Object.assign({},L,{id:'i'+(S.nextId++),grade:4})});
+  }
+ }
+ // 콜로세움 초청
+ if(S.rep>=55&&!S.colosseumDone&&!S.contracts.some(c=>c.tier===3)){
+  const t=TIERS[3],opp=genOpponent(R(1.3,1.5),3);
+  if(!S.champ.defeated){opp.name=S.champ.name;opp.cls='secutor';opp.pid='hermes';opp.fame=45;opp.wins=S.champ.wins;opp.losses=0;
+   opp.weapon=genItem('sword',3);opp.talent='sword';opp.talentKnown=true;}
+  S.contracts.push({id:'c'+RI(1e4,1e5),tier:3,tName:'★ 콜로세움 대경기 — 챔피언전',fee:200,purse:800,opp,scouted:false,scoutCost:60,grand:true});
+ }
+}
+
+/* ═══════════ 모달 ═══════════ */
+let deferModals=false;const modalQueue=[];
+function modal(title,body,acts){
+ if(deferModals){modalQueue.push([title,body,acts]);return;}
+ $('mTitle').textContent=title;$('mBody').textContent=body;
+ const box=$('mActs');box.innerHTML='';
+ (acts||[{t:'확인'}]).forEach(a=>{
+  const b=document.createElement('button');b.textContent=a.t;if(a.primary)b.className='primary';
+  b.onclick=()=>{$('modalBack').classList.remove('on');a.fn&&a.fn();};box.appendChild(b);});
+ $('modalBack').classList.add('on');
+}
+
+/* ═══════════ 내비게이션 ═══════════ */
+let curScreen='map';
+function go(s){
+ if(s==='contracts')s='colosseum'; // 경기 계약은 콜로세움에 통합됨
+ curScreen=s;
+ document.querySelectorAll('.screen').forEach(e=>e.classList.remove('on'));
+ $('screen-'+s).classList.add('on');
+ const CITY_SUB={market:1,wshop:1,ashop:1,colosseum:1};
+ const bb=$('backToMap');
+ bb.style.display=(s==='map'||s==='city'||s==='arena')?'none':'block';
+ const btn=bb.querySelector('button');
+ if(CITY_SUB[s]){btn.textContent='◂ 도시로';btn.dataset.target='city';}
+ else{btn.textContent='◂ 양성소 전경';btn.dataset.target='map';}
+ renderAll();
+ window.scrollTo(0,0);
+}
+document.querySelectorAll('.bld').forEach(b=>{
+ const enter=()=>{if(!arena||arena.over)go(b.dataset.s);};
+ b.addEventListener('click',enter);
+ b.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();enter();}});
+});
+$('backToMap').querySelector('button').onclick=e=>go(e.target.dataset.target||'map');
+function setBadge(id,n){const el=$(id);if(!el)return;el.style.display=n?'':'none';el.querySelector('text').textContent=n;}
+function renderMap(){
+ const t=$('mapWeekTxt');if(t)t.textContent=`제 ${S.week}주 · 명성 ${S.rep} · 검투사 ${S.gladiators.length}명`;
+ setBadge('mapBadgeMarket',S.market.length+S.wmarket.length);
+ setBadge('mapBadgeInjured',S.gladiators.filter(g=>g.injury>0).length);
+}
+function renderCity(){
+ setBadge('cityBadgeSlaves',S.market.length);
+ setBadge('cityBadgeWeapons',S.wmarket.filter(i=>i.cat!=='shield').length);
+ setBadge('cityBadgeShields',S.wmarket.filter(i=>i.cat==='shield').length);
+ setBadge('cityBadgeContracts',S.contracts.length);
+ const star=$('cityColoStar');
+ if(star)star.style.display=S.contracts.some(c=>c.grand)?'':'none';
+}
+function shopItemCard(it){
+ const d=document.createElement('div');d.className='gcard';
+ const poor=S.money<it.price;
+ d.innerHTML=`<div class="spread"><span style="color:${GRADES[it.grade].c};font-weight:700;font-size:15px">${it.name}</span><span class="small dim">${WCATS[it.cat].n}</span></div>
+  <div class="small dim">${itemStatTxt(it)}</div>
+  <hr><div class="spread"><span class="gold" style="font-weight:700">${fmt(it.price)} 데나리우스</span>
+  <button class="primary sm" ${poor?'disabled':''}>${poor?'자금 부족':'구매'}</button></div>`;
+ d.querySelector('button').onclick=e=>{e.stopPropagation();
+  S.money-=it.price;S.armory.push(it);S.wmarket=S.wmarket.filter(x=>x.id!==it.id);
+  S.chron.push(`${S.week}주차 — ${it.name} 구입 (${fmt(it.price)}D).`);renderAll();};
+ return d;
+}
+function renderWshop(){
+ const box=$('wshopList');box.innerHTML='';
+ const items=S.wmarket.filter(i=>i.cat!=='shield');
+ if(!items.length)box.innerHTML='<p class="dim">이번 주 무기 매물이 없다. 다음 주에 새 물건이 들어온다.</p>';
+ items.forEach(it=>box.appendChild(shopItemCard(it)));
+}
+function renderAshop(){
+ const box=$('ashopList');box.innerHTML='';
+ const items=S.wmarket.filter(i=>i.cat==='shield');
+ if(!items.length)box.innerHTML='<p class="dim">이번 주 방패 매물이 없다. 다음 주에 새 물건이 들어온다.</p>';
+ items.forEach(it=>box.appendChild(shopItemCard(it)));
+}
+function renderColosseum(){
+ const box=$('coloBox');
+ const champName=S.champ.defeated?(S.champ.heir||'—'):S.champ.name;
+ const champLine=S.champ.defeated
+  ?`<div class="small grn">전 챔피언 헤르메스는 무너졌다. 지금 로마가 외치는 이름은 <b>${S.champ.heir}</b> — 당신의 검투사였던 자다.</div>`
+  :`<div class="small dim">${S.champ.epithet} · 통산 <b class="gold">${S.champ.wins}승</b> 무패. 시인 마르티알리스가 노래한 사내.</div>`;
+ const grand=S.contracts.find(c=>c.grand);
+ let status='';
+ if(S.colosseumDone){
+  status=`<div class="notice">👑 당신의 루두스는 이미 이 모래를 제패했다. 로마에서 그 이름을 모르는 자가 없다.</div>`;
+ }else if(grand){
+  status=`<div class="notice">★ 초청장이 도착했다 — <b>${grand.tName}</b><br><span class="small dim">출전료 ${fmt(grand.fee)}D · 승리 상금 ${fmt(grand.purse)}D · 상대: ${grand.opp.name}</span></div>
+   <button class="primary" id="btnGrandGo">대경기 출전 준비 ▸</button>`;
+ }else{
+  const pct=clamp(Math.round(S.rep/55*100),0,100);
+  status=`<div class="small dim" style="margin-bottom:6px">대경기 초청 조건: 양성소 명성 <b class="gold">55</b> — 현재 ${S.rep}</div>
+   <div class="bar cond" style="height:8px"><i style="width:${pct}%"></i></div>
+   <p class="small dim" style="margin-top:8px">명성을 쌓아라. 지방의 모래가 콜로세움으로 가는 길이다.</p>`;
+ }
+ box.innerHTML=`<div class="panel"><h3>현 챔피언</h3>
+   <div style="display:flex;gap:14px;align-items:flex-start">${portraitHtml(S.champ.defeated?(S.champ.heirPid??0):'hermes','pt-l')}
+    <div style="flex:1;min-width:0"><div class="gname" style="font-size:18px">${champName}</div>${champLine}</div></div></div>
+  <div class="panel"><h3>대경기</h3>${status}</div>`;
+ const b=$('btnGrandGo');if(b&&grand)b.onclick=()=>openFightPrep(grand);
+ renderContracts();
+}
+
+/* ═══════════ 렌더링 ═══════════ */
+function renderHeader(){
+ $('hWeek').textContent=S.week;
+ const m=$('hMoney');m.textContent=fmt(S.money);m.classList.toggle('neg',S.money<0);
+ $('hRep').textContent=S.rep;
+ $('hCount').textContent=S.gladiators.length+'/'+FACS.barrack.eff[S.fac.barrack];
+}
+function statGridHtml(g,hidePot){
+ let h='<div class="statgrid">';
+ for(const[k,lbl]of STATKEYS)h+=`<div class="stat"><div class="lbl">${lbl}</div><div class="num ${statCls(g[k])}">${g[k]}</div></div>`;
+ return h+'</div>';
+}
+function condBars(g){
+ return `<div class="small dim" style="margin-top:4px">컨디션 ${Math.round(g.cond)}%</div><div class="bar cond"><i style="width:${g.cond}%"></i></div>`;
+}
+function tagsHtml(g){
+ let h='';
+ if(g.fame>=15)h+=`<span class="tag star">★ 명성 ${g.fame}</span>`;else if(g.fame>0)h+=`<span class="tag">명성 ${g.fame}</span>`;
+ if(g.injury>0)h+=`<span class="tag hurt">부상 ${g.injury}주</span>`;
+ g.traits.forEach(t=>h+=`<span class="tag">${traitName(t)}</span>`);
+ return h;
+}
+function gCardHtml(g,extra){
+ return `<div style="display:flex;gap:12px;align-items:flex-start">${portraitHtml(g.pid,'pt-m')}
+ <div style="flex:1;min-width:0"><div class="spread"><span class="gname">${g.name}</span><span class="small dim">${g.age}세 · ${g.wins}승 ${g.losses}패</span></div>
+ <div class="gclass">${CLASSES[g.cls].n} · ${g.origin}</div>${statGridHtml(g)}${condBars(g)}<div style="margin-top:6px">${tagsHtml(g)}</div>${extra||''}</div></div>`;
+}
+function renderLudus(){
+ const upkeep=weeklyUpkeep();
+ $('financeBox').innerHTML=`<table>
+  <tr><td>보유 자금</td><td style="text-align:right" class="${S.money<0?'red':'gold'}">${fmt(S.money)} 데나리우스</td></tr>
+  <tr><td>주간 유지비 (식비·급여)</td><td style="text-align:right" class="red">−${fmt(upkeep)}</td></tr>
+  <tr><td>명성</td><td style="text-align:right">${S.rep} / 100</td></tr>
+  <tr><td class="dim small">명성 55 이상 → 콜로세움 대경기 초청</td><td></td></tr></table>`;
+ $('ludusAlert').innerHTML = S.money<0?'<div class="notice" style="border-color:var(--blood)">⚠ 자금이 바닥났다. 검투사를 팔거나 경기에서 이기지 못하면 양성소는 채권자의 손에 넘어간다. (자금 −200 이하 시 파산)</div>'
+  : (S.rep>=55&&!S.colosseumDone?'<div class="notice">★ 콜로세움에서 초청장이 왔다! 경기 계약 탭을 확인하라.</div>':'');
+ const box=$('ludusRoster');box.innerHTML='';
+ if(!S.gladiators.length)box.innerHTML='<p class="dim">검투사가 없다. 노예 시장으로 가라.</p>';
+ S.gladiators.forEach(g=>{const d=document.createElement('div');d.className='gcard';d.innerHTML=gCardHtml(g);d.onclick=()=>{selGlad=g.id;go('roster');};box.appendChild(d);});
+ const wl=$('weekLog');wl.innerHTML=S.log.length?S.log.map(l=>`<p>${l}</p>`).join(''):'<p class="dim">아직 소식이 없다.</p>';
+}
+let selGlad=null;
+function trainAnimHtml(g){
+ const G='<rect width="220" height="90" fill="#17110b"/><rect y="76" width="220" height="14" fill="#3a2c19"/>';
+ const legs=(x,a)=>`<line x1="${x-4}" y1="74" x2="${x-7+(a||0)}" y2="58" stroke="#c99b72" stroke-width="4" stroke-linecap="round"/><line x1="${x+4}" y1="74" x2="${x+7-(a||0)}" y2="58" stroke="#c99b72" stroke-width="4" stroke-linecap="round"/>`;
+ const body=(x,c)=>`<rect x="${x-8}" y="36" width="16" height="24" rx="4" fill="${c||'#8b6f47'}"/><circle cx="${x}" cy="30" r="6" fill="#c99b72"/>`;
+ let inner='',cap='';
+ const t=g.injury>0?'hurt':g.train;
+ if(t==='hurt'){
+  cap=`요양 중 — ${g.injury}주 남음`;
+  inner=`<rect x="66" y="62" width="70" height="10" rx="3" fill="#4a3524"/>
+   <rect x="72" y="54" width="52" height="12" rx="6" fill="#8b6f47"/><circle cx="134" cy="58" r="6" fill="#c99b72"/>
+   <rect x="88" y="52" width="14" height="5" fill="#e2d4b2"/>
+   <g class="amZz"><text x="150" y="46" font-size="12" fill="#a8987a">z</text></g><g class="amZz2"><text x="158" y="40" font-size="10" fill="#a8987a">z</text></g>`;
+ }else if(t==='str'){
+  cap='근력 단련 — 바위 들어올리기';
+  inner=legs(95,2)+body(95)+`<g class="amLift"><circle cx="95" cy="20" r="10" fill="#6e6055"/><circle cx="92" cy="17" r="2.4" fill="#5a4e44"/>
+   <line x1="88" y1="40" x2="88" y2="26" stroke="#c99b72" stroke-width="4" stroke-linecap="round"/><line x1="102" y1="40" x2="102" y2="26" stroke="#c99b72" stroke-width="4" stroke-linecap="round"/></g>`;
+ }else if(t==='skl'||t==='balanced'){
+  cap=t==='skl'?'기술 연마 — 팔루스 베기':'균형 훈련 — 기본기 반복';
+  inner=`<rect x="128" y="38" width="8" height="38" rx="3" fill="#5a4326"/><line x1="128" y1="48" x2="136" y2="50" stroke="#3a2a18" stroke-width="2"/>`
+   +legs(92,3)+body(92)+`<g class="amChop"><line x1="98" y1="42" x2="112" y2="44" stroke="#c99b72" stroke-width="4" stroke-linecap="round"/><line x1="112" y1="44" x2="127" y2="41" stroke="#c8c8ce" stroke-width="3" stroke-linecap="round"/></g>`;
+ }else if(t==='spd'){
+  cap='민첩 훈련 — 마당 왕복 달리기';
+  inner=`<g class="amDash">`+`<line x1="58" y1="74" x2="50" y2="60" stroke="#c99b72" stroke-width="4" stroke-linecap="round"/><line x1="66" y1="74" x2="74" y2="62" stroke="#c99b72" stroke-width="4" stroke-linecap="round"/>`
+   +`<rect x="54" y="36" width="16" height="24" rx="4" fill="#8b6f47" transform="rotate(8 62 48)"/><circle cx="66" cy="31" r="6" fill="#c99b72"/>
+   <line x1="46" y1="46" x2="58" y2="42" stroke="#a8987a" stroke-width="2" opacity=".5"/><line x1="42" y1="54" x2="54" y2="52" stroke="#a8987a" stroke-width="2" opacity=".35"/></g>`;
+ }else if(t==='sta'){
+  cap='지구력 훈련 — 통나무 지고 걷기';
+  inner=`<g class="amBob">`+legs(95,4)+`<rect x="60" y="28" width="70" height="9" rx="4" fill="#5a4326"/>`+body(95)+`
+   <line x1="86" y1="40" x2="80" y2="32" stroke="#c99b72" stroke-width="4" stroke-linecap="round"/><line x1="104" y1="40" x2="110" y2="32" stroke="#c99b72" stroke-width="4" stroke-linecap="round"/></g>`;
+ }else if(t==='wil'){
+  cap='정신 수련 — 화로 앞의 침묵';
+  inner=`<rect x="126" y="60" width="24" height="12" rx="2" fill="#3a2a18"/><g class="flame"><ellipse cx="138" cy="54" rx="8" ry="11" fill="#e8862a"/><ellipse cx="138" cy="51" rx="4" ry="6" fill="#ffd97a"/></g>
+   <line x1="84" y1="74" x2="92" y2="62" stroke="#c99b72" stroke-width="4" stroke-linecap="round"/><line x1="100" y1="74" x2="92" y2="62" stroke="#c99b72" stroke-width="4" stroke-linecap="round"/>
+   <g class="amBreathe"><rect x="84" y="38" width="16" height="24" rx="4" fill="#8b6f47"/><circle cx="92" cy="32" r="6" fill="#c99b72"/></g>`;
+ }else if(t==='apt'){
+  cap=`무기 적성 훈련 — 제 무기를 찾는 중 (${g.aptTrain||0}/3)`;
+  inner=`<rect x="126" y="34" width="60" height="6" rx="2" fill="#5a4326"/><line x1="132" y1="40" x2="132" y2="76" stroke="#5a4326" stroke-width="4"/><line x1="180" y1="40" x2="180" y2="76" stroke="#5a4326" stroke-width="4"/>
+   <line x1="140" y1="40" x2="140" y2="62" stroke="#c8c8ce" stroke-width="3"/><line x1="154" y1="40" x2="154" y2="70" stroke="#c8c8ce" stroke-width="3.6"/><line x1="168" y1="40" x2="168" y2="66" stroke="#8a7448" stroke-width="3"/>
+   `+legs(92,2)+body(92)+`<g class="amSwap"><line x1="98" y1="42" x2="114" y2="44" stroke="#c99b72" stroke-width="4" stroke-linecap="round"/><line x1="114" y1="44" x2="126" y2="42" stroke="#c8c8ce" stroke-width="3" stroke-linecap="round"/></g>`;
+ }else{ // rest
+  cap='휴식 — 그늘에서 몸을 추스른다';
+  inner=`<rect x="120" y="52" width="34" height="24" rx="3" fill="#4a3524"/>
+   <line x1="86" y1="74" x2="94" y2="64" stroke="#c99b72" stroke-width="4" stroke-linecap="round"/><line x1="100" y1="74" x2="94" y2="64" stroke="#c99b72" stroke-width="4" stroke-linecap="round"/>
+   <rect x="86" y="42" width="16" height="24" rx="4" fill="#8b6f47" transform="rotate(-6 94 54)"/><circle cx="92" cy="36" r="6" fill="#c99b72"/>
+   <g class="amZz"><text x="106" y="34" font-size="12" fill="#a8987a">z</text></g><g class="amZz2"><text x="114" y="28" font-size="10" fill="#a8987a">z</text></g>`;
+ }
+ return `<div class="tAnim"><svg viewBox="0 0 220 90" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">${G}${inner}</svg><div class="tCap">${cap}</div></div>`;
+}
+function renderRoster(){
+ const list=$('rosterList');list.innerHTML='';
+ S.gladiators.forEach(g=>{
+  const d=document.createElement('div');d.className='gcard'+(selGlad===g.id?' sel':'');
+  d.innerHTML=`<div style="display:flex;gap:10px;align-items:center">${portraitHtml(g.pid,'pt-s')}<div style="flex:1;min-width:0">
+   <div class="spread"><span class="gname">${g.name}${g.weapon?' <span class="small" style="color:'+GRADES[g.weapon.grade].c+'">⚔</span>':''}</span><span class="small dim">${CLASSES[g.cls].n}</span></div>
+   <div class="small dim">${g.wins}승 ${g.losses}패 · 능력 합 ${statSum(g)}/${g.pot}</div>${g.injury?`<span class="tag hurt">부상 ${g.injury}주</span>`:''}</div></div>`;
+  d.onclick=()=>{selGlad=g.id;renderRoster();};list.appendChild(d);});
+ if(!S.gladiators.length)list.innerHTML='<p class="dim">검투사가 없다.</p>';
+ const g=S.gladiators.find(x=>x.id===selGlad);
+ const det=$('rosterDetail');
+ if(!g){det.innerHTML='<p class="dim">왼쪽에서 검투사를 선택하라.</p>';return;}
+ det.innerHTML=gCardHtml(g)+`<hr>
+  <div class="grid2">
+   <div><div class="small dim" style="margin-bottom:4px">훈련 종목</div>
+    <select id="trSel">${[['str','근력 단련'],['skl','기술 연마'],['spd','민첩 훈련'],['sta','지구력 훈련'],['wil','정신 수련'],['apt','무기 적성 훈련'],['balanced','균형 훈련'],['rest','휴식']].map(([v,n])=>`<option value="${v}" ${g.train===v?'selected':''}>${n}</option>`).join('')}</select></div>
+   <div><div class="small dim" style="margin-bottom:4px">강도${(g.train==='apt'||g.train==='rest')?' <span class="dim">(이 훈련엔 무관)</span>':''}</div>
+    <select id="inSel" ${(g.train==='apt'||g.train==='rest')?'disabled':''}>${[['0','가벼움'],['1','보통'],['2','혹독함 (부상 위험)']].map(([v,n])=>`<option value="${v}" ${''+g.intensity===v?'selected':''}>${n}</option>`).join('')}</select></div>
+  </div>
+  ${g.train==='apt'?'<p class="small dim" style="margin-top:6px">무기 적성 훈련은 강도와 무관하다 — 3주간 여러 무기를 다뤄 숨은 재능을 찾는 것이 목적이며, 부상 위험이 없다.</p>':''}
+  ${trainAnimHtml(g)}
+  <p class="small dim" style="margin-top:8px">잠재력: 능력 합 ${statSum(g)} / <span class="gold">${g.pot}</span> — 한계에 가까울수록 성장이 느리다. ${g.age>=28?'나이가 들어 성장이 더디다.':''}</p>
+  <hr><h3 style="font-size:14px;font-weight:700;color:var(--gold);margin-bottom:8px">장비 <span class="dim small" style="font-weight:400">— 죽으면 장비도 함께 잃는다</span></h3>
+  <div class="small" style="margin-bottom:8px">${g.talentKnown?`재능: <b class="gold">${WCATS[g.talent].n}</b> — 재능에 맞는 무기를 쥐면 온전한 성능을 낸다`:`재능: <span class="dim">미지 — '무기 적성 훈련'으로 해금 (${g.aptTrain||0}/3)</span>`}</div>
+  <div class="grid2">
+   <div><div class="small dim" style="margin-bottom:4px">무기</div>
+    <select id="eqW"><option value="">기본 — ${WEAPONS[CLASSES[g.cls].weapon].n}</option>${(g.weapon?[g.weapon]:[]).concat(S.armory.filter(i=>i.cat!=='shield')).map(i=>`<option value="${i.id}" ${g.weapon&&g.weapon.id===i.id?'selected':''}>[${WCATS[i.cat].n}] ${i.name}</option>`).join('')}</select></div>
+   <div><div class="small dim" style="margin-bottom:4px">방패</div>
+    <select id="eqS"><option value="">${CLASSES[g.cls].shield==='none'?'없음 (그물 사용)':'기본 '+(CLASSES[g.cls].shield==='large'?'스쿠툼':'파르마')}</option>${(g.shield?[g.shield]:[]).concat(S.armory.filter(i=>i.cat==='shield')).map(i=>`<option value="${i.id}" ${g.shield&&g.shield.id===i.id?'selected':''}>${i.name}</option>`).join('')}</select></div>
+  </div>
+  ${g.weapon?`<div class="small" style="margin-top:6px">${itemNameHtml(g.weapon)} <span class="dim">· ${itemStatTxt(g.weapon)}</span>${g.weapon.desc?`<div class="small dim" style="font-style:italic">${g.weapon.desc}</div>`:''}</div>`:''}
+  ${g.shield?`<div class="small" style="margin-top:4px">${itemNameHtml(g.shield)} <span class="dim">· ${itemStatTxt(g.shield)}</span>${g.shield.desc?`<div class="small dim" style="font-style:italic">${g.shield.desc}</div>`:''}</div>`:''}
+  ${g.weapon&&g.talentKnown?(g.talent===g.weapon.cat?'<div class="small grn" style="margin-top:4px">⚔ 재능 일치 — 무기가 손에 착 붙는다</div>':'<div class="small red" style="margin-top:4px">재능 불일치 — 무기 보정이 절반 가까이 깎인다</div>'):(g.weapon?'<div class="small dim" style="margin-top:4px">이 무기가 맞는지는… 모래 위에서 드러난다.</div>':'')}
+  ${CLASSES[g.cls].shield==='none'&&g.shield?'<div class="small dim" style="margin-top:4px">방패를 들면 그물을 쓰지 못한다.</div>':''}
+  <hr><div class="spread"><span class="small dim">몸값 ${fmt(gValue(g))} · 매각가 ${fmt(Math.round(gValue(g)*0.65))} <span class="dim">(장비는 회수)</span></span>
+  <button class="danger sm" id="btnSell">매각</button></div>
+  <hr><div class="small dim">전적</div><div class="weeklog small">${g.hist.length?g.hist.slice(-8).reverse().map(h=>`<p>${h}</p>`).join(''):'<p class="dim">기록 없음</p>'}</div>`;
+ $('trSel').onchange=e=>{g.train=e.target.value;renderRoster();};
+ $('inSel').onchange=e=>{g.intensity=+e.target.value;};
+ $('eqW').onchange=e=>equipItem(g,'weapon',e.target.value);
+ $('eqS').onchange=e=>equipItem(g,'shield',e.target.value);
+ $('btnSell').onclick=()=>{
+  modal('검투사 매각',`${g.name}을(를) ${fmt(Math.round(gValue(g)*0.65))} 데나리우스에 매각하는가? 되돌릴 수 없다.`,[
+   {t:'매각한다',fn:()=>{if(g.weapon){S.armory.push(g.weapon);g.weapon=null;}if(g.shield){S.armory.push(g.shield);g.shield=null;}S.money+=Math.round(gValue(g)*0.65);S.gladiators=S.gladiators.filter(x=>x.id!==g.id);S.chron.push(`${S.week}주차 — ${g.name} 매각.`);selGlad=null;renderAll();}},
+   {t:'취소'}]);
+ };
+}
+function renderMarket(){
+ const box=$('marketList');box.innerHTML='';
+ const cap=FACS.barrack.eff[S.fac.barrack];
+ if(!S.market.length)box.innerHTML='<p class="dim">이번 주 매물이 없다. 다음 주를 기다려라.</p>';
+ S.market.forEach(g=>{
+  const d=document.createElement('div');d.className='gcard';
+  const full=S.gladiators.length>=cap, poor=S.money<g.price;
+  d.innerHTML=gCardHtml(g,`<hr><div class="spread"><span class="gold" style="font-weight:700">${fmt(g.price)} 데나리우스</span>
+   <button class="primary sm" ${full||poor?'disabled':''}>${full?'숙소 만원':poor?'자금 부족':'구매'}</button></div>`);
+  d.querySelector('button').onclick=e=>{e.stopPropagation();
+   S.money-=g.price;S.gladiators.push(g);S.market=S.market.filter(x=>x.id!==g.id);
+   S.chron.push(`${S.week}주차 — ${g.name} 영입 (${fmt(g.price)}D).`);renderAll();};
+  box.appendChild(d);});
+}
+function renderContracts(){
+ const box=$('contractList');box.innerHTML='';
+ if(!S.contracts.length)box.innerHTML='<p class="dim">이번 주 제안이 없다. 다음 주에 새 계약이 들어온다.</p>';
+ S.contracts.forEach(c=>{
+  const d=document.createElement('div');d.className='panel';
+  if(c.special)d.style.borderColor='#7a4a8a';
+  const o=c.opp;
+  const oppInfo=c.scouted?`<div style="display:flex;gap:10px;align-items:flex-start;margin-top:4px">${portraitHtml(o.pid,'pt-s')}<div style="flex:1;min-width:0"><div class="small">상대: <b>${o.name}</b>${c.grand&&!S.champ.defeated?' — <span class="gold">현 챔피언</span>':''} (${CLASSES[o.cls].n}, ${o.wins}승 ${o.losses}패, 명성 ${o.fame})</div>${statGridHtml(o)}</div></div>`
+   :`<div class="small dim">상대: ${o.name} (${CLASSES[o.cls].n}) — 자세한 전력 미상. 소문: "${scoutRumor(o)}"</div>`;
+  d.innerHTML=`<div class="spread"><h3 style="margin:0">${c.grand?'👑 ':''}${c.tName}</h3>
+   <span class="small">출전료 <b class="gold">${fmt(c.fee)}</b> · 승리 상금 <b class="gold">${fmt(c.purse)}</b></span></div>
+   ${c.reward?`<div class="small" style="color:#b06ad0;margin:4px 0">⚔ 우승 상품: <b>${c.reward.name}</b> — <span class="dim">${itemStatTxt(c.reward)}</span><br><span class="dim" style="font-style:italic">${c.reward.desc}</span></div>`:''}
+   ${oppInfo}${c.scouted&&o.weapon?`<div class="small" style="color:${GRADES[o.weapon.grade].c}">상대 장비: ${o.weapon.name}</div>`:''}<hr><div class="row">
+   ${c.scouted?'':`<button class="sm" data-a="scout">정찰 (−${c.scoutCost}D)</button>`}
+   <button class="primary sm" data-a="fight">출전 준비 ▸</button></div>`;
+  d.querySelectorAll('button').forEach(b=>b.onclick=()=>{
+   if(b.dataset.a==='scout'){if(S.money<c.scoutCost)return modal('자금 부족','정찰꾼을 살 돈이 없다.');S.money-=c.scoutCost;c.scouted=true;renderAll();}
+   else openFightPrep(c);});
+  box.appendChild(d);});
+}
+function scoutRumor(o){
+ const s=statSum(o);
+ return s>62?'짐승 같은 자라더군. 조심하게.':s>52?'제법 이름값을 하는 자일세.':s>42?'평범한 실력이라 들었네.':'풋내기라는 소문일세.';
+}
+function openFightPrep(c){
+ const ready=S.gladiators.filter(g=>g.injury===0);
+ if(!ready.length)return modal('출전 불가','싸울 수 있는 검투사가 없다. 모두 부상 중이거나, 양성소가 비었다.');
+ let selId=ready[0].id,tactic='bal';
+ const body=()=>`상대: ${c.opp.name} (${CLASSES[c.opp.cls].n})\n${c.scouted?'전력 파악 완료.':'전력 미상 — 소문뿐이다.'}\n\n클래스 상성: ${CLASSES[COUNTER[c.opp.cls]].n} 계열이 ${CLASSES[c.opp.cls].n}에 유리하다.`;
+ $('mTitle').textContent='출전 준비 — '+c.tName;
+ $('mBody').textContent=body();
+ const box=$('mActs');box.innerHTML='';
+ const selG=document.createElement('select');
+ ready.forEach(g=>{const o=document.createElement('option');o.value=g.id;o.textContent=`${g.name} — ${CLASSES[g.cls].n}, 능력 합 ${statSum(g)}, 컨디션 ${Math.round(g.cond)}%`;selG.appendChild(o);});
+ selG.onchange=e=>selId=+e.target.value;
+ const selT=document.createElement('select');
+ [['agg','공격적 — 빠른 승부, 체력 소모 큼'],['bal','균형 — 상황에 맞춰'],['def','수비적 — 상대 지치기를 기다림']].forEach(([v,n])=>{const o=document.createElement('option');o.value=v;o.textContent=n;if(v==='bal')o.selected=true;selT.appendChild(o);});
+ selT.onchange=e=>tactic=e.target.value;
+ const lbl1=document.createElement('div');lbl1.className='small dim';lbl1.textContent='출전 검투사';
+ const lbl2=document.createElement('div');lbl2.className='small dim';lbl2.textContent='전술 지시';
+ const goBtn=document.createElement('button');goBtn.className='primary';goBtn.textContent='모래 위로 ▸';
+ goBtn.onclick=()=>{$('modalBack').classList.remove('on');const g=S.gladiators.find(x=>x.id===selId);startFight(c,g,tactic);};
+ const cancel=document.createElement('button');cancel.textContent='취소';cancel.onclick=()=>$('modalBack').classList.remove('on');
+ box.append(lbl1,selG,lbl2,selT,goBtn,cancel);
+ $('modalBack').classList.add('on');
+}
+function renderFacility(){
+ const box=$('facilityList');box.innerHTML='';
+ for(const key in FACS){const f=FACS[key],lv=S.fac[key];
+  const d=document.createElement('div');d.className='panel';
+  const next=lv<f.lv.length-1;
+  d.innerHTML=`<h3>${f.n} <span class="dim small" style="font-weight:400">— ${f.d}</span></h3>
+   <div>현재: <b>${f.lv[lv]}</b></div>
+   ${next?`<div class="small dim">다음: ${f.lv[lv+1]} (${fmt(f.cost[lv+1])}D)</div><div style="margin-top:8px"><button class="sm primary" ${S.money<f.cost[lv+1]?'disabled':''}>증축</button></div>`:'<div class="small gold">최고 단계</div>'}`;
+  if(next)d.querySelector('button').onclick=()=>{S.money-=f.cost[lv+1];S.fac[key]++;S.chron.push(`${S.week}주차 — ${f.n} 증축: ${f.lv[lv+1]}.`);renderAll();};
+  box.appendChild(d);}
+ const ab=$('armoryList');ab.innerHTML='';
+ if(!S.armory.length)ab.innerHTML='<p class="dim">보관 중인 장비가 없다. 시장의 무기 상인을 찾아가라.</p>';
+ S.armory.forEach(it=>{
+  const d=document.createElement('div');d.className='gcard';
+  d.innerHTML=`<div class="spread"><span style="color:${GRADES[it.grade].c};font-weight:700;font-size:15px">${it.name}</span><span class="small dim">${WCATS[it.cat].n}</span></div>
+   <div class="small dim">${itemStatTxt(it)}</div>${it.desc?`<div class="small dim" style="font-style:italic">${it.desc}</div>`:''}
+   <hr><div class="spread"><span class="small dim">판매가 ${fmt(Math.round(it.price?it.price*0.5:120))}D</span><button class="danger sm">판매</button></div>`;
+  d.querySelector('button').onclick=()=>{
+   const val=Math.round(it.price?it.price*0.5:120);
+   modal('장비 판매',`${it.name}을(를) ${fmt(val)}D에 판매하는가?${it.grade>=4?'\n전설의 무기다 — 다시 구할 방법은 특별 흥행전뿐이다.':''}`,[
+    {t:'판매한다',fn:()=>{S.money+=val;S.armory=S.armory.filter(x=>x.id!==it.id);renderAll();}},{t:'취소'}]);
+  };
+  ab.appendChild(d);});
+ const sb=$('staffList');sb.innerHTML='';
+ for(const key in STAFF){const st=STAFF[key],on=S.staff[key];
+  const d=document.createElement('div');d.className='panel';
+  d.innerHTML=`<h3>${st.n}</h3><div class="small dim">${st.d}</div><div class="small">주급 ${st.wage}D</div>
+   <div style="margin-top:8px"><button class="sm ${on?'':'primary'}">${on?'해고':'고용'}</button></div>`;
+  d.querySelector('button').onclick=()=>{S.staff[key]=!on;renderAll();};
+  sb.appendChild(d);}
+}
+function renderAll(){
+ renderHeader();
+ renderMap();renderCity();
+ if(curScreen==='wshop')renderWshop();
+ if(curScreen==='ashop')renderAshop();
+ if(curScreen==='colosseum')renderColosseum();
+ if(curScreen==='ludus')renderLudus();
+ if(curScreen==='roster')renderRoster();
+ if(curScreen==='market')renderMarket();
+ if(curScreen==='facility')renderFacility();
+}
+
+/* ═══════════ 악타 디우르나 (주간 신문) ═══════════ */
+const WORLD_NEWS=[
+ {h:'플라비우스 원형경기장, 개장 백일 축제 이어져',s:'티투스 황제 — "로마 시민 모두를 위한 선물이다."'},
+ {h:'카피톨리누스 대화재 복구 한창… 유피테르 신전 재건 논의',s:'세 밤낮을 태운 불길, 시민 성금 줄이어.'},
+ {h:'베수비우스 참사 1주기 — 나폴리 만에 추모 제단',s:'폼페이와 헤르쿨라네움을 기억하며.'},
+ {h:'티투스 황제, 검투 흥행세 감면안 원로원 제출',s:'라니스타들 "성군이시다" 환호.'},
+ {h:'이집트 곡물선 입항 지연 — 빵값 들썩',s:'오스티아 항만 하역 인부 증원령.'},
+ {h:'브리타니아 총독 아그리콜라, 북부 원정 전과 보고',s:'"안개의 땅 끝까지 독수리 깃발을."'},
+ {h:'도나우 국경 불온… 다키아 정세에 군단 증강',s:'변경 출신 노예 시세가 오르고 있다.'},
+ {h:'시인 마르티알리스, 원형경기장 축시집 발표',s:'"바다도 산도 이 앞에선 침묵하리."'},
+ {h:'전차 경주 청색파-녹색파 난투극',s:'키르쿠스 막시무스에 헌병 배치.'},
+ {h:'아프리카 속주에서 사자 2백 마리 도착',s:'맹수 사냥(베나티오) 대흥행 예고.'},
+ {h:'아벤티누스 언덕 목욕장 신축 공사로 마차 통행 마비',s:'상인들 불만 속출.'},
+ {h:'위조 데나리우스 유통 적발 — 환전상 셋 추방',s:'"은화 테두리를 확인하라."'},
+ {h:'갈리아산 검투사 노예 시세 상승세',s:'좋은 몸은 부르는 게 값.'},
+ {h:'점술가들 "혜성은 흉조"… 황실 "낭설 유포 엄단"',s:'그래도 시민들은 부적을 산다.'},
+ {h:'검투사 의무실용 그리스 의사 몸값 폭등',s:'살릴 줄 아는 손이 귀하다.'},
+ {h:'원로원, 미성년 관중 맹수 경기 관람 제한 논의',s:'"교육에 해롭다" vs "로마인은 강하게 큰다."'}];
+const CHAMP_NEWS=()=>[
+ {h:`챔피언 헤르메스, 통산 ${S.champ.wins}승 — 여전히 무적`,s:'세쿠토르의 교본이라 불리는 사내.'},
+ {h:'헤르메스, 쓰러진 상대에게 자비를 청하다',s:'"죽이는 것보다 살려두는 쪽이 관중을 울린다."'},
+ {h:'"헤르메스에게 도전할 자, 정녕 없는가"',s:'에디토르들, 새 이야기에 목마르다.'},
+ {h:'마르티알리스, 헤르메스 찬가 낭송회',s:'"헤르메스, 검투사들의 마르스여…"'},
+ {h:`헤르메스의 글라디우스, 신전에 봉헌 소문`,s:'본인은 웃으며 부인했다.'}];
+function pickWorldNews(n){
+ const out=[];let avail=WORLD_NEWS.map((_,i)=>i).filter(i=>!S.newsSeen.includes(i));
+ for(let k=0;k<n;k++){
+  if(!avail.length){S.newsSeen=[];avail=WORLD_NEWS.map((_,i)=>i);}
+  const j=avail.splice(RI(0,avail.length-1),1)[0];
+  S.newsSeen.push(j);out.push(WORLD_NEWS[j]);
+ }
+ return out;
+}
+function itemHtml(it){return `<div class="item"><div class="h">${it.h}</div>${it.s?`<div class="s">${it.s}</div>`:''}</div>`;}
+function showPaper(){
+ $('paperDate').textContent=`티투스 치세 · 제 ${S.week}주`;
+ const world=pickWorldNews(2).map(itemHtml).join('');
+ let arenaNews='';
+ if(S.champ.defeated)arenaNews=itemHtml({h:`새 챔피언 ${S.champ.heir||''}의 시대`,s:'로마의 술집마다 그 이름이 오르내린다.'});
+ else arenaNews=itemHtml(pick(CHAMP_NEWS()));
+ let goal='';
+ if(!S.colosseumDone){
+  goal=S.rep>=55?`<div class="goalbox">★ 콜로세움 대경기 — 귀하의 루두스에 초청장이 발송되었다. 챔피언이 기다린다.</div>`
+   :`<div class="goalbox">콜로세움 대경기 초청 기준: 양성소 명성 55 — 현재 귀하의 명성 ${S.rep}. 로마는 기다린다.</div>`;
+ }
+ const mine=(S.newsBuf.length?S.newsBuf.map(h=>itemHtml({h})).join(''):itemHtml({h:'조용한 한 주였다.',s:'담장 너머로 목검 소리만 들려왔다.'}));
+ S.newsBuf=[];
+ $('paperCols').innerHTML=`<h4>도시 소식</h4>${world}<h4>투기장</h4>${arenaNews}${goal}<h4>우리 루두스</h4>${mine}`;
+ $('paperBack').classList.add('on');
+ $('paperClose').focus();
+}
+function closePaper(){
+ $('paperBack').classList.remove('on');
+ renderAll();
+ if(modalQueue.length){const a=modalQueue.shift();modalQueue.length=0;modal(a[0],a[1],a[2]);}
+}
+$('paperClose').onclick=closePaper;
+$('paperBack').addEventListener('keydown',e=>{if(e.key==='Escape')closePaper();});
+
+/* ═══════════ 주간 턴 ═══════════ */
+function weeklyUpkeep(){
+ let u=S.gladiators.length*12;
+ if(S.staff.doctor)u+=STAFF.doctor.wage;
+ if(S.staff.trainer)u+=STAFF.trainer.wage;
+ return u;
+}
+function processTraining(g,log){
+ if(g.injury>0)return;
+ if(g.train==='rest'){g.cond=clamp(g.cond+20,0,100);log.push(`${g.name} — 휴식으로 몸을 추슬렀다.`);return;}
+ const inten=g.intensity;
+ if(g.train==='apt'){
+  // 적성 훈련은 강도와 무관 — 재능 파악이 목적. 부상 위험 없고 소모도 가볍다.
+  g.aptTrain=(g.aptTrain||0)+1;
+  if(!g.talentKnown&&g.aptTrain>=3){
+   g.talentKnown=true;
+   log.push(`<span class="gold">${g.name} — 무기 적성이 드러났다! ${WCATS[g.talent].n}에 타고난 재능이 있다.</span>`);
+  }else if(!g.talentKnown){
+   log.push(`${g.name} — 낯선 무기들을 번갈아 쥐어 본다. (적성 파악 ${g.aptTrain}/3)`);
+  }
+  if(g.skl<20&&statSum(g)<g.pot&&Math.random()<0.25){g.skl++;log.push(`${g.name} — 무기 다루는 요령이 붙었다. <span class="grn">기술 +1</span>`);}
+  g.cond=clamp(g.cond-4,0,100);
+  return;
+ }else{
+ const baseP=[0.30,0.50,0.75][inten]*FACS.train.eff[S.fac.train]*(S.staff.trainer?1.3:1);
+ const ageF=g.age<24?1.15:g.age<28?1:g.age<31?0.7:0.45;
+ const room=clamp((g.pot-statSum(g))/12,0.05,1);
+ const targets=g.train==='balanced'?STATKEYS.map(s=>s[0]):[g.train];
+ let grew=false;
+ targets.forEach(k=>{
+  if(g[k]>=20)return;
+  if(Math.random()<baseP*ageF*room/(g.train==='balanced'?2.6:1)){g[k]++;grew=true;}
+ });
+ if(grew)log.push(`${g.name} — 훈련의 성과가 보인다. <span class="grn">(${g.train==='balanced'?'전반적 성장':STATKEYS.find(s=>s[0]===g.train)[1]+' 상승'})</span>`);
+ }
+ // 부상 위험
+ let injP=[0,0.02,0.07][inten];
+ if(hasTrait(g,'iron'))injP*=0.5;
+ if(S.staff.doctor)injP*=0.5;
+ injP/=FACS.med.eff[S.fac.med];
+ if(Math.random()<injP){g.injury=RI(1,3);g.cond=clamp(g.cond-20,0,100);log.push(`<span class="red">${g.name} — 훈련 중 부상! ${g.injury}주간 요양이 필요하다.</span>`);}
+ g.cond=clamp(g.cond-[3,7,14][inten],0,100);
+}
+function randomEvent(log){
+ if(Math.random()>0.32||!S.gladiators.length)return;
+ const g=pick(S.gladiators);
+ const roll=Math.random();
+ if(roll<0.2&&!hasTrait(g,'loyal')){
+  const caught=Math.random()<0.7;
+  if(caught){g.cond=clamp(g.cond-25,0,100);log.push(`<span class="red">${g.name}이(가) 탈출을 시도하다 붙잡혔다. 채찍질 후 감금 — 컨디션 급락.</span>`);}
+  else{S.gladiators=S.gladiators.filter(x=>x.id!==g.id);log.push(`<span class="red">${g.name}이(가) 밤사이 담을 넘어 사라졌다!</span>`);S.chron.push(`${S.week}주차 — ${g.name} 탈주.`);S.newsBuf.push(`모 양성소에서 검투사 탈주 소동 — 현상금이 걸렸다는 소문`);}
+ }else if(roll<0.4&&g.fame>=10){
+  const offer=Math.round(gValue(g)*R(1.1,1.5));
+  log.push(`귀족 하나가 ${g.name}에게 눈독을 들인다.`);
+  modal('귀족의 제안',`원로원 의원의 하인이 찾아왔다.\n"주인님께서 ${g.name}을(를) ${fmt(offer)} 데나리우스에 사시겠다 한다."`,[
+   {t:`판다 (+${fmt(offer)}D)`,fn:()=>{S.money+=offer;S.gladiators=S.gladiators.filter(x=>x.id!==g.id);S.chron.push(`${S.week}주차 — ${g.name}, 귀족에게 매각.`);renderAll();}},
+   {t:'거절한다 (명성 +1)',fn:()=>{S.rep=clamp(S.rep+1,0,100);renderAll();}}]);
+ }else if(roll<0.55){
+  const cash=RI(20,60);S.money+=cash;
+  log.push(`지난 경기를 본 상인이 후원금을 보내왔다. <span class="gold">+${cash}D</span>`);
+ }else if(roll<0.7){
+  g.cond=clamp(g.cond-30,0,100);
+  log.push(`<span class="red">${g.name}이(가) 상한 음식에 배탈이 났다. 컨디션 급락.</span>`);
+ }else if(roll<0.85){
+  log.push(`${g.name}이(가) 훈련장에서 후배들을 이끌었다. 사기가 오른다.`);
+  S.gladiators.forEach(x=>x.cond=clamp(x.cond+6,0,100));
+ }else{
+  const k=pick(STATKEYS)[0];
+  if(g[k]<20&&statSum(g)<g.pot){g[k]++;log.push(`${g.name}이(가) 은퇴한 노병에게 비법을 배웠다. <span class="grn">${STATKEYS.find(s=>s[0]===k)[1]} +1</span>`);}
+ }
+}
+function nextWeek(){
+ if(arena&&!arena.over)return;
+ if($('paperBack').classList.contains('on'))return;
+ const log=[];
+ const upkeep=weeklyUpkeep();
+ S.money-=upkeep;
+ log.push(`유지비 <span class="red">−${fmt(upkeep)}D</span> 지출.`);
+ S.gladiators.forEach(g=>{
+  if(g.injury>0){
+   let rec=1+(S.staff.doctor?1:0);
+   g.injury=Math.max(0,g.injury-rec);
+   if(g.injury===0)log.push(`<span class="grn">${g.name} — 부상에서 회복했다.</span>`);
+   else log.push(`${g.name} — 요양 중 (남은 ${g.injury}주).`);
+  }
+  processTraining(g,log);
+  g.cond=clamp(g.cond+FACS.kitchen.eff[S.fac.kitchen]*FACS.med.eff[S.fac.med]*0.6,0,100);
+ });
+ deferModals=true;
+ randomEvent(log);
+ deferModals=false;
+ refreshMarket();refreshContracts();
+ if(!S.champ.defeated&&Math.random()<0.65)S.champ.wins++;
+ S.week++;
+ S.log=log;
+ if(S.money<=-200){
+  modalQueue.length=0;
+  modal('파산','채권자들이 문을 부수고 들어왔다. 검투사도, 양성소도, 이제 당신 것이 아니다.\n\n— 루두스의 몰락, '+S.week+'주차.',[{t:'새로 시작',fn:init}]);
+  return;
+ }
+ renderAll();
+ showPaper();
+}
+$('btnNextWeek').onclick=nextWeek;
+
+
+/* ═══════════════════════════════════════
+   아레나 — 전투 시뮬레이션 & 관전 렌더링
+   ═══════════════════════════════════════ */
+const cv=$('arenaCv'),ctx=cv.getContext('2d');
+const FLOOR=352,W=960,H=440;
+let arena=null,soundOn=false,actx=null;
+let lastT=0;
+
+/* 사운드 (WebAudio 합성) */
+function sfx(type){
+ if(!soundOn)return;
+ if(!actx)actx=new (window.AudioContext||window.webkitAudioContext)();
+ const t=actx.currentTime;
+ const g=actx.createGain();g.connect(actx.destination);
+ if(type==='clang'){
+  const o=actx.createOscillator();o.type='square';o.frequency.setValueAtTime(900,t);o.frequency.exponentialRampToValueAtTime(250,t+.12);
+  g.gain.setValueAtTime(.12,t);g.gain.exponentialRampToValueAtTime(.001,t+.15);o.connect(g);o.start(t);o.stop(t+.16);
+ }else if(type==='thud'){
+  const o=actx.createOscillator();o.type='sine';o.frequency.setValueAtTime(130,t);o.frequency.exponentialRampToValueAtTime(45,t+.14);
+  g.gain.setValueAtTime(.25,t);g.gain.exponentialRampToValueAtTime(.001,t+.18);o.connect(g);o.start(t);o.stop(t+.2);
+ }else if(type==='whoosh'||type==='roar'){
+  const len=type==='roar'?.5:.15;
+  const buf=actx.createBuffer(1,actx.sampleRate*len,actx.sampleRate);
+  const d=buf.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=(Math.random()*2-1)*(1-i/d.length);
+  const src=actx.createBufferSource();src.buffer=buf;
+  const f=actx.createBiquadFilter();f.type=type==='roar'?'lowpass':'bandpass';f.frequency.value=type==='roar'?400:1500;
+  g.gain.setValueAtTime(type==='roar'?.18:.08,t);g.gain.exponentialRampToValueAtTime(.001,t+len);
+  src.connect(f);f.connect(g);src.start(t);
+ }
+}
+$('btnSound').onclick=e=>{soundOn=!soundOn;e.target.textContent=(soundOn?'🔊':'🔇')+' 효과음';};
+
+/* 전투 개시 */
+function startFight(contract,glad,tactic){
+ S.contracts=S.contracts.filter(c=>c.id!==contract.id);
+ const crowd=[];
+ for(let row=0;row<3;row++)for(let i=0;i<38;i++)
+  crowd.push({x:20+i*25+R(-6,6),y:52+row*26+R(-3,3),r:R(5,7),c:pick(['#c9b18a','#a88d68','#8a6f52','#d4bc95','#7a5f45','#b39a76']),ph:R(0,6.28),sp:R(4,8),arm:Math.random()<.3});
+ const specks=[];for(let i=0;i<90;i++)specks.push({x:R(0,W),y:R(FLOOR-6,H-8),r:R(.6,1.8),a:R(.05,.18)});
+ arena={
+  contract,tactic,over:false,phase:'intro',phaseT:0,t:0,speed:1,shake:0,excite:0.15,
+  particles:[],floats:[],specks,crowd,verdict:null,result:null,bigText:null,bigT:0,
+  f:[mkFighter(glad,1,tactic),mkFighter(contract.opp,-1,pick(['agg','bal','def']))]
+ };
+ $('arenaTitle').textContent=`${contract.tName} — ${glad.name} 대 ${contract.opp.name}`;
+ $('combatLog').innerHTML='';$('btnFightDone').style.display='none';
+ clog(`<span class="sys">— ${contract.tName}. 모래가 골라지고, 나팔이 울린다. —</span>`);
+ clog(`<span class="sys">${glad.name}(${CLASSES[glad.cls].n}) 대 ${contract.opp.name}(${CLASSES[contract.opp.cls].n})</span>`);
+ arena.f.forEach(fx=>{
+  if(!fx.g.weapon)return;
+  if(fx.wpn.matched)clog(`<span class="grn">${fx.g.name}의 손에 ${fx.g.weapon.name}이(가) 착 감긴다 — 제 주인을 만난 무기다.</span>`);
+  else clog(`<span class="sys">${fx.g.name}이(가) ${fx.g.weapon.name}을(를) 어색하게 고쳐 쥔다.</span>`);
+ });
+ document.querySelectorAll('.screen').forEach(e=>e.classList.remove('on'));
+ $('screen-arena').classList.add('on');
+ window.scrollTo(0,0);
+ lastT=performance.now();
+ requestAnimationFrame(loop);
+}
+function mkFighter(g,side,tactic){
+ const wpn=effWeapon(g);
+ const shieldSize=g.shield?(CLASSES[g.cls].shield!=='none'?CLASSES[g.cls].shield:'small'):CLASSES[g.cls].shield;
+ return{g,side,tactic,wpn,shieldSize,blockBonus:g.shield?(g.shield.block||0):0,x:side===1?300:660,facing:side,hp:maxHp(g),mhp:maxHp(g),stam:100,
+  state:'idle',st:0,cd:1.2+Math.random(),armA:-0.5,armT:-0.5,walk:0,flash:0,lunge:0,
+  netCd:4,entangle:0,hitsLanded:0,dmgDealt:0,heavy:false,down:false,surrender:false,dead:false,
+  condMul:0.75+((g.cond||100)/100)*0.25};
+}
+function fstat(f,k){return f.g[k]*f.condMul;} // 컨디션 반영 실효 능력치
+function clog(html,cls){
+ const p=document.createElement('p');if(cls)p.className=cls;p.innerHTML=html;
+ const box=$('combatLog');box.appendChild(p);box.scrollTop=box.scrollHeight;
+}
+
+/* ── 의사결정 ── */
+function decide(f,o,dt){
+ f.cd-=dt;
+ if(f.cd>0||f.state!=='idle')return;
+ if(f.entangle>0)return;
+ const wpn=f.wpn;
+ const dist=Math.abs(o.x-f.x);
+ const range=wpn.reach;
+ if(f.stam<14){setState(f,'gasp',1.4);clog(`${f.g.name}이(가) 가쁜 숨을 몰아쉰다...`,'sys');f.cd=1.5;return;}
+ // 상성 압박: 카운터 클래스 상대면 살짝 신중
+ if(dist>range-4){setState(f,'advance',2);f.cd=0.05;return;}
+ // 레티아리우스 그물
+ if(f.shieldSize==='none'&&f.netCd<=0&&dist<range+40&&Math.random()<0.3){
+  throwNet(f,o);return;
+ }
+ const t=f.tactic,hh=hasTrait(f.g,'hothead');
+ let pAtk=(t==='agg'?0.60:t==='def'?0.36:0.48)*clamp(arena.t/10,0.35,1);
+ let pHeavy=t==='agg'?0.34:0.18;
+ if(hh){pAtk+=0.15;}
+ if(o.state==='gasp'||o.entangle>0)pAtk+=0.3; // 빈틈 노리기
+ if(f.hp<f.mhp*0.3&&hasTrait(f.g,'coward')){pAtk-=0.25;}
+ const r=Math.random();
+ if(r<pAtk){
+  f.heavy=Math.random()<pHeavy;
+  const wind=wpn.wind*(f.heavy?1.7:1)*(1.15-fstat(f,'spd')*0.012);
+  setState(f,'windup',wind);
+ }else if(r<pAtk+(t==='def'?0.3:0.15)&&f.shieldSize!=='none'){
+  setState(f,'guard',R(0.5,1.0));
+ }else if(r<pAtk+0.45){
+  setState(f,'circle',R(0.4,0.8));
+ }else{
+  setState(f,'retreat',R(0.3,0.5));
+ }
+ f.cd=R(0.45,1.05)*(1.1-fstat(f,'spd')*0.01);
+}
+function setState(f,s,dur){f.state=s;f.st=dur;}
+function throwNet(f,o){
+ f.netCd=7;setState(f,'windup',0.4);f.netThrow=true;
+ clog(`${f.g.name}이(가) 그물을 크게 휘두른다!`);
+}
+/* ── 상태 갱신 ── */
+function updFighter(f,o,dt){
+ f.walk+=dt*8;f.flash=Math.max(0,f.flash-dt*4);f.lunge*=Math.pow(0.001,dt);
+ f.netCd-=dt;f.entangle=Math.max(0,f.entangle-dt);
+ f.facing=o.x>f.x?1:-1;
+ // 팔 각도 보간
+ const target=f.state==='windup'?-2.2:f.state==='strike'?0.9:f.state==='guard'?-0.2:-0.5;
+ f.armA+=(target-f.armA)*Math.min(1,dt*(f.state==='strike'?26:10));
+ if(f.down||f.dead)return;
+ if(f.state!=='gasp')f.stam=clamp(f.stam+dt*(f.state==='idle'||f.state==='circle'?4:1.5),0,100);
+ else f.stam=clamp(f.stam+dt*14,0,100);
+ f.st-=dt;
+ const spd=(46+fstat(f,'spd')*5.5)*(f.stam<25?0.6:1);
+ const dist=Math.abs(o.x-f.x);
+ const wpn=f.wpn;
+ if(f.entangle>0){/* 그물에 묶임 */}
+ else if(f.state==='advance'){
+  if(dist>wpn.reach-6){f.x+=f.facing*spd*dt;f.stam-=dt*2;if(Math.random()<dt*3)dust(f.x,FLOOR,1);}
+  else setState(f,'idle',0);
+  if(f.st<=0)setState(f,'idle',0);
+ }else if(f.state==='retreat'){
+  f.x-=f.facing*spd*0.7*dt;
+  if(f.st<=0)setState(f,'idle',0);
+ }else if(f.state==='circle'){
+  f.x+=f.facing*Math.sin(f.walk*0.7)*14*dt;
+  if(f.st<=0)setState(f,'idle',0);
+ }else if(f.state==='windup'&&f.st<=0){
+  if(f.netThrow){f.netThrow=false;resolveNet(f,o);setState(f,'idle',0);f.cd=0.8;}
+  else{setState(f,'strike',0.13);f.lunge=f.heavy?26:16;resolveAttack(f,o,f.heavy);}
+ }else if(f.state==='strike'&&f.st<=0){setState(f,'recoil',0.3+(f.heavy?0.2:0));}
+ else if(f.state!=='idle'&&f.state!=='down'&&f.st<=0){setState(f,'idle',0);}
+ f.x=clamp(f.x,60,W-60);
+ // 경계 밀림 방지: 겹침 해소
+ if(dist<34){f.x-=f.facing*20*dt;}
+}
+function resolveNet(f,o){
+ const hitP=0.35+fstat(f,'skl')*0.02-fstat(o,'spd')*0.015;
+ if(Math.random()<hitP){
+  o.entangle=1.8;o.flash=1;arena.excite=clamp(arena.excite+0.18,0,1);
+  netFx(o.x,FLOOR-40);sfx('whoosh');
+  clog(`<span class="crit">그물이 ${o.g.name}을(를) 덮쳤다! 몸이 묶인다!</span>`);
+  crowdRoar('우오오오!');
+ }else{
+  netFx(o.x+o.facing*-40,FLOOR-20);
+  clog(`${o.g.name}이(가) 그물을 걷어낸다.`);
+ }
+}
+function resolveAttack(f,o,heavy){
+ const wpn=f.wpn;
+ const dist=Math.abs(o.x-f.x);
+ f.stam-=heavy?17:9;
+ if(dist>wpn.reach+18){dust(f.x+f.facing*30,FLOOR,2);sfx('whoosh');return;} // 헛손질
+ const counter=COUNTER[o.g.cls]===f.g.cls?0.05:0;
+ let dodgeP=o.entangle>0?0:clamp(0.09+(fstat(o,'spd')-fstat(f,'skl'))*0.013+(o.stam>40?0.04:0)- (heavy?-0.05:0),0.02,0.4);
+ let blockP=o.entangle>0?0:o.shieldSize==='none'?0.05:clamp(0.16+fstat(o,'skl')*0.012+(o.state==='guard'?0.32:0)+(o.shieldSize==='large'?0.06:0)+o.blockBonus,0,0.72);
+ const r=Math.random();
+ if(r<dodgeP){
+  o.lunge=-12;dust(o.x,FLOOR,3);sfx('whoosh');
+  setState(o,'circle',0.25);
+  clog(`${o.g.name}이(가) 아슬아슬하게 몸을 비튼다!`);
+  arena.excite=clamp(arena.excite+0.03,0,1);
+ }else if(r<dodgeP+blockP){
+  spark(o.x+o.facing*14,FLOOR-42);sfx('clang');
+  o.stam-=heavy?14:8;
+  const chip=wpn.dmg*0.15*(heavy?1.6:1);
+  o.hp-=chip;f.hitsLanded+=0.3;
+  arena.shake=heavy?4:2;
+  clog(`${o.g.name}, 방패로 받아낸다 — 불꽃이 튄다!`,'hit');
+  if(heavy&&fstat(f,'str')>fstat(o,'str')+3){setState(o,'stagger',0.5);clog(`충격에 ${o.g.name}이(가) 밀려난다!`);}
+  arena.excite=clamp(arena.excite+0.04,0,1);
+ }else{
+  let critP=0.05+fstat(f,'skl')*0.006+counter+(hasTrait(f.g,'brutal')?0.05:0)+(wpn.crit||0);
+  const crit=Math.random()<critP;
+  const late=1+Math.max(0,arena.t-60)*0.02;
+  let dmg=wpn.dmg*R(0.85,1.2)*(1+fstat(f,'str')*0.05)*(heavy?1.55:1)*(f.stam<25?0.7:1)*(crit?1.8:1)*late;
+  if(o.entangle>0)dmg*=1.3;
+  o.hp-=dmg;f.hitsLanded++;f.dmgDealt+=dmg;
+  o.flash=1;o.lunge=-(heavy?18:10);
+  blood(o.x+o.facing*-6,FLOOR-46,crit?16:8);
+  sfx('thud');if(crit)sfx('roar');
+  arena.shake=crit?9:heavy?5:3;
+  arena.excite=clamp(arena.excite+(crit?0.14:0.06)+(hasTrait(f.g,'showman')?0.03:0),0,1);
+  if(crit){clog(`<span class="crit">${f.g.name}의 ${wpn.n}이 살을 갈랐다! 강렬한 일격!</span>`);crowdRoar('하베트!(맞았다!)');}
+  else clog(`${f.g.name}의 ${wpn.n}이 ${o.g.name}에게 꽂힌다. <span class="dim small">(−${Math.round(dmg)})</span>`,'hit');
+  if(o.hp<=0){fighterDown(o,f,crit||heavy);return;}
+  setState(o,'hit',0.3);
+  // 궁지 판정
+  if(o.hp<o.mhp*0.18&&!o.lowWarned){
+   o.lowWarned=true;
+   const hold=fstat(o,'wil')+(hasTrait(o.g,'veteran')?4:0)-(hasTrait(o.g,'coward')?5:0);
+   if(hold<RI(4,16)){
+    o.surrender=true;fighterDown(o,f,false,true);
+   }else{
+    clog(`<span class="crowd">${o.g.name}의 다리가 휘청인다 — 그러나 눈빛은 아직 죽지 않았다!</span>`);
+    arena.excite=clamp(arena.excite+0.1,0,1);
+   }
+  }
+ }
+}
+function fighterDown(o,winner,violent,surrendered){
+ o.down=true;o.hp=Math.max(0,o.hp);
+ setState(o,'down',99);setState(winner,'idle',0);
+ arena.phase='verdict';arena.phaseT=0;
+ arena.excite=clamp(arena.excite+0.25,0,1);
+ sfx('roar');
+ if(surrendered){
+  clog(`<span class="crowd">${o.g.name}이(가) 검을 내리고 손가락을 치켜든다 — 항복(아드 디기툼)!</span>`);
+  bigText('AD DIGITVM');
+ }else{
+  clog(`<span class="crit">${o.g.name}이(가) 모래 위에 쓰러졌다!</span>`);
+  bigText('VICTORIA');
+ }
+ crowdRoar('우오오오오!');
+}
+
+/* ── 이펙트 ── */
+function blood(x,y,n){for(let i=0;i<n;i++)arena.particles.push({x,y,vx:R(-90,90),vy:R(-160,-20),g:420,r:R(1.5,3.5),c:'#8f1114',life:R(0.5,1.1),stick:true});}
+function dust(x,y,n){for(let i=0;i<n;i++)arena.particles.push({x:x+R(-8,8),y:y-2,vx:R(-25,25),vy:R(-45,-10),g:60,r:R(2,5),c:'rgba(190,160,110,.4)',life:R(0.4,0.8)});}
+function spark(x,y){for(let i=0;i<7;i++)arena.particles.push({x,y,vx:R(-140,140),vy:R(-140,60),g:300,r:R(0.8,1.8),c:'#ffd76a',life:R(0.15,0.4)});}
+function netFx(x,y){for(let i=0;i<12;i++)arena.particles.push({x:x+R(-20,20),y:y+R(-20,20),vx:R(-15,15),vy:R(20,60),g:100,r:1.2,c:'#c8bfa0',life:0.5});}
+function crowdRoar(txt){arena.floats.push({x:R(150,W-150),y:R(40,120),t:txt,life:1.6});}
+function bigText(t){arena.bigText=t;arena.bigT=2.2;}
+
+/* ── 판정과 보상 ── */
+function runVerdict(){
+ const [p,e]=arena.f;
+ const loser=p.down||p.surrender?p:e;
+ const winner=loser===p?e:p;
+ const perf=clamp(loser.hitsLanded/7,0,1)*0.22+clamp(arena.t/75,0,1)*0.1;
+ let mercy=0.44+loser.g.fame*0.014+arena.excite*0.18+perf
+  +(hasTrait(loser.g,'crowd_fav')?0.16:0)
+  +(loser.surrender&&loser.hitsLanded<2?-0.15:0)
+  -(arena.contract.tier>=2?0.04:0);
+ const spared=Math.random()<clamp(mercy,0.12,0.95);
+ arena.verdict={loser,winner,spared};
+ if(spared){
+  bigText('MITTE!');sfx('roar');
+  clog(`<span class="crowd">관중들이 손수건을 흔든다 — "미테!(살려라!)" 주최자가 고개를 끄덕인다.</span>`);
+  clog(`<span class="grn">${loser.g.name}, 목숨을 건졌다.</span>`);
+ }else{
+  bigText('IVGVLA!');sfx('roar');
+  loser.dead=true;
+  clog(`<span class="crit">"이우굴라!(찔러라!)" — 엄지가 아래로 향한다.</span>`);
+  clog(`<span class="crit">${winner.g.name}이(가) 조용히 검을 내린다. ${loser.g.name}의 이야기는 여기서 끝났다.</span>`);
+  blood(loser.x,FLOOR-16,22);
+ }
+ arena.phase='end';arena.phaseT=0;
+}
+function finishFight(){
+ const c=arena.contract,[p,e]=arena.f;
+ const won=!(p.down||p.surrender);
+ const g=p.g,tier=TIERS[c.tier];
+ let lines=[],money=c.fee;
+ lines.push(`출전료 +${fmt(c.fee)}D`);
+ if(won){
+  money+=c.purse;g.wins++;
+  const fameUp=tier.fameW+(arena.excite>0.7?2:arena.excite>0.4?1:0);
+  g.fame+=fameUp;S.rep=clamp(S.rep+tier.repW,0,100);
+  lines.push(`승리 상금 +${fmt(c.purse)}D`,`명성 +${fameUp} (검투사) · 양성소 명성 +${tier.repW}`);
+  if(arena.verdict&&!arena.verdict.spared){g.kills++;lines.push(`처형 집행 — 통산 ${g.kills}명`);}
+  if(c.reward){S.armory.push(c.reward);lines.push(`⚔ 전리품 획득: ${c.reward.name}!`);S.chron.push(`${S.week}주차 — 특별 흥행전에서 ${c.reward.name} 획득.`);}
+  // 성장
+  const grow=[];
+  ['str','skl','spd','wil'].forEach(k=>{if(g[k]<20&&statSum(g)<g.pot&&Math.random()<0.3){g[k]++;grow.push(STATKEYS.find(s=>s[0]===k)[1]);}});
+  if(grow.length)lines.push(`실전 경험: ${grow.join(', ')} +1`);
+  // 부상 여부
+  if(p.hp<p.mhp*0.35&&Math.random()<0.5){g.injury=RI(1,2);lines.push(`깊은 상처 — ${g.injury}주 요양 필요`);}
+  g.cond=clamp(g.cond-25,5,100);
+  g.hist.push(`${S.week}주차 ${c.tName} — ${e.g.name}에게 승리`);
+  S.newsBuf.push(`『${g.name}』, ${c.tName}에서 ${e.g.name} 제압${arena.excite>0.7?' — 관중이 그 이름을 연호했다':''}`);
+  if(c.reward)S.newsBuf.push(`전설의 무기 '${c.reward.name}', 특별 흥행전의 승자에게 돌아가다`);
+  S.chron.push(`${S.week}주차 — ${g.name}, ${c.tName}에서 승리 (+${fmt(money)}D).`);
+ }else{
+  g.losses++;
+  if(arena.verdict&&!arena.verdict.spared&&arena.verdict.loser===p){
+   S.gladiators=S.gladiators.filter(x=>x.id!==g.id);
+   lines.push(`${g.name}은(는) 돌아오지 못했다.`,`몸값 손실 −${fmt(gValue(g))}D 상당`);
+   S.newsBuf.push(`${c.tName}의 모래가 『${g.name}』을(를) 삼켰다 — 관중은 이미 다음 경기를 말한다`);
+   if(g.weapon||g.shield)lines.push(`장착했던 장비${[g.weapon,g.shield].filter(Boolean).map(i=>' '+i.name).join(',')}도 모래에 묻혔다.`);
+   S.chron.push(`${S.week}주차 — ${g.name}, ${c.tName}에서 전사.`);
+  }else{
+   g.injury=RI(2,4);g.cond=clamp(g.cond-40,5,100);g.fame=Math.max(0,g.fame-1);
+   lines.push(`패배 — 부상 ${g.injury}주`,`관중의 자비로 목숨은 건졌다`);
+   g.hist.push(`${S.week}주차 ${c.tName} — ${e.g.name}에게 패배`);
+   S.newsBuf.push(`『${g.name}』, ${c.tName}에서 무릎 꿇다 — 관중의 자비로 목숨은 건져`);
+   S.chron.push(`${S.week}주차 — ${g.name}, ${c.tName}에서 패배.`);
+  }
+  S.rep=clamp(S.rep-1,0,100);
+ }
+ S.money+=money;
+ let title=won?'승리! — '+c.tName:'패배 — '+c.tName;
+ if(c.grand&&won){
+  S.colosseumDone=true;
+  title='👑 콜로세움 제패!';
+  lines.push('','챔피언 헤르메스가 무릎을 꿇었다.','8만 관중이 외치는 이름은 이제 하나 — '+g.name+'.','당신의 루두스는 로마에서 모르는 자가 없다.','','원한다면 계속해서 제국 최고의 라니스타로 군림하라.');
+  S.champ.defeated=true;S.champ.heir=g.name;S.champ.heirPid=g.pid;
+  S.newsBuf.push(`이변! 『${g.name}』, 챔피언 헤르메스를 꺾다 — 새 시대의 개막`);
+  S.rep=100;
+ }
+ const doRudis=won&&g.fame>=25&&g.wins>=8;
+ const acts=[{t:'양성소로 돌아간다',primary:true,fn:()=>{arena=null;go('map');}}];
+ if(doRudis)acts.unshift({t:`${g.name}에게 자유의 목검(루디스)을 수여한다 (명성 +10, 검투사는 떠난다)`,fn:()=>{
+  S.rep=clamp(S.rep+10,0,100);S.gladiators=S.gladiators.filter(x=>x.id!==g.id);
+  S.chron.push(`${S.week}주차 — ${g.name}, 자유의 목검을 받고 은퇴. 전설이 되었다.`);
+  arena=null;go('map');}});
+ modal(title,lines.join('\n'),acts);
+ renderHeader();
+}
+$('btnFightDone').onclick=finishFight;
+
+/* ── 조작 ── */
+document.querySelectorAll('.spd').forEach(b=>b.onclick=()=>{
+ if(!arena)return;arena.speed=+b.dataset.spd;
+ document.querySelectorAll('.spd').forEach(x=>x.classList.toggle('on',x===b));
+ b.blur();
+});
+$('btnSkip').onclick=()=>{
+ if(!arena||arena.over)return;
+ let guard=0;
+ while(!arena.over&&guard++<12000){stepSim(1/30);}
+ draw();
+};
+
+/* ── 시뮬레이션 스텝 ── */
+function stepSim(dt){
+ arena.t+=dt;arena.phaseT+=dt;
+ arena.shake=Math.max(0,arena.shake-dt*22);
+ arena.excite=clamp(arena.excite-dt*0.02,0.1,1);
+ arena.bigT=Math.max(0,arena.bigT-dt);
+ if(arena.phase==='intro'){
+  if(arena.phaseT>1.6){arena.phase='fight';clog('<span class="crowd">"싸워라!" — 심판(수마 루디스)의 지팡이가 내려간다.</span>');}
+ }else if(arena.phase==='fight'){
+  const[a,b]=arena.f;
+  decide(a,b,dt);decide(b,a,dt);
+  updFighter(a,b,dt);updFighter(b,a,dt);
+  // 시간 초과 → 판정 (드묾)
+  if(arena.t>110){const weaker=a.hp/a.mhp<b.hp/b.mhp?a:b;weaker.surrender=true;fighterDown(weaker,weaker===a?b:a,false,true);}
+ }else if(arena.phase==='verdict'){
+  const[a,b]=arena.f;
+  updFighter(a,b,dt);updFighter(b,a,dt);
+  if(arena.phaseT>2.0&&!arena.verdict)runVerdict();
+ }else if(arena.phase==='end'){
+  if(arena.phaseT>1.7&&!arena.over){arena.over=true;$('btnFightDone').style.display='inline-block';}
+ }
+ // 파티클
+ arena.particles=arena.particles.filter(pt=>{
+  pt.life-=dt;pt.x+=pt.vx*dt;pt.y+=pt.vy*dt;pt.vy+=pt.g*dt;
+  if(pt.stick&&pt.y>FLOOR+6){pt.vx=0;pt.vy=0;pt.g=0;pt.y=FLOOR+6+R(0,10);pt.stick=false;pt.life=Math.max(pt.life,2);}
+  return pt.life>0;});
+ arena.floats=arena.floats.filter(fl=>{fl.life-=dt;fl.y-=dt*20;return fl.life>0;});
+}
+
+/* ── 렌더링 ── */
+function drawArenaBg(){
+ // 하늘·벨라리움(차양)
+ const sky=ctx.createLinearGradient(0,0,0,120);sky.addColorStop(0,'#2a2016');sky.addColorStop(1,'#1a1410');
+ ctx.fillStyle=sky;ctx.fillRect(0,0,W,140);
+ ctx.save();ctx.globalAlpha=.25;
+ for(let i=0;i<12;i++){ctx.fillStyle=i%2?'#7a2020':'#c9b48a';ctx.beginPath();ctx.moveTo(i*80,0);ctx.lineTo(i*80+80,0);ctx.lineTo(i*80+64,26);ctx.lineTo(i*80+16,26);ctx.fill();}
+ ctx.restore();
+ // 관중석 벽
+ ctx.fillStyle='#241b12';ctx.fillRect(0,26,W,120);
+ // 관중
+ const ex=arena.excite;
+ arena.crowd.forEach(c=>{
+  const jump=ex>0.25?Math.max(0,Math.sin(arena.t*c.sp+c.ph))*ex*9:0;
+  ctx.fillStyle=c.c;ctx.beginPath();ctx.arc(c.x,c.y-jump,c.r,0,7);ctx.fill();
+  if(c.arm&&ex>0.5){ctx.strokeStyle=c.c;ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(c.x-3,c.y-jump);ctx.lineTo(c.x-6,c.y-jump-9);ctx.moveTo(c.x+3,c.y-jump);ctx.lineTo(c.x+6,c.y-jump-9);ctx.stroke();}
+ });
+ // 포디움(귀빈석 벽) — 대리석 띠
+ const wall=ctx.createLinearGradient(0,146,0,230);wall.addColorStop(0,'#4a3d2c');wall.addColorStop(1,'#332a1e');
+ ctx.fillStyle=wall;ctx.fillRect(0,146,W,86);
+ ctx.fillStyle='#5c4d38';ctx.fillRect(0,146,W,6);
+ ctx.fillStyle='rgba(0,0,0,.25)';for(let i=0;i<8;i++)ctx.fillRect(60+i*120,158,42,60); // 아치 그림자
+ ctx.fillStyle='#6d5b42';ctx.fillRect(0,226,W,6);
+ // 모래 바닥
+ const sand=ctx.createLinearGradient(0,232,0,H);sand.addColorStop(0,'#b8935a');sand.addColorStop(0.5,'#c9a566');sand.addColorStop(1,'#a5824c');
+ ctx.fillStyle=sand;ctx.fillRect(0,232,W,H-232);
+ // 중앙 원
+ ctx.strokeStyle='rgba(120,90,50,.5)';ctx.lineWidth=3;
+ ctx.beginPath();ctx.ellipse(W/2,FLOOR+14,300,44,0,0,7);ctx.stroke();
+ arena.specks.forEach(s=>{ctx.fillStyle=`rgba(90,70,40,${s.a})`;ctx.beginPath();ctx.arc(s.x,s.y,s.r,0,7);ctx.fill();});
+}
+function drawFighter(f){
+ const g=f.g,cls=CLASSES[g.cls];
+ const shieldSize=f.shieldSize||cls.shield;
+ const vis=(f.wpn&&f.wpn.vis)||cls.weapon;
+ const dir=f.facing;
+ ctx.save();
+ ctx.translate(f.x+dir*f.lunge*0.6,FLOOR);
+ // 그림자
+ ctx.fillStyle='rgba(40,25,10,.35)';ctx.beginPath();ctx.ellipse(0,4,22,6,0,0,7);ctx.fill();
+ ctx.scale(dir,1);
+ if(f.down){
+  ctx.rotate(f.dead?-1.55:-1.35);ctx.translate(20,18);
+ }
+ const moving=f.state==='advance'||f.state==='retreat'||f.state==='circle';
+ const ph=moving?Math.sin(f.walk)*7:0;
+ const skin='#c99b72';
+ // 다리
+ ctx.strokeStyle=skin;ctx.lineWidth=5;ctx.lineCap='round';
+ ctx.beginPath();ctx.moveTo(-2,-30);ctx.lineTo(-7+ph,-2);ctx.moveTo(2,-30);ctx.lineTo(7-ph,-2);ctx.stroke();
+ // 샌들
+ ctx.strokeStyle='#5a4326';ctx.lineWidth=3;
+ ctx.beginPath();ctx.moveTo(-9+ph,-1);ctx.lineTo(-4+ph,-1);ctx.moveTo(4-ph,-1);ctx.lineTo(9-ph,-1);ctx.stroke();
+ // 몸통 (클래스 색)
+ ctx.fillStyle=cls.color;
+ ctx.beginPath();ctx.roundRect(-10,-56,20,28,5);ctx.fill();
+ ctx.fillStyle='rgba(255,255,255,.08)';ctx.fillRect(-10,-56,20,6);
+ // 허리띠
+ ctx.fillStyle='#8a2a2a';ctx.fillRect(-10,-34,20,5);
+ // 머리
+ ctx.fillStyle=skin;ctx.beginPath();ctx.arc(0,-63,7.5,0,7);ctx.fill();
+ // 투구
+ if(g.cls==='murmillo'||g.cls==='thraex'){
+  ctx.fillStyle='#b8a04a';ctx.beginPath();ctx.arc(0,-64,8.5,Math.PI,0);ctx.fill();
+  ctx.beginPath(); // 볏
+  if(g.cls==='murmillo'){ctx.moveTo(-8,-68);ctx.quadraticCurveTo(0,-84,10,-70);ctx.lineTo(4,-66);ctx.closePath();}
+  else{ctx.moveTo(2,-70);ctx.quadraticCurveTo(10,-82,14,-72);ctx.lineTo(6,-66);ctx.closePath();}
+  ctx.fill();
+  ctx.fillStyle='#7a6a30';ctx.fillRect(-6,-64,12,4); // 면갑
+ }else if(g.cls==='secutor'){
+  ctx.fillStyle='#9a9a9a';ctx.beginPath();ctx.arc(0,-63,8.5,0,7);ctx.fill();
+  ctx.fillStyle='#111';ctx.beginPath();ctx.arc(4,-64,1.6,0,7);ctx.fill(); // 눈구멍
+ }else{ // 레티아리우스: 갈레루스(어깨 보호구)
+  ctx.fillStyle='#b8a04a';ctx.beginPath();ctx.moveTo(-12,-58);ctx.lineTo(-2,-58);ctx.lineTo(-4,-70);ctx.lineTo(-14,-66);ctx.closePath();ctx.fill();
+  ctx.strokeStyle='#5a4326';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(-6,-68);ctx.lineTo(6,-66);ctx.stroke(); // 머리띠
+ }
+ // 방패 (앞팔)
+ if(shieldSize==='large'){
+  ctx.fillStyle='#7a2a24';ctx.beginPath();ctx.roundRect(11,-58,10,32,4);ctx.fill();
+  ctx.fillStyle='#d4a017';ctx.beginPath();ctx.arc(16,-42,2.5,0,7);ctx.fill();
+ }else if(shieldSize==='small'){
+  ctx.fillStyle='#7a2a24';ctx.beginPath();ctx.arc(15,-44,8,0,7);ctx.fill();
+  ctx.strokeStyle='#d4a017';ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(15,-44,5,0,7);ctx.stroke();
+ }else if(f.netCd<=0||f.netCd>3.5){ // 그물 들고 있음(대기 시)
+  ctx.strokeStyle='rgba(200,190,160,.7)';ctx.lineWidth=1;
+  for(let i=0;i<3;i++){ctx.beginPath();ctx.moveTo(12,-46+i*4);ctx.quadraticCurveTo(20,-40+i*5,16,-26+i*3);ctx.stroke();}
+ }
+ // 무기 팔
+ ctx.save();
+ ctx.translate(-3,-50);
+ ctx.rotate(f.armA);
+ ctx.strokeStyle=skin;ctx.lineWidth=5;ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(14,4);ctx.stroke();
+ ctx.translate(14,4);
+ const lgd=g.weapon&&g.weapon.grade>=4;
+ if(vis==='gladius'||vis==='spatha'||vis==='pugio'){
+  const L=vis==='spatha'?40:vis==='pugio'?15:26;
+  ctx.fillStyle=lgd?'#e8d48a':'#c8c8ce';
+  ctx.beginPath();ctx.moveTo(0,-2);ctx.lineTo(L,-1);ctx.lineTo(L+4,1);ctx.lineTo(L,3);ctx.lineTo(0,4);ctx.closePath();ctx.fill();
+  if(vis==='spatha'){ctx.strokeStyle='#8a8a90';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(2,1);ctx.lineTo(L-2,1);ctx.stroke();}
+  ctx.fillStyle='#5a4326';ctx.fillRect(-4,-3,5,8);
+ }else if(vis==='sica'){
+  ctx.strokeStyle='#c8c8ce';ctx.lineWidth=4;ctx.beginPath();ctx.moveTo(0,0);ctx.quadraticCurveTo(18,2,26,-8);ctx.stroke();
+  ctx.fillStyle='#5a4326';ctx.fillRect(-4,-3,5,7);
+ }else{ // trident
+  ctx.strokeStyle='#8a7448';ctx.lineWidth=3.5;ctx.beginPath();ctx.moveTo(-14,4);ctx.lineTo(38,-4);ctx.stroke();
+  ctx.strokeStyle=lgd?'#e8d48a':'#c8c8ce';ctx.lineWidth=2.5;
+  ctx.beginPath();ctx.moveTo(38,-4);ctx.lineTo(48,-6);ctx.moveTo(36,-8);ctx.lineTo(46,-12);ctx.moveTo(38,-1);ctx.lineTo(48,1);ctx.stroke();
+ }
+ ctx.restore();
+ // 그물에 묶임 표시
+ if(f.entangle>0){
+  ctx.strokeStyle='rgba(210,200,170,.85)';ctx.lineWidth=1.4;
+  for(let i=0;i<4;i++){ctx.beginPath();ctx.moveTo(-14,-60+i*10);ctx.quadraticCurveTo(0,-56+i*10,14,-60+i*10);ctx.stroke();}
+  for(let i=0;i<4;i++){ctx.beginPath();ctx.moveTo(-12+i*8,-64);ctx.lineTo(-10+i*8,-24);ctx.stroke();}
+ }
+ // 피격 섬광
+ if(f.flash>0){ctx.globalCompositeOperation='lighter';ctx.fillStyle=`rgba(255,80,60,${f.flash*0.5})`;ctx.beginPath();ctx.roundRect(-12,-72,24,72,6);ctx.fill();ctx.globalCompositeOperation='source-over';}
+ ctx.restore();
+ // 이름표 + 바
+ if(!f.down){
+  ctx.save();ctx.translate(f.x,FLOOR-92);
+  ctx.font='600 12px "Noto Serif KR"';ctx.textAlign='center';
+  ctx.fillStyle=f.side===1?'#ffd97a':'#e8dcc0';
+  ctx.fillText(g.name,0,0);
+  ctx.fillStyle='#100c08';ctx.fillRect(-26,4,52,5);
+  ctx.fillStyle='#c33';ctx.fillRect(-26,4,52*clamp(f.hp/f.mhp,0,1),5);
+  ctx.fillStyle='#100c08';ctx.fillRect(-26,10,52,3);
+  ctx.fillStyle='#d4a017';ctx.fillRect(-26,10,52*clamp(f.stam/100,0,1),3);
+  ctx.restore();
+ }
+}
+function drawHud(){
+ // 관중 열기 게이지
+ ctx.save();
+ ctx.font='11px "Noto Sans KR"';ctx.fillStyle='#a8987a';ctx.textAlign='left';
+ ctx.fillText('관중 열기',14,H-14);
+ ctx.fillStyle='#100c08';ctx.fillRect(80,H-23,180,10);
+ const grad=ctx.createLinearGradient(80,0,260,0);grad.addColorStop(0,'#8a6a12');grad.addColorStop(1,'#ff6b3d');
+ ctx.fillStyle=grad;ctx.fillRect(80,H-23,180*arena.excite,10);
+ ctx.textAlign='right';ctx.fillStyle='#a8987a';
+ ctx.fillText(Math.floor(arena.t)+'초',W-14,H-14);
+ ctx.restore();
+ // 함성 플로트
+ arena.floats.forEach(fl=>{
+  ctx.save();ctx.globalAlpha=clamp(fl.life,0,1);
+  ctx.font='700 15px "Noto Sans KR"';ctx.textAlign='center';ctx.fillStyle='#ffd97a';
+  ctx.fillText(fl.t,fl.x,fl.y);ctx.restore();
+ });
+ // 큰 텍스트
+ if(arena.bigT>0){
+  ctx.save();
+  const a=clamp(arena.bigT/0.4,0,1)*clamp((2.2-arena.bigT)/0.25,0,1);
+  ctx.globalAlpha=a;
+  ctx.font='900 54px Cinzel, serif';ctx.textAlign='center';
+  ctx.fillStyle=arena.bigText==='IVGVLA!'?'#c33':'#ffd97a';
+  ctx.shadowColor='rgba(0,0,0,.8)';ctx.shadowBlur=18;
+  ctx.fillText(arena.bigText,W/2,190);
+  ctx.restore();
+ }
+ if(arena.phase==='intro'){
+  ctx.save();ctx.globalAlpha=clamp(1.6-arena.phaseT,0,1);
+  ctx.font='700 26px Cinzel, serif';ctx.textAlign='center';ctx.fillStyle='#e8dcc0';
+  ctx.fillText('AVE · PVGNATE',W/2,200);
+  ctx.restore();
+ }
+}
+function draw(){
+ ctx.save();
+ if(arena.shake>0)ctx.translate(R(-arena.shake,arena.shake),R(-arena.shake,arena.shake));
+ drawArenaBg();
+ // 뒤에 있는(멀리) 쪽 먼저
+ const fs=[...arena.f].sort((a,b)=>a.x-b.x);
+ // 파티클(바닥 핏자국 먼저)
+ arena.particles.filter(p=>!p.g&&p.c.startsWith('#8f')).forEach(p=>{ctx.fillStyle=p.c;ctx.globalAlpha=clamp(p.life,0,0.8);ctx.beginPath();ctx.arc(p.x,p.y,p.r*1.4,0,7);ctx.fill();ctx.globalAlpha=1;});
+ fs.forEach(drawFighter);
+ arena.particles.filter(p=>p.g).forEach(p=>{ctx.fillStyle=p.c;ctx.globalAlpha=clamp(p.life*1.5,0,1);ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,7);ctx.fill();ctx.globalAlpha=1;});
+ drawHud();
+ ctx.restore();
+}
+function loop(now){
+ if(!arena)return;
+ let dt=Math.min(0.05,(now-lastT)/1000);lastT=now;
+ if(!arena.over){for(let i=0;i<arena.speed;i++)stepSim(dt);}
+ draw();
+ requestAnimationFrame(loop);
+}
+
+/* ═══════════ 인트로 — 바로의 안내 ═══════════ */
+const INTRO_STEPS=[
+ {t:`오셨습니까, 도련님. …아니, 이제는 '주인님'이라 불러야겠지요.
+
+선대께서 그리 급히 가실 줄은 몰랐습니다. 열병은 사흘 만에 그분을 데려갔고, 남기신 것이라곤 이 낡은 루두스와 빚 문서 몇 장… 그리고 저, 바로뿐입니다.`,b:'…자네는 누구지?'},
+ {t:`스무 해를 모래 위에서 싸웠습니다. 목검을 받아 자유의 몸이 된 뒤로는 선대의 독토르 — 수석 교관으로 일했지요.
+
+이 흉터들이 제 경력서입니다. 왼눈은 트라키아 놈의 시카가 가져갔습니다만… 남은 한쪽이 두 배로 밝아졌으니 손해는 아닙니다.`,b:'상황을 말해보게'},
+ {t:`남은 검투사는 둘. 금고에는 500데나리우스. 매주 사내들 밥값과 급여가 나갑니다 — 자금이 바닥나면 채권자들이 문을 부술 겁니다.
+
+사내들은 [훈련장]에서 단련시키고, [게시판]의 계약을 골라 모래 위로 내보내십시오. 훈련이 혹독할수록 빨리 자랍니다만, 몸이 부서지는 것도 빠르지요. 그 균형을 재는 것이 라니스타의 일입니다.`,b:'경기는 어떻게 되나'},
+ {t:`명심하십시오 — 여기서 승패를 정하는 건 검이 아니라 '관중'입니다.
+
+쓰러진 자의 목숨은 관중의 엄지가 정합니다. 사랑받는 검투사는 져도 살아 돌아오고, 재미없는 자는 이겨도 언젠가 버려집니다. 그러니 화려하게 싸우게 하십시오.
+
+그리고… 죽은 자의 장비는 모래가 삼킵니다. 좋은 무기일수록, 누구 손에 쥐여 줄지 신중히 정하십시오. 사내마다 맞는 무기가 따로 있는 법입니다.`,b:'우리의 목표는?'},
+ {t:`플라비우스 원형경기장 — 사람들이 '콜로세움'이라 부르는 그곳이 올해 문을 열었습니다. 8만 관중. 제국의 심장.
+
+양성소의 명성이 55에 이르면 초청장이 올 겁니다. 그 모래 위에 우리 검투사를 세우는 것 — 그것이 선대의 꿈이었습니다.
+
+이제는… 주인님의 꿈이기도 하길 바랍니다.`,b:null}
+];
+let introStep=0,introTimer=null;
+function introRenderDots(){
+ $('introStepDots').innerHTML=INTRO_STEPS.map((_,i)=>`<i class="${i<=introStep?'on':''}"></i>`).join('');
+}
+function introType(text,done){
+ const el=$('introText');
+ clearInterval(introTimer);
+ const reduce=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+ if(reduce){el.textContent=text;done();return;}
+ let i=0;el.innerHTML='<span class="cursor">&nbsp;</span>';
+ introTimer=setInterval(()=>{
+  i+=2;
+  if(i>=text.length){clearInterval(introTimer);introTimer=null;el.textContent=text;done();}
+  else el.innerHTML=text.slice(0,i).replace(/\n/g,'<br>')+'<span class="cursor">&nbsp;</span>';
+ },26);
+}
+function introShowStep(){
+ introRenderDots();
+ const st=INTRO_STEPS[introStep];
+ const acts=$('introActs');
+ acts.querySelectorAll('button').forEach(b=>b.remove());
+ const finish=()=>{
+  if(st.b===null){
+   const b1=document.createElement('button');b1.className='primary';b1.textContent='훈련장부터 보지';
+   b1.onclick=()=>{endIntro();go('roster');};
+   const b2=document.createElement('button');b2.textContent='알겠네, 바로';
+   b2.onclick=()=>endIntro();
+   acts.append(b1,b2);b1.focus();
+  }else{
+   const b=document.createElement('button');b.className='primary';b.textContent=st.b+' ▸';
+   b.onclick=()=>{introStep++;introShowStep();};
+   acts.append(b);b.focus();
+  }
+ };
+ introType(st.t,finish);
+}
+function skipTyping(){
+ if(introTimer){clearInterval(introTimer);introTimer=null;
+  $('introText').textContent=INTRO_STEPS[introStep].t;
+  introShowStep2();}
+}
+function introShowStep2(){ // 타이핑 즉시 완료 시 버튼만 재생성
+ const st=INTRO_STEPS[introStep];
+ const acts=$('introActs');
+ if(acts.querySelector('button'))return;
+ if(st.b===null){
+  const b1=document.createElement('button');b1.className='primary';b1.textContent='훈련장부터 보지';
+  b1.onclick=()=>{endIntro();go('roster');};
+  const b2=document.createElement('button');b2.textContent='알겠네, 바로';
+  b2.onclick=()=>endIntro();
+  acts.append(b1,b2);b1.focus();
+ }else{
+  const b=document.createElement('button');b.className='primary';b.textContent=st.b+' ▸';
+  b.onclick=()=>{introStep++;introShowStep();};
+  acts.append(b);b.focus();
+ }
+}
+function showIntro(){
+ introStep=0;
+ $('introBack').classList.add('on');
+ introShowStep();
+}
+function endIntro(){
+ clearInterval(introTimer);introTimer=null;
+ $('introBack').classList.remove('on');
+}
+$('introSkip').onclick=()=>endIntro();
+$('introText').onclick=skipTyping;
+$('introBack').addEventListener('keydown',e=>{if(e.key==='Escape')endIntro();});
+
+/* ═══════════ 초기화 ═══════════ */
+function init(){
+ S=newState();
+ const a=genGladiator(1.05),b=genGladiator(0.85);
+ S.gladiators=[a,b];selGlad=a.id;
+ refreshMarket();refreshContracts();
+ S.log=['당신은 아버지의 빚과 함께 이 낡은 루두스를 물려받았다.','검투사 둘, 데나리우스 500. 여기서부터 시작이다.'];
+ S.chron=['1주차 — 루두스를 물려받다.'];
+ go('map');
+ showIntro();
+}
+init();
+</script>
+</body>
+</html>
