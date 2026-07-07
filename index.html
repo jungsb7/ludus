@@ -35,9 +35,9 @@ header{border-bottom:1px solid var(--stone-hi);padding:14px 20px;display:flex;al
 .brand h1{font-family:var(--font-roman);font-weight:900;font-size:26px;letter-spacing:.14em;color:var(--gold);text-shadow:0 0 24px rgba(212,160,23,.25)}
 .brand .sub{font-size:12px;color:var(--parch-dim)}
 .hstats{display:flex;gap:8px;margin-left:auto;flex-wrap:wrap}
-.hstat{background:var(--stone);border:1px solid var(--stone-hi);padding:5px 12px;border-radius:3px;display:flex;gap:7px;align-items:baseline}
-.hstat .k{font-size:11px;color:var(--parch-dim)}
-.hstat .v{font-weight:700;color:var(--gold);font-variant-numeric:tabular-nums}
+.hstat{background:var(--stone);border:1px solid var(--stone-hi);padding:5px 12px;border-radius:3px;display:flex;flex-wrap:wrap;align-items:baseline;row-gap:3px;column-gap:7px}
+.hstat .k{font-size:11px;color:var(--parch-dim);white-space:nowrap}
+.hstat .v{font-weight:700;color:var(--gold);font-variant-numeric:tabular-nums;white-space:nowrap}
 .hstat .v.neg{color:var(--blood)}
 button{font-family:var(--font-ui);cursor:pointer;background:var(--stone);color:var(--parchment);border:1px solid var(--stone-hi);
   padding:7px 14px;border-radius:3px;font-size:13px;transition:border-color .15s,background .15s}
@@ -87,6 +87,21 @@ h2 .rn{font-family:var(--font-roman);color:var(--gold);font-size:15px;margin-rig
 .lede{color:var(--parch-dim);font-size:13px;margin-bottom:16px}
 .panel{background:var(--stone);border:1px solid var(--stone-hi);border-radius:4px;padding:14px 16px;margin-bottom:12px}
 .panel h3{font-size:14px;font-weight:700;color:var(--gold);margin-bottom:10px;letter-spacing:.03em}
+/* §2 계약 카드 — 좌측 컬러바 + 접힘/펼침 */
+.ccard{position:relative;padding-left:20px;cursor:default}
+.ccard>.cbar{position:absolute;left:0;top:0;bottom:0;width:4px;border-radius:4px 0 0 4px;background:var(--stone-hi)}
+.ccard.evt-beast>.cbar{background:#c98a5a}
+.ccard.evt-rival>.cbar{background:#9a3a3a}
+.ccard.evt-special>.cbar{background:#7a4a8a}
+.ccard.evt-champ>.cbar{background:var(--gold)}
+.ccard .chead{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;cursor:pointer}
+.ccard .chead .ctitle{display:inline-flex;align-items:center;gap:5px;font-size:14px;font-weight:700;color:var(--gold);min-width:0}
+.ccard .cmetrics{display:flex;align-items:center;gap:8px;flex:none;font-size:11px;color:#b8a06a}
+.ccard .cmetrics .cm{display:inline-flex;align-items:center;gap:2px;white-space:nowrap}
+.ccard .cchevron{flex:none;transition:transform .18s;color:#8a7a5a;font-size:11px}
+.ccard.open .cchevron{transform:rotate(90deg)}
+.ccard .cbody{margin-top:6px}
+.ccard .cfoot{margin-top:8px}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
 .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
@@ -126,6 +141,13 @@ td{padding:7px 8px;border-bottom:1px solid rgba(58,46,29,.5)}
 .arena-ctl{display:flex;gap:8px;align-items:center;margin:10px 0;flex-wrap:wrap}
 /* ── 전투 스킬 HUD — 아이콘 + 시계방향 쿨다운 와이프 ── */
 #skillHud{position:absolute;left:12px;bottom:12px;display:flex;gap:9px;z-index:15;pointer-events:none}
+/* §3 전투 지속 배지 — 좌상단, 날씨·라이벌·베나티오 맥락 상시 표시 */
+#arenaBadges{position:absolute;left:12px;top:12px;display:flex;flex-direction:column;gap:5px;z-index:15;pointer-events:none}
+#arenaBadges .abadge{display:inline-flex;align-items:center;gap:5px;background:rgba(8,6,4,.55);border:1px solid #5a4a2e;border-radius:4px;padding:3px 8px;font-size:11px;color:#cdbfa0;backdrop-filter:blur(2px)}
+#arenaBadges .abadge.rain{border-color:#4a5866;color:#9ab0c4}
+#arenaBadges .abadge.rival{border-color:#8a3a3a;color:#e08a8c}
+#arenaBadges .abadge.beast{border-color:#7a5238;color:#c98a5a}
+@media(max-width:600px){#arenaBadges{left:8px;top:8px;gap:4px}#arenaBadges .abadge{font-size:10px;padding:2px 6px}}
 .shSlot{position:relative;width:48px;height:48px;border-radius:10px;overflow:hidden;
   filter:drop-shadow(0 2px 6px rgba(0,0,0,.6))}
 .shSlot .skillicon{width:100%!important;height:100%!important;filter:none}
@@ -143,75 +165,79 @@ td{padding:7px 8px;border-bottom:1px solid rgba(58,46,29,.5)}
 /* ── 스킬 컷인 연출 (INCITATIO) v2 — 지속시간 --cidur 기반 %키프레임, 잘림 방지 풀블리드 ── */
 #cutinLayer{position:absolute;inset:0;overflow:hidden;pointer-events:none;display:none;z-index:20;--cidur:2s}
 #cutinLayer.on{display:block}
-#cutinPanel{position:absolute;inset:0;opacity:0;
+#cutinPanel{position:absolute;left:0;right:0;top:17%;bottom:17%;opacity:0;overflow:hidden;
   background:linear-gradient(165deg,#8a1a1e,#6e1216 46%,#3a0c0e 100%);
-  box-shadow:inset 0 0 70px rgba(0,0,0,.55)}
+  box-shadow:inset 0 0 70px rgba(0,0,0,.55),0 6px 28px rgba(0,0,0,.5)}
+/* 풀 컷인 시 밴드 밖 게임화면 살짝 어둡게 — 집중 */
+#cutinLayer:not(.mini).on::before{content:'';position:absolute;inset:0;background:rgba(8,4,2,.42);
+  animation:ciSoft var(--cidur) linear forwards}
 #cutinPanel::before{content:'';position:absolute;left:0;right:0;top:0;height:4px;
   background:linear-gradient(90deg,transparent,#d4a017 18%,#ffdf8a 50%,#d4a017 82%,transparent)}
 #cutinPanel::after{content:'';position:absolute;left:0;right:0;bottom:0;height:4px;
   background:linear-gradient(90deg,transparent,#d4a017 18%,#ffdf8a 50%,#d4a017 82%,transparent)}
-#cutinLayer.mini #cutinPanel{inset:auto 0 0 0;height:30%;
+#cutinLayer.mini #cutinPanel{inset:auto 0 0 0;top:auto;height:26%;overflow:hidden;
   background:linear-gradient(90deg,#6a1316 0%,#3a0c0e 78%,rgba(58,12,14,0) 100%);box-shadow:none}
 #cutinLayer.mini #cutinPanel::before{height:2.5px;background:linear-gradient(90deg,#d4a017,#ffdf8a 30%,transparent 92%)}
 #cutinLayer.mini #cutinPanel::after{display:none}
 #cutinLayer.on #cutinPanel{animation:ciPanel var(--cidur) ease-out forwards}
 @keyframes ciPanel{
  0%{opacity:0;transform:translateX(5%)}
- 11%{opacity:1;transform:translateX(0)}
- 86%{opacity:1;transform:translateX(0)}
+ 8%{opacity:1;transform:translateX(0)}
+ 90%{opacity:1;transform:translateX(0)}
  100%{opacity:0;transform:translateX(-3%)}}
-.ciRays{position:absolute;top:50%;left:66%;width:1200px;height:1200px;transform:translate(-50%,-50%);
+.ciRays{position:absolute;top:50%;left:66%;width:900px;height:900px;transform:translate(-50%,-50%);
   background:repeating-conic-gradient(from 0deg at 50% 50%, rgba(255,255,255,.06) 0deg 3deg, transparent 3deg 9deg, rgba(255,217,122,.08) 9deg 11deg, transparent 11deg 18deg);
-  opacity:0;animation:ciRays var(--cidur) linear forwards}
+  opacity:0}
+#cutinLayer.on .ciRays{animation:ciRays var(--cidur) linear forwards}
 #cutinLayer.mini .ciRays{left:10%;top:100%;width:800px;height:800px}
 @keyframes ciRays{
  0%{opacity:0;transform:translate(-50%,-50%) rotate(0)}
- 14%{opacity:.75}
- 86%{opacity:.55;transform:translate(-50%,-50%) rotate(16deg)}
+ 9%{opacity:.75}
+ 90%{opacity:.55;transform:translate(-50%,-50%) rotate(16deg)}
  100%{opacity:0;transform:translate(-50%,-50%) rotate(19deg)}}
-.ciPortrait{position:absolute;right:3%;bottom:0;height:94%;aspect-ratio:3/4;opacity:0;
-  animation:ciPt var(--cidur) cubic-bezier(.22,.8,.3,1) forwards}
-#cutinLayer.mini .ciPortrait{height:88%;bottom:6%;right:auto;left:2.5%;aspect-ratio:1/1}
+.ciPortrait{position:absolute;right:3.5%;bottom:0;height:96%;aspect-ratio:3/4;opacity:0}
+#cutinLayer.on .ciPortrait{animation:ciPt var(--cidur) cubic-bezier(.22,.8,.3,1) forwards}
+#cutinLayer.mini .ciPortrait{height:76%;bottom:12%;right:auto;left:2.5%;aspect-ratio:1/1}
 .ciPortrait .pt{width:100%;height:100%;display:block}
 .ciPortrait svg{width:100%;height:100%;filter:drop-shadow(-7px 5px 0 rgba(16,6,3,.8)) drop-shadow(0 0 4px rgba(212,160,23,.7))}
 #cutinLayer.mini .ciPortrait svg{border-radius:50%;background:rgba(20,8,4,.4);
   filter:none;outline:2.5px solid #d4a017;outline-offset:-1px}
 @keyframes ciPt{
  0%{opacity:0;transform:translateX(46px)}
- 6%{opacity:0;transform:translateX(46px)}
- 22%{opacity:1;transform:translateX(0)}
- 87%{opacity:1;transform:translateX(-6px)}
+ 4%{opacity:0;transform:translateX(46px)}
+ 12%{opacity:1;transform:translateX(0)}
+ 91%{opacity:1;transform:translateX(-6px)}
  100%{opacity:0;transform:translateX(-14px)}}
 .ciFade{position:absolute;right:30%;top:0;width:22%;height:100%;
-  background:linear-gradient(90deg,#5e1013,rgba(94,16,19,0));pointer-events:none;opacity:0;
-  animation:ciSoft var(--cidur) linear forwards}
+  background:linear-gradient(90deg,#5e1013,rgba(94,16,19,0));pointer-events:none;opacity:0}
+#cutinLayer.on .ciFade{animation:ciSoft var(--cidur) linear forwards}
 #cutinLayer.mini .ciFade{display:none}
-@keyframes ciSoft{0%{opacity:0}14%{opacity:1}86%{opacity:1}100%{opacity:0}}
-.ciText{position:absolute;left:5.5%;top:50%;max-width:58%;transform:translateY(-50%) rotate(-3deg);opacity:0;
-  animation:ciTx var(--cidur) cubic-bezier(.2,.8,.3,1) forwards}
-#cutinLayer.mini .ciText{left:14%;top:auto;bottom:7%;max-width:80%;transform:rotate(0)}
+@keyframes ciSoft{0%{opacity:0}9%{opacity:1}90%{opacity:1}100%{opacity:0}}
+.ciText{position:absolute;left:5.5%;top:50%;max-width:58%;transform:translateY(-50%) rotate(-3deg);opacity:0}
+#cutinLayer.on .ciText{animation:ciTx var(--cidur) cubic-bezier(.2,.8,.3,1) forwards}
+#cutinLayer.mini .ciText{left:13%;top:auto;bottom:6%;max-width:80%;transform:rotate(0)}
 @keyframes ciTx{
  0%{opacity:0;transform:translateY(calc(-50% + 16px)) rotate(-3deg) scale(1.05)}
- 9%{opacity:0}
- 24%{opacity:1;transform:translateY(-50%) rotate(-3deg) scale(1)}
- 86%{opacity:1;transform:translateY(calc(-50% - 4px)) rotate(-3deg) scale(1)}
+ 5%{opacity:0}
+ 13%{opacity:1;transform:translateY(-50%) rotate(-3deg) scale(1)}
+ 90%{opacity:1;transform:translateY(calc(-50% - 4px)) rotate(-3deg) scale(1)}
  100%{opacity:0;transform:translateY(calc(-50% - 10px)) rotate(-3deg) scale(1)}}
 #cutinLayer.mini.on .ciText{animation-name:ciTxMini}
 @keyframes ciTxMini{
  0%{opacity:0;transform:translateY(14px)}
- 12%{opacity:0}
- 30%{opacity:1;transform:translateY(0)}
- 86%{opacity:1}
+ 7%{opacity:0}
+ 17%{opacity:1;transform:translateY(0)}
+ 90%{opacity:1}
  100%{opacity:0;transform:translateY(-6px)}}
-.ciLat{font-family:'Cinzel',serif;font-weight:900;font-size:clamp(26px,6vw,56px);letter-spacing:.09em;color:#f4e6b8;
+.ciLat{font-family:'Cinzel',serif;font-weight:900;font-size:clamp(23px,4.8vw,44px);letter-spacing:.09em;color:#f4e6b8;
   text-shadow:2px 2px 0 #2a0a0c,0 0 20px rgba(255,217,122,.35);line-height:1.05;text-transform:uppercase;
   border-bottom:2px solid rgba(212,160,23,.75);padding-bottom:8px;display:inline-block}
 #cutinLayer.mini .ciLat{display:none}
-.ciKo{font-family:'Noto Serif KR',serif;font-weight:700;font-size:clamp(17px,2.8vw,26px);color:#ffd97a;margin-top:9px;text-shadow:1px 1px 0 #2a0a0c}
-#cutinLayer.mini .ciKo{font-size:clamp(18px,3vw,26px);margin-top:0}
-.ciKo .ciSub{display:block;font-weight:400;font-size:clamp(12px,1.8vw,15px);color:#d8b47e;margin-top:3px;text-shadow:none}
+.ciKo{font-family:'Noto Serif KR',serif;font-weight:700;font-size:clamp(15px,2.3vw,22px);color:#ffd97a;margin-top:9px;text-shadow:1px 1px 0 #2a0a0c}
+#cutinLayer.mini .ciKo{font-size:clamp(14px,2.1vw,19px);margin-top:0}
+.ciKo .ciSub{display:block;font-weight:400;font-size:clamp(10.5px,1.4vw,12.5px);color:#d8b47e;margin-top:2px;text-shadow:none}
 @media(prefers-reduced-motion:reduce){
- #cutinLayer.on #cutinPanel,.ciRays,.ciPortrait,.ciFade,.ciText{animation-name:ciSoft!important;animation-timing-function:linear!important}
+ #cutinLayer.on #cutinPanel,#cutinLayer.on .ciRays,#cutinLayer.on .ciPortrait,#cutinLayer.on .ciFade,#cutinLayer.on .ciText{animation-name:ciSoft!important;animation-timing-function:linear!important}
 }
 
 /* ── 모달 ── */
@@ -221,6 +247,10 @@ td{padding:7px 8px;border-bottom:1px solid rgba(58,46,29,.5)}
   box-shadow:0 20px 60px rgba(0,0,0,.7)}
 #modal h3{font-family:var(--font-serif);font-size:18px;color:var(--gold);margin-bottom:10px}
 #modal .body{font-family:var(--font-serif);font-size:14px;margin-bottom:16px;white-space:pre-line}
+/* 경기 결과 아이콘 행 */
+.fres{display:flex;gap:7px;align-items:baseline;padding:2px 0;font-size:13.5px;line-height:1.5}
+.fres .fres-i{flex:0 0 auto}
+.fres.fres-n{color:var(--parchment)}
 #modal .acts{display:flex;gap:8px;flex-direction:column}
 #modal .acts button{text-align:left;padding:10px 14px}
 textarea{width:100%;background:var(--umbra);color:var(--parchment);border:1px solid var(--stone-hi);border-radius:3px;padding:8px;font-size:12px;font-family:monospace;min-height:90px}
@@ -230,8 +260,12 @@ textarea{width:100%;background:var(--umbra);color:var(--parchment);border:1px so
 .weeklog p{padding:2px 0;border-bottom:1px dashed rgba(58,46,29,.4)}
 
 /* ── 양성소 전경(맵) ── */
-#mapWrap,#cityWrap{border:2px solid var(--stone-hi);border-radius:4px;overflow:hidden;background:#0e0a06;box-shadow:0 0 0 1px #0a0704, inset 0 0 60px rgba(0,0,0,.5)}
+#mapWrap,#cityWrap{position:relative;border:2px solid var(--stone-hi);border-radius:4px;overflow:hidden;background:#0e0a06;box-shadow:0 0 0 1px #0a0704, inset 0 0 60px rgba(0,0,0,.5)}
 #mapWrap svg,#cityWrap svg{display:block;width:100%;height:auto}
+/* 우천 오버레이 — 전투 화면과 동일 canvas 빗줄기 모델. SVG 지도 위에 겹침 */
+.rain-cv{position:absolute;left:0;top:0;width:100%;height:auto;pointer-events:none;opacity:0;transition:opacity .5s;z-index:5}
+.raining .rain-cv{opacity:1}
+.raining::after{content:'';position:absolute;left:0;top:0;width:100%;height:100%;pointer-events:none;background:rgba(40,54,72,.16);z-index:4}
 .bld{cursor:pointer;outline:none}
 .bld .glow{opacity:0;transition:opacity .25s}
 .bld:hover .glow,.bld:focus-visible .glow{opacity:1}
@@ -322,6 +356,25 @@ textarea{width:100%;background:var(--umbra);color:var(--parchment);border:1px so
 /* ── 훈련장 UI ── */
 #rosterLayout{grid-template-columns:320px 1fr;align-items:start}
 .sechd{display:flex;align-items:center;gap:10px;margin:18px 0 10px;font-size:12px;font-weight:700;letter-spacing:.14em;color:var(--gold);text-transform:uppercase}
+/* §1 로스터 상세 세그먼트 탭 */
+.rtabs{display:flex;border:1px solid var(--stone-hi);border-radius:4px;overflow:hidden;background:var(--umbra);margin:10px 0}
+.rtabs button{flex:1;border:none;background:transparent;padding:8px 6px;font-size:12.5px;color:var(--parch-dim);letter-spacing:.02em}
+.rtabs button+button{border-left:1px solid var(--stone-hi)}
+.rtabs button.on{background:linear-gradient(180deg,#8a6a12,#6d5310);color:#fff;font-weight:700}
+.rsummary{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:6px;padding:7px 9px;background:rgba(200,164,86,.06);border:1px solid var(--stone-hi);border-radius:3px;font-size:12px}
+.rsummary .rs-badge{cursor:pointer}
+.rsummary .rs-sep{color:#5a4a2e}
+/* 장비 아이콘 할당 그리드 — 장착 시 회색 오버레이 + E 배지 */
+.eqgrid{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0 4px}
+.eqslot{position:relative;cursor:pointer;border-radius:6px;transition:transform .1s}
+.eqslot:hover{transform:translateY(-2px)}
+.eqslot.equipped::after{content:'E';position:absolute;top:-4px;right:-4px;width:16px;height:16px;
+ display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:#16110c;
+ background:var(--gold);border-radius:50%;box-shadow:0 0 0 1.5px #16110c;letter-spacing:0}
+.eqslot .eqlabel{text-align:center;font-size:9.5px;color:var(--parch-dim);margin-top:2px;max-width:52px;
+ overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.eqslot.equipped .eqlabel{color:var(--gold)}
+.eqslot.eqbase .itemicon{border-style:dashed}
 .sechd .lat{font-family:var(--font-roman);font-weight:400;font-size:11px;color:var(--parch-dim);letter-spacing:.2em}
 .sechd::before,.sechd::after{content:'';height:1px;background:var(--stone-hi)}
 .sechd::before{width:14px;background:linear-gradient(90deg,transparent,var(--stone-hi))}
@@ -346,7 +399,28 @@ textarea{width:100%;background:var(--umbra);color:var(--parchment);border:1px so
 .rtag.tr{border-color:#4e6a3a;color:#9dc183}
 .rtag.rs{border-color:#3f5a6e;color:#8db4c9}
 .rtag.hurt{border-color:#6b1114;color:#e08a8c}
+.uic{display:inline-block;flex:none}
+/* §5 공통 배지 규격 — rankb·favb·fameb·이벤트 배지가 승계 */
+.bdg,.rankb,.favb,.fameb{display:inline-flex;align-items:center;gap:3px;font-size:10.5px;border:1px solid #5a4a2e;border-radius:3px;padding:0 6px;letter-spacing:.4px;vertical-align:1px;line-height:1.7}
+.bdg.sm,.rankb.sm,.favb.sm,.fameb.sm{font-size:9.5px;padding:0 4px}
+.rankb{color:#b8a06a}
+.rankb.md{border-color:#6e5a32;color:#cdb375}
+.rankb.hi{border-color:var(--gold);color:var(--gold);box-shadow:0 0 6px rgba(200,164,86,.25)}
+.favb{border-color:#7a4a52;color:#d09aa4}
+.favb.md{border-color:#9a5560;color:#e0a8b2}
+.favb.hi{border-color:#e08a98;color:#f0b0bc;box-shadow:0 0 6px rgba(224,138,152,.28)}
+.favb.lo{border-color:#4a4038;color:#8a7a6a}
+.fameb{border-color:#7a682e;color:#cdb375}
+.fameb.hi{border-color:var(--gold);color:var(--gold);box-shadow:0 0 6px rgba(200,164,86,.25)}
+/* 이벤트/상태 기능군 색 (§5) */
+.bdg.evt-beast{border-color:#7a5238;color:#c98a5a}
+.bdg.evt-rival{border-color:#8a3a3a;color:#e08a8c}
+.bdg.evt-special{border-color:#6a4278;color:#b088c8}
+.bdg.evt-champ{border-color:var(--gold);color:var(--gold)}
+.bdg.st-info{border-color:#4a5866;color:#8a9ab0}
 .rbar{height:3px;background:#100c08;border-radius:2px;overflow:hidden;margin-top:5px}
+/* §4 헤더 명성/검투사 뱃지 */
+.hstat .laurel-done{display:inline-flex;align-items:center;gap:3px;color:var(--gold);font-size:11px}
 .rbar i{display:block;height:100%;background:linear-gradient(90deg,#4e6a3a,#7fa35c)}
 @media(max-width:820px){.grid2,.grid3,#rosterLayout{grid-template-columns:1fr}.brand h1{font-size:20px}main{padding:12px}.trgrid{grid-template-columns:repeat(2,1fr)}}
 @media(prefers-reduced-motion:reduce){*{transition:none!important}}
@@ -359,6 +433,9 @@ main{padding-left:max(20px,env(safe-area-inset-left));padding-right:max(20px,env
  /* 씬 지도: 축소 대신 가로 스와이프 팬 — 현판 글자·건물 터치 크기 유지 */
  #mapWrap,#cityWrap{overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch}
  #mapWrap svg,#cityWrap svg{min-width:780px}
+ /* 빗줄기 canvas도 지도 SVG와 동일 폭 — 가로 스크롤 시 어긋남·잘림 방지 */
+ #mapWrap .rain-cv,#cityWrap .rain-cv{min-width:780px;width:100%;height:auto}
+ #mapWrap.raining::after,#cityWrap.raining::after{min-width:780px}
 }
 @media(max-width:430px){
  header{padding:10px 12px 10px max(12px,env(safe-area-inset-left));gap:8px 10px}
@@ -394,9 +471,10 @@ main{padding-left:max(20px,env(safe-area-inset-left));padding-right:max(20px,env
 <header>
   <div class="brand"><h1>LVDVS</h1><span class="sub">검투사 양성소 · 서기 80년, 로마</span></div>
   <div class="hstats">
-    <div class="hstat"><span class="k">주차</span><span class="v" id="hWeek">1</span></div>
-    <div class="hstat"><span class="k">데나리우스</span><span class="v" id="hMoney">500</span></div>
-    <div class="hstat"><span class="k">명성</span><span class="v" id="hRep">5</span></div>
+    <div class="hstat"><span class="v" id="hWeek">1</span><span class="k">주차</span></div>
+    <div class="hstat"><span class="k">날씨</span><span class="v" id="hWeather" style="display:inline-flex;align-items:center;gap:4px;font-size:14px">맑음</span></div>
+    <div class="hstat"><span class="k" style="display:inline-flex;align-items:center"><svg class="uic" width="13" height="13" viewBox="0 0 24 24" aria-hidden="true" style="vertical-align:-1px"><use href="#uic-denarius"/></svg></span><span class="v" id="hMoney">500</span></div>
+    <div class="hstat"><span class="k">명성</span><span class="v" id="hRep">5</span><span id="hRepBar"></span></div>
     <div class="hstat"><span class="k">검투사</span><span class="v" id="hCount">2/4</span></div>
   </div>
   <button class="primary" id="btnNextWeek">다음 주 ▸</button>
@@ -409,7 +487,7 @@ main{padding-left:max(20px,env(safe-area-inset-left));padding-right:max(20px,env
 
   <!-- 전경(맵) -->
   <section class="screen on" id="screen-map">
-    <div id="mapWrap">
+    <div id="mapWrap"><canvas class="rain-cv" id="mapRainCv" width="1000" height="540"></canvas>
     <svg viewBox="0 0 1000 540" xmlns="http://www.w3.org/2000/svg" aria-label="양성소 전경 지도">
       <defs>
         <linearGradient id="gSky" x1="0" y1="0" x2="0" y2="1">
@@ -580,11 +658,6 @@ main{padding-left:max(20px,env(safe-area-inset-left));padding-right:max(20px,env
         <ellipse cx="252" cy="450" rx="5" ry="1.6" fill="#3a2a16"/>
       </g>
 
-      <!-- 상단 정보 -->
-      <text id="mapWeekTxt" x="18" y="30" font-family="'Noto Serif KR',serif" font-size="16" fill="#e8dcc0">제 1주 · 명성 5</text>
-      <text x="18" y="50" font-family="Cinzel,serif" font-size="10" letter-spacing="3" fill="#a8987a">ROMA · ANNO LXXX</text>
-      <line x1="18" y1="58" x2="150" y2="58" stroke="#5a4a30" stroke-width="1"/>
-
       <!-- ◆ 집무실 (양성소 현황) -->
       <g class="bld" data-s="ludus" tabindex="0" role="button" aria-label="집무실 — 재정과 소식">
         <title>집무실 — 재정과 지난 주 소식</title>
@@ -738,7 +811,6 @@ main{padding-left:max(20px,env(safe-area-inset-left));padding-right:max(20px,env
         <g><ellipse cx="800" cy="252" rx="14" ry="12" fill="url(#gFire)"/><path d="M792 238 h10 l-2 4 h-6 Z" fill="#3a2a16"/><line x1="797" y1="242" x2="797" y2="246" stroke="#3a2a16" stroke-width="1.6"/><rect x="792" y="246" width="10" height="12" rx="2" fill="#241608"/><g class="flame"><ellipse cx="797" cy="253" rx="3" ry="4.5" fill="#ffd97a"/></g></g>
         <!-- 깃발 -->
         <g class="banner"><rect x="908" y="188" width="4" height="40" fill="#3a2a18"/><path d="M912 190 L952 197 L936 204 L952 211 L912 218 Z" fill="#7a2020"/><path d="M912 190 L952 197 L912 200 Z" fill="#8a2a2a"/></g>
-        <g id="mapBadgeMarket" style="display:none"><circle cx="914" cy="214" r="11" fill="#d4a017"/><text x="914" y="218" text-anchor="middle" font-family="'Noto Sans KR',sans-serif" font-size="11" font-weight="700" fill="#16110c">0</text></g>
         <rect class="plate" x="794" y="316" width="116" height="26" rx="4"/>
         <circle cx="802" cy="329" r="2" fill="#d4a017" opacity=".7"/><circle cx="902" cy="329" r="2" fill="#d4a017" opacity=".7"/>
         <text class="plateTxt" x="852" y="334" text-anchor="middle" font-family="'Noto Sans KR',sans-serif" font-size="14" font-weight="700">도시로 나가기</text>
@@ -813,7 +885,7 @@ main{padding-left:max(20px,env(safe-area-inset-left));padding-right:max(20px,env
 
   <!-- 로마 시내 -->
   <section class="screen" id="screen-city">
-    <div id="cityWrap">
+    <div id="cityWrap"><canvas class="rain-cv" id="cityRainCv" width="1000" height="540"></canvas>
     <svg viewBox="0 0 1000 540" xmlns="http://www.w3.org/2000/svg" aria-label="로마 시내 지도">
       <defs>
         <linearGradient id="cSky" x1="0" y1="0" x2="0" y2="1">
@@ -842,11 +914,6 @@ main{padding-left:max(20px,env(safe-area-inset-left));padding-right:max(20px,env
       </g>
       <!-- 지평선 지면 -->
       <rect x="0" y="218" width="1000" height="322" fill="#42351f"/>
-
-      <!-- 상단 정보 -->
-      <text id="cityWeekTxt" x="18" y="30" font-family="'Noto Serif KR',serif" font-size="16" fill="#e8dcc0">제 1주 · 명성 5</text>
-      <text x="18" y="50" font-family="Cinzel,serif" font-size="10" letter-spacing="3" fill="#a8987a">ROMA · ANNO LXXX</text>
-      <line x1="18" y1="58" x2="150" y2="58" stroke="#5a4a30" stroke-width="1"/>
 
       <!-- ═══ 콜로세움 (도로의 끝) ═══ -->
       <g class="bld" data-s="colosseum" tabindex="0" role="button" aria-label="콜로세움 — 챔피언과 대경기">
@@ -906,7 +973,6 @@ main{padding-left:max(20px,env(safe-area-inset-left));padding-right:max(20px,env
         </g>
         <rect class="plate" x="442" y="256" width="116" height="24" rx="4"/>
         <text class="plateTxt" x="500" y="273" text-anchor="middle" font-family="'Noto Sans KR',sans-serif" font-size="13" font-weight="700">콜로세움</text>
-        <g id="cityBadgeContracts" style="display:none"><circle cx="558" cy="252" r="11" fill="#a4161a"/><text x="558" y="256" text-anchor="middle" font-family="'Noto Sans KR',sans-serif" font-size="11" font-weight="700" fill="#fff">0</text></g>
       </g>
 
       <!-- ═══ 도로 (일점투시) ═══ -->
@@ -990,7 +1056,6 @@ main{padding-left:max(20px,env(safe-area-inset-left));padding-right:max(20px,env
           <polygon points="332,274 412,278.7 412,291.9 332,291" fill="none" stroke="#8a7454" stroke-width="1.1"/>
           <text x="370" y="286.4" text-anchor="middle" font-family="Cinzel,serif" font-size="8.2" letter-spacing="1.3" fill="#463822" transform="rotate(1.5 370 283)">MANCIPIA</text>
         </g>
-        <g id="cityBadgeSlaves" style="display:none"><circle cx="438" cy="254" r="10" fill="#d4a017"/><text x="438" y="258" text-anchor="middle" font-family="'Noto Sans KR',sans-serif" font-size="10" font-weight="700" fill="#16110c">0</text></g>
         <rect class="plate" x="326" y="368" width="94" height="22" rx="4"/>
         <text class="plateTxt" x="373" y="384" text-anchor="middle" font-family="'Noto Sans KR',sans-serif" font-size="12" font-weight="700">노예 상인</text>
       </g>
@@ -1034,7 +1099,6 @@ main{padding-left:max(20px,env(safe-area-inset-left));padding-right:max(20px,env
           <text x="148" y="262" text-anchor="middle" font-family="Cinzel,serif" font-size="12.5" letter-spacing="3.5" fill="#463822" transform="rotate(0.3 148 258)">ARMA</text>
           <circle cx="108" cy="249.5" r="1.4" fill="#8a7454"/><circle cx="192" cy="253" r="1.3" fill="#8a7454"/><circle cx="108" cy="266.6" r="1.4" fill="#8a7454"/><circle cx="192" cy="264.4" r="1.3" fill="#8a7454"/>
         </g>
-        <g id="cityBadgeWeapons" style="display:none"><circle cx="306" cy="238" r="11" fill="#d4a017"/><text x="306" y="242" text-anchor="middle" font-family="'Noto Sans KR',sans-serif" font-size="11" font-weight="700" fill="#16110c">0</text></g>
         <rect class="plate" x="60" y="492" width="116" height="26" rx="4"/>
         <circle cx="68" cy="505" r="2" fill="#d4a017" opacity=".7"/><circle cx="168" cy="505" r="2" fill="#d4a017" opacity=".7"/>
         <text class="plateTxt" x="118" y="510" text-anchor="middle" font-family="'Noto Sans KR',sans-serif" font-size="14" font-weight="700">무기점</text>
@@ -1073,7 +1137,6 @@ main{padding-left:max(20px,env(safe-area-inset-left));padding-right:max(20px,env
           <text x="852" y="262" text-anchor="middle" font-family="Cinzel,serif" font-size="12.5" letter-spacing="3.5" fill="#463822" transform="rotate(-0.3 852 258)">SCVTA</text>
           <circle cx="892" cy="249.5" r="1.4" fill="#8a7454"/><circle cx="808" cy="253" r="1.3" fill="#8a7454"/><circle cx="892" cy="266.6" r="1.4" fill="#8a7454"/><circle cx="808" cy="264.4" r="1.3" fill="#8a7454"/>
         </g>
-        <g id="cityBadgeShields" style="display:none"><circle cx="694" cy="238" r="11" fill="#d4a017"/><text x="694" y="242" text-anchor="middle" font-family="'Noto Sans KR',sans-serif" font-size="11" font-weight="700" fill="#16110c">0</text></g>
         <rect class="plate" x="824" y="492" width="116" height="26" rx="4"/>
         <circle cx="832" cy="505" r="2" fill="#d4a017" opacity=".7"/><circle cx="932" cy="505" r="2" fill="#d4a017" opacity=".7"/>
         <text class="plateTxt" x="882" y="510" text-anchor="middle" font-family="'Noto Sans KR',sans-serif" font-size="14" font-weight="700">방어구점</text>
@@ -1119,7 +1182,6 @@ main{padding-left:max(20px,env(safe-area-inset-left));padding-right:max(20px,env
       <div class="panel"><h3>재정</h3><div id="financeBox"></div></div>
       <div class="panel"><h3>지난 주 소식</h3><div class="weeklog" id="weekLog"><p class="dim">아직 소식이 없다. 첫 주를 시작하라.</p></div></div>
     </div>
-    <div class="panel"><h3>검투사 개요</h3><div id="ludusRoster" class="grid2"></div></div>
   </section>
 
   <!-- 검투사 -->
@@ -1142,7 +1204,7 @@ main{padding-left:max(20px,env(safe-area-inset-left));padding-right:max(20px,env
 
   <!-- 무기점 -->
   <section class="screen" id="screen-wshop">
-    <h2><span class="rn">✠</span>무기점 — 아르마멘타리움</h2>
+    <h2><span class="rn"><svg class="uic" width="16" height="16" viewBox="0 0 24 24" aria-hidden="true" style="vertical-align:-2px"><use href="#uic-swords"/></svg></span>무기점 — 아르마멘타리움</h2>
     <p class="lede">벽마다 강철이 걸려 있다. 좋은 검은 비싸고, 싼 검은 이유가 있다. 구입한 장비는 공방의 무기고로 들어간다.</p>
     <div class="npcbar" id="npc-wshop"></div>
     <div id="wshopList" class="grid2"></div>
@@ -1150,7 +1212,7 @@ main{padding-left:max(20px,env(safe-area-inset-left));padding-right:max(20px,env
 
   <!-- 방어구점 -->
   <section class="screen" id="screen-ashop">
-    <h2><span class="rn">✠</span>방어구점 — 스쿠타리아</h2>
+    <h2><span class="rn"><svg class="uic" width="16" height="16" viewBox="0 0 24 24" aria-hidden="true" style="vertical-align:-2px"><use href="#uic-swords"/></svg></span>방어구점 — 스쿠타리아</h2>
     <p class="lede">"검은 이기게 하고, 방패는 살아 돌아오게 하지." 주인장의 입버릇이다. 구입한 방패는 공방의 무기고로 들어간다.</p>
     <div class="npcbar" id="npc-ashop"></div>
     <div id="ashopList" class="grid2"></div>
@@ -1158,7 +1220,7 @@ main{padding-left:max(20px,env(safe-area-inset-left));padding-right:max(20px,env
 
   <!-- 콜로세움 -->
   <section class="screen" id="screen-colosseum">
-    <h2><span class="rn">★</span>콜로세움 — 플라비우스 원형경기장</h2>
+    <h2><span class="rn"><svg class="uic" width="16" height="16" viewBox="0 0 24 24" aria-hidden="true" style="vertical-align:-2px"><use href="#uic-laurel"/></svg></span>콜로세움 — 플라비우스 원형경기장</h2>
     <p class="lede">8만 관중. 제국의 심장. 이 모래 위에 서는 것이 모든 라니스타의 꿈이다.</p>
     <div class="npcbar" id="npc-colosseum"></div>
     <div id="coloBox"></div>
@@ -1179,8 +1241,9 @@ main{padding-left:max(20px,env(safe-area-inset-left));padding-right:max(20px,env
 
   <!-- 아레나 -->
   <section class="screen" id="screen-arena">
-    <h2><span class="rn">✦</span><span id="arenaTitle">경기</span></h2>
+    <h2><span class="rn"><svg class="uic" width="16" height="16" viewBox="0 0 24 24" aria-hidden="true" style="vertical-align:-2px"><use href="#uic-swords"/></svg></span><span id="arenaTitle">경기</span></h2>
     <div id="arenaWrap"><canvas id="arenaCv" width="960" height="440"></canvas>
+      <div id="arenaBadges"></div>
       <div id="skillHud"></div>
       <div id="cutinLayer" aria-hidden="true">
         <div id="cutinPanel">
@@ -1242,9 +1305,11 @@ const CLASSES={
  murmillo:{n:'무르밀로',desc:'대형 방패 스쿠툼과 글라디우스. 단단한 정면 승부.',shield:'large',weapon:'gladius',color:'#8b6f47',bias:{str:2,sta:1,spd:-1}},
  thraex:{n:'트라키아식',desc:'굽은 검 시카와 소형 방패. 방패 위를 노리는 변칙.',shield:'small',weapon:'sica',color:'#7a4a8a',bias:{skl:2,spd:1,sta:-1}},
  retiarius:{n:'레티아리우스',desc:'그물과 삼지창. 갑옷 없이 거리와 속도로 싸운다.',shield:'none',weapon:'trident',color:'#3e6b7a',bias:{spd:2,skl:1,str:-1}},
- secutor:{n:'세쿠토르',desc:'민무늬 투구의 추격자. 레티아리우스의 숙적.',shield:'large',weapon:'gladius',color:'#5e6468',bias:{sta:2,str:1,skl:-1}}};
-const COUNTER={thraex:'murmillo',murmillo:'retiarius',retiarius:'secutor',secutor:'thraex'};
-const WEAPONS={gladius:{n:'글라디우스',dmg:15,reach:64,wind:.30},sica:{n:'시카',dmg:13,reach:58,wind:.26,crit:.05},trident:{n:'삼지창',dmg:16,reach:92,wind:.38}};
+ secutor:{n:'세쿠토르',desc:'민무늬 투구의 추격자. 레티아리우스의 숙적.',shield:'large',weapon:'gladius',color:'#5e6468',bias:{sta:2,str:1,skl:-1}},
+ hoplomachus:{n:'호플로마쿠스',desc:'그리스 중장보병풍. 작은 원형 방패와 장창으로 거리를 유지하며 찌른다.',shield:'small',weapon:'hasta',color:'#6a7a44',bias:{str:1,skl:1,sta:1,spd:-1}},
+ dimachaerus:{n:'디마카이루스',desc:'방패 없이 두 자루의 검. 몰아치는 연격, 그러나 무른 몸.',shield:'none',weapon:'dual',color:'#7a3a3a',bias:{str:1,spd:2,sta:-1}}};
+const COUNTER={thraex:'murmillo',murmillo:'retiarius',retiarius:'secutor',secutor:'hoplomachus',hoplomachus:'dimachaerus',dimachaerus:'thraex'};
+const WEAPONS={gladius:{n:'글라디우스',dmg:15,reach:64,wind:.30},sica:{n:'시카',dmg:13,reach:58,wind:.26,crit:.05},trident:{n:'삼지창',dmg:16,reach:92,wind:.38},hasta:{n:'하스타',dmg:14,reach:96,wind:.40},dual:{n:'쌍검',dmg:11,reach:60,wind:.22}};
 /* ═══════════ 초상화 ═══════════
    나중에 JPG로 교체하려면: PORTRAIT_IMG.enabled=true 로 바꾸고
    base 경로에 p0.jpg ~ p7.jpg, hermes.jpg 파일을 두면 된다.
@@ -1701,6 +1766,7 @@ const SKMOTIF={
  p_immortal:`<g opacity=".4"><circle cx="48" cy="52" r="26" fill="none" stroke="#c2cad2" stroke-width="1.2"/><circle cx="48" cy="52" r="31" fill="none" stroke="#c2cad2" stroke-width="1" opacity=".5"/></g><path d="M48 76 Q22 58 24 41 Q26 29 38 31 Q45 32.5 48 40 Q51 32.5 58 31 Q70 29 72 41 Q74 58 48 76 Z" fill="#8a1216"/><path d="M48 74 Q25 57 26.5 42 Q28 32 38 33.5 Q44.5 35 48 42" fill="none" stroke="#c9282e" stroke-width="3" stroke-linecap="round"/><g fill="none" stroke-width="3.4"><path d="M26 50 q5 6 11 7" stroke="#6e767e"/><path d="M26 49 q5 6 11 7" stroke="#e8edf2"/><path d="M37 57 q6 4 12 4" stroke="#6e767e"/><path d="M37 56 q6 4 12 4" stroke="#e8edf2"/><path d="M49 61 q7 -1 12 -5" stroke="#6e767e"/><path d="M49 60 q7 -1 12 -5" stroke="#e8edf2"/></g>`,
  p_minerva:`<g opacity=".5"><g stroke="#c2cad2" stroke-width="1.4">${Array.from({length:8},(_, i)=>{const a=i*45*Math.PI/180;return `<line x1="${(48+14*Math.cos(a)).toFixed(1)}" y1="${(52+14*Math.sin(a)).toFixed(1)}" x2="${(48+30*Math.cos(a)).toFixed(1)}" y2="${(52+30*Math.sin(a)).toFixed(1)}"/>`;}).join('')}</g></g><path d="M24 52 Q48 32 72 52 Q48 72 24 52 Z" fill="#100c08" stroke="#e8edf2" stroke-width="2.6"/><ellipse cx="48" cy="52" rx="7" ry="11" fill="#c2cad2"/><ellipse cx="48" cy="52" rx="2.6" ry="9" fill="#1c1206"/>`,
  p_avatar:`<g>${Array.from({length:5},(_, i)=>`<path d="M48 52 m0 ${-(8+i*5)} a ${8+i*5} ${8+i*5} 0 0 1 ${(6+i*3)} ${(4+i*2)}" fill="none" stroke="#c9a566" stroke-width="2" opacity="${(0.7-i*0.1).toFixed(2)}"/>`).join('')}</g><path d="M42 44 L46 44 L48 62 L44 62 Z" fill="#3a2c1c"/><path d="M38 40 Q48 32 58 40 Q56 54 48 58 Q40 54 38 40 Z" fill="#3a2c1c" opacity=".9"/>`,
+ p_venator:`<g fill="#e8dcc0" stroke="#8a6a4a" stroke-width="1.4"><path d="M48 30 Q34 30 32 46 Q31 56 38 62 L38 70 L44 70 L44 64 L52 64 L52 70 L58 70 L58 62 Q65 56 64 46 Q62 30 48 30 Z"/></g><g fill="#1c1206"><circle cx="41" cy="48" r="3.4"/><circle cx="55" cy="48" r="3.4"/></g><g stroke="#c9a566" stroke-width="2.4" stroke-linecap="round"><line x1="26" y1="26" x2="70" y2="70"/></g><path d="M70 70 l-8 1 l1 -8 Z" fill="#c9a566"/>`,
 };
 
 /* 82종 정의 — SKILLS[id] */
@@ -1793,11 +1859,32 @@ const SKILLS={
  p_seasoned:{n:'노련미',type:'passive',grade:1,wcat:null,motif:SKMOTIF.p_seasoned,desc:'격상 상대전 전 판정 +4%p'},
  p_darling:{n:'관중의 총아',type:'passive',grade:1,wcat:null,motif:SKMOTIF.p_darling,desc:'관중열기 높을 때 피해 +8%, 경기 후 명성 +1'},
  p_beast:{n:'야수의 본능',type:'passive',grade:1,wcat:null,motif:SKMOTIF.p_beast,desc:'클래스 상성 우위 보정 강화'},
+ p_venator:{n:'야수 사냥꾼',type:'passive',grade:1,wcat:null,motif:SKMOTIF.p_venator,desc:'베나티오(짐승 상대) 시 피해 +20%, 치명타 +5%p'},
  p_immortal:{n:'불사의 심장',type:'passive',grade:2,wcat:null,motif:SKMOTIF.p_immortal,desc:'경기당 1회 치명상을 HP 1로 버팀'},
  p_minerva:{n:'미네르바의 눈',type:'passive',grade:2,wcat:null,motif:SKMOTIF.p_minerva,desc:'상대 예비동작 감지 — 회피·블록 +8%p 상시'},
  p_avatar:{n:'아레나의 화신',type:'passive',grade:2,wcat:null,motif:SKMOTIF.p_avatar,desc:'시간 경과 피해 보정이 더 일찍 시작'},
 };
 const SKILL_IDS=Object.keys(SKILLS);
+/* ═══════════ UI 아이콘 (이모지 대체 · 단색 currentColor) ═══════════
+   SKILL_DEFS와 동일 방식으로 init에서 body에 주입됨. uicon(name,size)로 참조.
+   전부 24x24 viewBox, stroke/fill은 currentColor로 부모 텍스트 색 상속. */
+const UI_ICONS=`<svg id="uiIconDefs" width="0" height="0" style="position:absolute;width:0;height:0;overflow:hidden" aria-hidden="true"><defs>
+ <symbol id="uic-beast" viewBox="0 0 24 24"><ellipse cx="12" cy="16" rx="5.5" ry="4.5" fill="currentColor"/><circle cx="6.5" cy="9" r="2" fill="currentColor"/><circle cx="12" cy="6.5" r="2.1" fill="currentColor"/><circle cx="17.5" cy="9" r="2" fill="currentColor"/></symbol>
+ <symbol id="uic-swords" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 4 L15 15"/><path d="M20 4 L9 15"/><path d="M13 13 L6 20"/><path d="M11 13 L18 20"/><path d="M3.5 6.5 L6.5 3.5"/><path d="M17.5 3.5 L20.5 6.5"/></symbol>
+ <symbol id="uic-crown" viewBox="0 0 24 24" fill="currentColor"><path d="M3 8 L7 13 L12 6 L17 13 L21 8 L19 19 L5 19 Z"/><rect x="4" y="19.5" width="16" height="2.2" rx="1"/></symbol>
+ <symbol id="uic-warn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"><path d="M12 3 L22 20 L2 20 Z"/><line x1="12" y1="9" x2="12" y2="14"/><circle cx="12" cy="17" r="0.9" fill="currentColor" stroke="none"/></symbol>
+ <symbol id="uic-letter" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><rect x="3" y="5.5" width="18" height="13" rx="1.5"/><path d="M3.5 6.5 L12 13 L20.5 6.5"/></symbol>
+ <symbol id="uic-star" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.5 L14.9 9 L22 9.7 L16.7 14.5 L18.3 21.5 L12 17.8 L5.7 21.5 L7.3 14.5 L2 9.7 L9.1 9 Z"/></symbol>
+ <symbol id="uic-laurel" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M8 21 Q3 15 5 7"/><path d="M6 9 Q3.5 9 2.5 7"/><path d="M5.7 12 Q3.2 12 2.2 10"/><path d="M6 15 Q3.7 15 2.8 13"/><path d="M16 21 Q21 15 19 7"/><path d="M18 9 Q20.5 9 21.5 7"/><path d="M18.3 12 Q20.8 12 21.8 10"/><path d="M18 15 Q20.3 15 21.2 13"/></symbol>
+ <symbol id="uic-denarius" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="6"/><line x1="12" y1="8.5" x2="12" y2="15.5"/></symbol>
+ <symbol id="uic-rank" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="9.5" y="6" width="5" height="13" rx="1" fill="currentColor" stroke="none"/><path d="M8 5.5 L16 5.5" stroke-width="2.2"/><line x1="4" y1="20" x2="20" y2="20"/></symbol>
+ <symbol id="uic-rain" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M7 13 A4.5 4.5 0 0 1 7.5 4.5 A5.5 5.5 0 0 1 18 6 A3.8 3.8 0 0 1 18 13 Z" stroke-linejoin="round"/><line x1="8" y1="16" x2="6.5" y2="20"/><line x1="12" y1="16" x2="10.5" y2="20"/><line x1="16" y1="16" x2="14.5" y2="20"/></symbol>
+ <symbol id="uic-torch" viewBox="0 0 24 24"><path d="M12 3 C9 6 9.5 9 12 11 C14.5 9 15 6 12 3 Z" fill="currentColor"/><rect x="10.7" y="11" width="2.6" height="9" rx="1" fill="currentColor"/></symbol>
+ <symbol id="uic-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><circle cx="12" cy="12" r="4.2" fill="currentColor" stroke="none"/><line x1="12" y1="2.5" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="21.5"/><line x1="2.5" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="21.5" y2="12"/><line x1="5.3" y1="5.3" x2="7" y2="7"/><line x1="17" y1="17" x2="18.7" y2="18.7"/><line x1="18.7" y1="5.3" x2="17" y2="7"/><line x1="7" y1="17" x2="5.3" y2="18.7"/></symbol>
+ <symbol id="uic-vs" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M8 5 L3 12 L8 19"/><path d="M16 5 L21 12 L16 19"/><circle cx="12" cy="12" r="1.1" fill="currentColor" stroke="none"/></symbol>
+ <symbol id="uic-x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M5 5 L19 19"/><path d="M19 5 L5 19"/></symbol>
+</defs></svg>`;
+function uicon(name,sz=13){return `<svg class="uic" width="${sz}" height="${sz}" viewBox="0 0 24 24" aria-hidden="true" style="vertical-align:-1px"><use href="#uic-${name}"/></svg>`;}
 function skillIconHtml(id,sz=54){
  const sk=SKILLS[id];if(!sk)return '';
  return `<div class="skillicon" style="width:${sz}px;height:${sz}px">${skillFrame(sk.type,sk.motif,sk.wcat)}</div>`;
@@ -1828,6 +1915,7 @@ const SKILL_FX={
  p_seasoned:{pas:{vsStronger:{th:1.10,allJudge:0.04}}},
  p_darling:{pas:{exciteHi:{above:0.5,dmgMul:1.08},fameBonus:1}},
  p_beast:{pas:{counterBoost:0.09}}, // 기존 counter 0.05 대체
+ p_venator:{pas:{vsBeast:{dmgMul:1.20,crit:0.05}}}, // 짐승 상대 특화
  p_immortal:{pas:{deathSave:'onceHp1'}},
  p_minerva:{pas:{dodge:0.08,blockAny:0.08}},
  p_avatar:{pas:{lateStart:40}}, // 시간경과 보정 60s→40s부터
@@ -1937,6 +2025,7 @@ function passiveDmgMul(f,o){
   if(p.earlyDmg&&arena.t<p.earlyDmg.until)m*=p.earlyDmg.mul;
   if(p.lowHp&&f.hp<f.mhp*p.lowHp.below)m*=p.lowHp.dmgMul;
   if(p.oppLowHp&&o.hp<o.mhp*p.oppLowHp.below)m*=p.oppLowHp.dmgMul;
+  if(p.vsBeast&&o.beast)m*=p.vsBeast.dmgMul;
   if(p.exciteHi&&arena.excite>p.exciteHi.above)m*=p.exciteHi.dmgMul;
  });
  // 버프(액티브) 피해 배수
@@ -1947,6 +2036,7 @@ function passiveCritAdd(f,o){
  let c=f.pmod?f.pmod.crit:0;
  f.passList&&f.passList.forEach(id=>{const p=SKILLS[id].pas;
   if(p.lowHp&&f.hp<f.mhp*p.lowHp.below)c+=p.lowHp.crit||0;
+  if(p.vsBeast&&o&&o.beast)c+=p.vsBeast.crit||0;
  });
  f.buffs&&f.buffs.forEach(b=>{if(b.crit)c+=b.crit;});
  return c;
@@ -2108,7 +2198,7 @@ function updateSkillHud(pf){
   const spent=a.perMatch&&(pf.actUsed[id]||0)>=a.perMatch;
   const cdEl=el.querySelector('.shCd'),secEl=el.querySelector('.shSec');
   if(spent){
-   el.className='shSlot spent';cdEl.style.setProperty('--p','0%');secEl.textContent='✕';
+   el.className='shSlot spent';cdEl.style.setProperty('--p','0%');secEl.innerHTML=uicon('x',11);
   }else if(cd>0){
    const total=(a.perMatch&&a.cd>=900)?8:a.cd; // 비전은 첫 대기 8s 기준
    const p=clamp(cd/total,0,1)*100;
@@ -2127,8 +2217,8 @@ function triggerCutin(f, id){
  if(arena.speed>=4&&!full)return false; // 4배속 미니 생략
  if(cutinBusy&&!full)return false; // 재생 중 미니는 생략(리듬 보호)
  const spd=arena.speed||1;
- // 히트스톱 — 컷인 재생 내내 시뮬 정지, 종료 시 pending 스킬 발동 (기획 변경: 페르소나식 2초 정지)
- const dur=(full?2.0:0.9)/spd;
+ // 히트스톱 — 컷인 재생 내내 시뮬 정지, 종료 시 pending 스킬 발동 (페르소나식 정지, 사용자 요청 2배 확대)
+ const dur=2.5/spd; // 메인·미니 동일 2.5초 정지
  arena.hitstop=dur;
  arena.shake=Math.max(arena.shake, full?4:2);
  sfx(full?'cutin':'cutinMini');
@@ -2139,6 +2229,7 @@ function showCutin(f, id, full, dur){
  const layer=$('cutinLayer'); if(!layer)return;
  const sk=SKILLS[id];
  cutinBusy=true;
+ layer.classList.remove('on'); // 애니메이션 확실 리셋 (이전 재생 잔재 제거)
  layer.className=full?'':'mini';
  layer.style.setProperty('--cidur',dur+'s');
  // 초상
@@ -2258,10 +2349,69 @@ const TRAITS=[
  {id:'veteran',n:'백전노장',d:'궁지에서도 침착하다'},{id:'crowd_fav',n:'관중의 연인',d:'패배해도 자비 판정에 유리하다'}];
 const STATKEYS=[['str','근력'],['skl','기술'],['spd','속도'],['sta','체력'],['wil','투지']];
 const TIERS=[
- {n:'시골 장터 경기',minRep:0,purse:[40,80],opp:[0.75,0.95],repW:2,fameW:1},
- {n:'지방 도시 축제',minRep:12,purse:[90,160],opp:[0.9,1.1],repW:3,fameW:2},
- {n:'속주 대경기',minRep:30,purse:[180,320],opp:[1.05,1.25],repW:5,fameW:3},
- {n:'콜로세움 흥행전',minRep:55,purse:[400,650],opp:[1.2,1.45],repW:8,fameW:5}];
+ {n:'시골 장터 경기',minRep:0,minRank:0,purse:[40,80],opp:[0.75,0.95],repW:2,fameW:1},
+ {n:'지방 도시 축제',minRep:12,minRank:1,purse:[90,160],opp:[0.9,1.1],repW:3,fameW:2},
+ {n:'속주 대경기',minRep:30,minRank:2,purse:[180,320],opp:[1.05,1.25],repW:5,fameW:3},
+ {n:'콜로세움 흥행전',minRep:55,minRank:3,purse:[400,650],opp:[1.2,1.45],repW:8,fameW:5}];
+/* ═══════════ 검투사 계급 (팔루스 체계) ═══════════
+   훈련용 말뚝(팔루스)에 빗댄 양성소 내부 서열. 계급이 곧 출전 자격 —
+   높은 무대는 이름 있는 자만 오를 수 있다. */
+const RANKS=[
+ {n:'티로',lat:'TIRO',d:'이름 없는 신참'},
+ {n:'베테라누스',lat:'VETERANUS',d:'모래 맛을 아는 자'},
+ {n:'테르티우스 팔루스',lat:'TERTIUS PALUS',d:'제3의 말뚝 — 속주가 이름을 안다'},
+ {n:'세쿤두스 팔루스',lat:'SECUNDUS PALUS',d:'제2의 말뚝 — 콜로세움의 문이 열린다'},
+ {n:'프리무스 팔루스',lat:'PRIMUS PALUS',d:'제1의 말뚝 — 양성소의 자존심'}];
+/* 승급 요구: 다음 계급(r+1)에 필요한 통산 승수(w) + 특정 티어 이상 승수(t,tw) */
+const RANK_REQ=[{w:3},{w:7,t:1,tw:3},{w:12,t:2,tw:3},{w:18,t:3,tw:1}];
+function tierWinCount(g,minTier){let s=0;const tw=g.tierWins||{};for(let t=minTier;t<=3;t++)s+=tw[t]||0;return s;}
+function rankReqTxt(r){ // r → r+1 승급 조건 문구
+ const q=RANK_REQ[r];if(!q)return null;
+ return `통산 ${q.w}승`+(q.t!=null?` · ${TIERS[q.t].n} 이상 ${q.tw}승`:'');
+}
+function rankEligible(g,r){
+ const q=RANK_REQ[r];if(!q)return false;
+ return g.wins>=q.w&&(q.t==null||tierWinCount(g,q.t)>=q.tw);
+}
+function checkPromotion(g){ // 조건 충족 시 연쇄 승급, 오른 계급 배열 반환
+ const up=[];
+ while(g.rank<RANKS.length-1&&rankEligible(g,g.rank)){g.rank++;up.push(g.rank);}
+ return up;
+}
+function rankBadge(r,small){return `<span class="rankb${r>=3?' hi':r>=1?' md':''}${small?' sm':''}">${RANKS[clamp(r,0,4)].n}</span>`;}
+/* ═══════════ 관중 총애도 (FAVOR) ═══════════
+   명성(fame)이 영구 누적이라면 favor는 최근 경기 인상에 따라 오르내리는 휘발성 지표임.
+   0~100, 신규 30. 짐승(g.beastId)에는 부여하지 않으므로 참조부는 방어 필요. */
+function favorTier(v){ // 등급 문구 (없으면 null)
+ if(v>=80)return{n:'군중의 총아',c:'hi'};
+ if(v>=55)return{n:'인기 검투사',c:'md'};
+ if(v<25)return{n:'잊혀진 이름',c:'lo'};
+ return null;
+}
+function favorBadge(v,small){
+ const t=favorTier(v);if(!t)return '';
+ return `<span class="favb ${t.c}${small?' sm':''}">${t.n}</span>`;
+}
+function hasIdol(){ // 아군에 총아(favor 80↑) 보유 시 팬 네트워크로 정보 우위
+ return S.gladiators.some(g=>!g.beastId&&(g.favor||0)>=80);
+}
+/* 총애도 55↑ 검투사 로스터 상세에서 낮은 확률로 표시되는 팬레터 (플레이버) */
+const FANLETTERS=[
+ '당신의 검이 그리는 호를 보려고 3주째 장터에 나옵니다 — 어느 직공',
+ '지난 경기, 무릎 꿇지 않아 줘서 고마웠소 — 이름 없는 노병',
+ '아이가 당신 흉내를 내며 막대기를 휘두릅니다. 부디 오래 살아남기를 — 한 어미',
+ '내기에서 당신에게 전 재산을 걸었소. 배신하지 마시오 — 포룸의 상인',
+ '당신이 흘린 땀 한 방울이 이 도시의 이야깃거리가 됩니다 — 선술집 주인',
+ '검투사의 피는 두렵지만, 당신의 눈빛만은 다시 보고 싶습니다 — 귀족가의 하녀',
+ '모래 위의 당신은 신 같았습니다. 다음 경기도 살아 돌아오십시오 — 젊은 견습공',
+ '당신 이름을 벽에 새겼소. 누가 지우면 다시 새기겠소 — 골목의 낙서꾼',
+ '원형경기장 꼭대기 값싼 자리에서도 당신은 빛났습니다 — 가난한 관객',
+ '당신이 이기는 날이면 우리 가게 포도주가 동납니다 — 감사한 주모',
+ '검을 든 당신보다 관중에게 손 흔드는 당신이 더 좋습니다 — 어느 소녀',
+ '당신의 상처가 아물기를 매일 기도합니다 — 신전의 여사제',
+ '나도 한때 모래를 밟았소. 당신을 보면 그 시절이 떠오르오 — 은퇴한 검투사',
+ '도박꾼들은 당신을 숫자로 보지만 나는 영웅으로 봅니다 — 소년 팬',
+ '당신이 살아 있는 한 이 낡은 도시에도 볼거리가 있습니다 — 늙은 문지기'];
 const FACS={
  train:{n:'훈련장',d:'훈련 성장 속도',lv:['모래 마당','목검 훈련장','전문 팔루스 훈련장'],cost:[0,220,520],eff:[1,1.25,1.5]},
  med:{n:'의무실',d:'회복 속도·부상 위험 감소',lv:['짚단 침상','의무실','그리스 의사의 진료소'],cost:[0,180,450],eff:[1,1.4,1.9]},
@@ -2276,7 +2426,10 @@ let S=null;
 function newState(){return{week:1,money:500,rep:5,gladiators:[],market:[],contracts:[],armory:[],wmarket:[],newsBuf:[],newsSeen:[],
  champ:{name:'헤르메스',epithet:'콜로세움의 총아',wins:24,defeated:false,heir:null},
  fac:{train:0,med:0,barrack:0,kitchen:0},staff:{doctor:false,trainer:false},
- log:[],chron:[],nextId:1,colosseumDone:false,usedNames:[]};}
+ log:[],chron:[],nextId:1,colosseumDone:false,usedNames:[],rivals:[],weather:'clear',achievements:[]};}
+/* 주간 날씨 결정 — nextWeek·init에서 호출. 맑음 82% / 우천 18%. */
+function rollWeather(){return Math.random()<0.18?'rain':'clear';}
+const WEATHER_LABEL={clear:'맑음',rain:'우천'};
 
 /* ═══════════ 유틸 ═══════════ */
 const R=(a,b)=>a+Math.random()*(b-a);
@@ -2284,6 +2437,7 @@ const RI=(a,b)=>Math.floor(R(a,b+1));
 const pick=a=>a[RI(0,a.length-1)];
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const fmt=n=>Math.round(n).toLocaleString('ko-KR');
+const den=n=>uicon('denarius',11)+fmt(n); // 화폐 표기 통일 — 아이콘+숫자, 'D' 접미사 대체
 const $=id=>document.getElementById(id);
 function statCls(v){return v>=14?'hi':v>=8?'md':'lo';}
 
@@ -2311,7 +2465,7 @@ function genGladiator(quality){ // quality 0.7~1.4
   str:0,skl:0,spd:0,sta:0,wil:0,pot:0,fame:0,wins:0,losses:0,kills:0,
   cond:100,injury:0,train:'balanced',intensity:1,traits:[],hist:[],
   talent:pick(TALENTS),talentKnown:false,aptTrain:0,weapon:null,shield:null,pid:pidForOrigin(org.n),
-  skills:[],skillSlots:{p:null,a1:null,a2:null},mirror:false,wilStreak:0,wcatWins:{}};
+  skills:[],skillSlots:{p:null,a1:null,a2:null},mirror:false,wilStreak:0,wcatWins:{},rank:0,tierWins:{},favor:30,winStreak:0};
  for(const[k]of STATKEYS){let v=RI(4,9)+Math.round(R(0,4)*quality);v+=(cls.bias[k]||0)+(org.b[k]||0);g[k]=clamp(v,3,17);}
  g.pot=clamp(Math.round((g.str+g.skl+g.spd+g.sta+g.wil)*R(1.15,1.45)*quality/1),40,95); // 능력치 총합 상한
  const tn=Math.random()<.55?1:Math.random()<.5?2:0;
@@ -2373,10 +2527,56 @@ function ownedLegendNames(){
  return new Set([...S.armory,...S.gladiators.flatMap(g=>[g.weapon,g.shield].filter(Boolean)),
   ...S.contracts.filter(c=>c.reward).map(c=>c.reward)].map(i=>i.name));
 }
+/* ═══════════ 동물전 (VENATIO / 베나티오) ═══════════
+   맹수와 검투사(베나토르)의 대결. 상대가 짐승이므로 스킬·항복·자비 판정 없음 —
+   순수 생존·처치전. 짐승은 mkBeast로 검투사와 같은 형태의 파이터 객체가 되어
+   전투 파이프라인(stepSim/updFighter/resolveAttack)을 재활용하되, f.beast 플래그로 분기됨.
+   수치는 자체 설계값(밸런스 조정 여지) — 고증이 아니라 게임 밸런스 목적. */
+const BEASTS={
+ lupus:{n:'굶주린 늑대',lat:'LVPVS',hp:140,dmg:13,reach:46,spd:8,minRank:0,
+  color:'#6b6258',behavior:'pack',d:'무리 사냥 본능 — 빠르게 파고들어 물어뜯음'},
+ aper:{n:'거대 멧돼지',lat:'APER',hp:160,dmg:12,reach:40,spd:5,minRank:0,
+  color:'#4e4238',behavior:'charge',d:'저돌 돌진 — 빗나가면 크게 경직됨'},
+ pardus:{n:'표범',lat:'PARDVS',hp:170,dmg:20,reach:52,spd:13,minRank:1,
+  color:'#b8923e',behavior:'ambush',d:'히트앤런 — 빠르고 회피가 높으나 몸이 약함'},
+ ursus:{n:'북방 곰',lat:'VRSVS',hp:300,dmg:26,reach:44,spd:4,minRank:2,
+  color:'#5a4632',behavior:'maul',d:'느리지만 일격이 치명적 — 껴안기로 속박함'},
+ leo:{n:'누미디아 사자',lat:'LEO',hp:260,dmg:24,reach:50,spd:9,minRank:2,
+  color:'#c9a35c',behavior:'lunge',d:'제왕의 맹수 — 균형 잡힌 강함, 돌진 후 물기'},
+ taurus:{n:'성난 황소',lat:'TAVRVS',hp:195,dmg:18,reach:44,spd:6,minRank:1,
+  color:'#7a6a58',behavior:'gore',d:'반복되는 직선 돌진 — 정면은 치명적이나 뿔을 흘리면 크게 헛돈다'},
+ crocodilus:{n:'나일 악어',lat:'CROCODILVS',hp:280,dmg:20,reach:42,spd:3,minRank:3,armor:0.68,
+  color:'#4a5a3e',behavior:'armor',d:'무장한 가죽 — 느리지만 피해를 덜 입고, 한번 물면 놓지 않는다'},
+};
+const BEAST_IDS=Object.keys(BEASTS);
+function mkBeast(id){
+ const B=BEASTS[id];
+ // 짐승도 g 객체를 흉내내되(렌더·로그 호환), cls 참조를 우회하기 위해 필드 최소화
+ const g={id:-RI(1e5,9e5),name:B.n,beastId:id,cls:null,origin:'짐승',age:0,fame:0,wins:0,losses:0,kills:0,
+  str:12,skl:6,spd:B.spd,sta:14,wil:20,traits:[],skills:[],skillSlots:{p:null,a1:null,a2:null},
+  weapon:null,shield:null,talent:null,pid:null};
+ return g;
+}
+/* 티어→짐승 후보 (계급 게이트는 UI에서 처리) */
+function beastPoolFor(rep){
+ const maxRank=rep>=45?4:rep>=30?2:rep>=15?1:0;
+ return BEAST_IDS.filter(id=>BEASTS[id].minRank<=maxRank);
+}
+
 /* ═══════════ 시장·계약 생성 ═══════════ */
 function refreshMarket(){
  S.market=[];const n=RI(3,4);
  for(let i=0;i<n;i++){const q=R(0.7,1.0+S.rep/120);const g=genGladiator(q);g.price=Math.round(gValue(g)*R(0.9,1.2));S.market.push(g);}
+ // 경력자 매물 — 다른 루두스 출신, 계급을 지닌 채 팔려 나옴 (명성 20↑, 30% 확률)
+ if(S.rep>=20&&Math.random()<0.3){
+  const g=genGladiator(R(1.0,1.0+S.rep/100));
+  g.wins=RI(4,4+Math.round(S.rep/12));g.losses=RI(1,4);g.fame=RI(3,Math.round(S.rep/4));
+  g.tierWins={0:Math.ceil(g.wins*0.5),1:Math.floor(g.wins*0.35),2:Math.floor(g.wins*0.15)};
+  checkPromotion(g);g.veteranSale=true;
+  g.hist.push(`다른 루두스에서 ${g.wins}승을 쌓고 팔려 나옴 — ${RANKS[g.rank].n}`);
+  g.price=Math.round(gValue(g)*R(1.0,1.25));
+  S.market.push(g);
+ }
  S.wmarket=[];
  const roll=()=>{const r=Math.random();let gr=r<0.30?0:r<0.72?1:r<0.92?2:3;if(gr===3&&S.rep<25)gr=2;return gr;};
  const wn=RI(2,3),sn=RI(1,2);
@@ -2430,9 +2630,62 @@ function genOpponent(mult,tier=0){
   g.weapon=genItem(cat,RI(0,Math.min(3,tier)));g.talent=cat;g.talentKnown=true;
  }
  assignOppSkills(g,tier);
+ g.rank=clamp(tier+(Math.random()<0.25?1:0),0,4); // 상대 계급 — 무대 격에 맞춤 (표시·정찰용)
  g.id=-RI(1000,99999);return g;
 }
-function refreshContracts(){
+/* ═══════════ 라이벌 검투사 (지속 NPC) ═══════════
+   genOpponent가 만드는 1회성 상대와 달리, 인상적 승부의 상대를 영속 NPC로 승격시켜
+   여러 주에 걸쳐 재등장시킴. 영속 NPC 선례는 S.champ. 개인 간 서사이므로 내 검투사가
+   사망·매각되면 라이벌도 은퇴 처리됨(승계 없음). 짐승·챔피언전·베나티오는 성립 제외. */
+const RIVAL_MAX=2;       // 동시 active 라이벌 상한 (추정 — 밸런스 확인 필요)
+const RIVAL_SETTLE=5;    // 상호 전적 합 도달 시 결착 (무한 반복 방지)
+function activeRivals(){return S.rivals.filter(r=>r.state==='active');}
+function rivalByOppId(id){return S.rivals.find(r=>r.g&&r.g.id===id);}
+/* 라이벌 성립 판정 — finishFight에서 호출. 성립 시 라이벌 객체 반환(없으면 null). */
+function tryFormRival(myGlad,oppG,won,spared,c){
+ if(c.venatio||c.grand||c.rival)return null;      // 베나티오·챔피언전·이미 라이벌전이면 제외
+ if(oppG.beastId)return null;
+ if(activeRivals().length>=RIVAL_MAX)return null;
+ if(rivalByOppId(oppG.id))return null;             // 이미 라이벌
+ const closeWin = won && (arena.trkLowestHp!=null?arena.trkLowestHp:1)<0.25;  // 접전 승리
+ const survivedLoss = !won && spared;              // 자비로 살아남은 패배
+ if(!closeWin&&!survivedLoss)return null;
+ const rv={
+  g:oppG, vsId:myGlad.id, vsName:myGlad.name,
+  myWins: won?1:0, theirWins: won?0:1,   // 내 검투사 기준 상호 전적
+  lastMet:S.week, nextChallenge:S.week+RI(3,6), meets:1,
+  state:'active', reason: closeWin?'close':'loss'
+ };
+ S.rivals.push(rv);
+ return rv;
+}
+/* 라이벌 재등장 계약 생성 — refreshContracts에서 호출 */
+function makeRivalContract(rv,wk){
+ // 상대 성장: 재등장마다 강해짐 (추정치 — 플레이어 성장과 비교 시뮬 필요)
+ const g=rv.g;
+ g.wins+=RI(1,3); g.fame+=RI(1,3);
+ const keys=['str','skl','spd','sta','wil'];
+ for(let i=0;i<2;i++){const k=pick(keys);if(g[k]<20)g[k]++;}
+ rv.meets++;
+ // 계급 상향 — 라이벌도 무대를 따라 올라온다. 플레이어 로스터 최고 계급을 상한으로 추격.
+ const myTop=S.gladiators.length?Math.max(...S.gladiators.map(x=>x.rank||0)):(g.rank||0);
+ if((g.rank||0)<clamp(myTop,0,4)&&rv.meets>=2)g.rank=clamp((g.rank||0)+1,0,4);
+ // 계약 티어는 라이벌의 계급이 밟을 수 있는 최고 무대로 산정
+ const tier=clamp([0,1,2,3,3][g.rank||0],0,3);
+ // 3회 이상 만난 라이벌은 스킬 상향 재부여 (티어 +1 취급, 상한 3)
+ if(rv.meets>=3){g.skills=[];g.skillSlots={p:null,a1:null,a2:null};assignOppSkills(g,clamp(tier+1,0,3));}
+ rv.lastMet=wk;
+ const t=TIERS[tier];
+ return {
+  id:'rv'+RI(1e4,1e5), tier, tName:'숙명의 재회 — '+t.n,
+  fee:Math.round(R(t.purse[0],t.purse[1])*0.5),
+  purse:Math.round(R(t.purse[0],t.purse[1])*1.3),
+  opp:g, scouted:true, scoutCost:0, rival:true, rivalOppId:g.id, minRank:TIERS[tier].minRank
+ };
+}
+function refreshContracts(showWeek){
+ // showWeek: 이 계약이 노출될 주 번호. 미지정 시 현재 주(init 등). nextWeek는 S.week+1을 넘김.
+ const wk=(showWeek==null?S.week:showWeek);
  S.contracts=[];
  const avail=TIERS.map((t,i)=>i).filter(i=>S.rep>=TIERS[i].minRep&&(i<3||S.colosseumDone));
  const n=RI(2,3);
@@ -2450,7 +2703,7 @@ function refreshContracts(){
    const ti=clamp(Math.floor(S.rep/18),1,2),t=TIERS[ti];
    const opp=genOpponent(R(t.opp[1],t.opp[1]+0.15),ti+1);
    opp.skills=[];opp.skillSlots={p:null,a1:null,a2:null};assignOppSkills(opp,ti,{special:true});
-   S.contracts.push({id:'c'+RI(1e4,1e5),tier:ti,tName:'⚔ 특별 흥행전 — '+t.n,
+   S.contracts.push({id:'c'+RI(1e4,1e5),tier:ti,tName:'특별 흥행전 — '+t.n,
     fee:Math.round(t.purse[0]*0.3),purse:Math.round(t.purse[0]*0.7),opp,scouted:false,
     scoutCost:25+ti*15,special:true,reward:Object.assign({},L,{id:'i'+(S.nextId++),grade:4})});
   }
@@ -2460,9 +2713,37 @@ function refreshContracts(){
   const t=TIERS[3],opp=genOpponent(R(1.3,1.5),3);
   if(!S.champ.defeated){opp.name=S.champ.name;opp.cls='secutor';opp.pid='hermes';opp.fame=45;opp.wins=S.champ.wins;opp.losses=0;
    opp.weapon=genItem('sword',3);opp.talent='sword';opp.talentKnown=true;}
+  opp.rank=4; // 콜로세움 무대의 상대는 프리무스 팔루스
   opp.skills=[];opp.skillSlots={p:null,a1:null,a2:null};assignOppSkills(opp,3,{grand:true});
-  S.contracts.push({id:'c'+RI(1e4,1e5),tier:3,tName:'★ 콜로세움 대경기 — 챔피언전',fee:200,purse:800,opp,scouted:false,scoutCost:60,grand:true});
+  S.contracts.push({id:'c'+RI(1e4,1e5),tier:3,tName:'콜로세움 대경기 — 챔피언전',fee:200,purse:800,opp,scouted:false,scoutCost:60,grand:true});
  }
+ // 동물전 (베나티오) — 명성 10↑ & 노출 주가 4의 배수(4·8·12…)일 때만 등장
+ if(S.rep>=10&&wk%4===0){
+  const pool=beastPoolFor(S.rep);
+  const bid=pick(pool),B=BEASTS[bid];
+  const ti=clamp(B.minRank,0,3),t=TIERS[ti];
+  S.contracts.push({id:'c'+RI(1e4,1e5),tier:ti,tName:'베나티오 — '+t.n,
+   fee:Math.round(R(t.purse[0],t.purse[1])*0.4),purse:Math.round(R(t.purse[0],t.purse[1])*1.15),
+   beast:bid,opp:mkBeast(bid),scouted:true,scoutCost:0,venatio:true,minRank:B.minRank});
+  // 신문 예고 — 다가올 베나티오를 알림
+  S.newsBuf.push(`${uicon('beast',12)} 베나티오 예고 — ${t.n}의 모래 위에 ${B.n}(${B.lat}) 등장 예정. 맞설 베나토르를 구한다는 소식`);
+ }
+ // ── 라이벌 재등장 ──
+ S.rivals.forEach(rv=>{
+  if(rv.state!=='active')return;
+  // 상대할 내 검투사가 사라졌으면(사망·매각) 라이벌 은퇴
+  if(!S.gladiators.some(g=>g.id===rv.vsId)){
+   rv.state='retired';
+   S.newsBuf.push(`『${rv.g.name}』, 겨룰 상대를 잃다 — ${rv.vsName}의 이름을 부르며 모래를 떠났다`);
+   S.chron.push(`${wk}주차 — 라이벌 ${rv.g.name}, ${rv.vsName}의 부재로 물러남.`);
+   return;
+  }
+  if(wk>=rv.nextChallenge&&!S.contracts.some(c=>c.rival&&c.rivalOppId===rv.g.id)){
+   S.contracts.push(makeRivalContract(rv,wk));
+   rv.nextChallenge=wk+RI(2,4); // 이번에 출전 안 하면 이 주차 이후 다시 도전 (자동 연기)
+   S.newsBuf.push(`${uicon('swords',12)} 재회 예고 — 『${rv.g.name}』이(가) ${rv.vsName}에게 다시 도전장을 던졌다 (상호 전적 ${rv.myWins}−${rv.theirWins})`);
+  }
+ });
 }
 
 /* ═══════════ 모달 ═══════════ */
@@ -2494,6 +2775,8 @@ function go(s){
  const btn=bb.querySelector('button');
  if(CITY_SUB[s]){btn.textContent='◂ 도시로';btn.dataset.target='city';}
  else{btn.textContent='◂ 양성소 전경';btn.dataset.target='map';}
+ // 전투 화면에서는 '다음 주' 버튼을 숨김 (전투 중 주차 진행 방지)
+ const nw=$('btnNextWeek');if(nw)nw.style.display=(s==='arena')?'none':'';
  renderAll();
  window.scrollTo(0,0);
 }
@@ -2505,9 +2788,53 @@ document.querySelectorAll('.bld').forEach(b=>{
 $('backToMap').querySelector('button').onclick=e=>go(e.target.dataset.target||'map');
 function setBadge(id,n){const el=$(id);if(!el)return;el.style.display=n?'':'none';el.querySelector('text').textContent=n;}
 function renderMap(){
- const t=$('mapWeekTxt');if(t)t.textContent=`제 ${S.week}주 · 명성 ${S.rep} · 검투사 ${S.gladiators.length}명`;
- setBadge('mapBadgeMarket',S.market.length+S.wmarket.length);
  setBadge('mapBadgeInjured',S.gladiators.filter(g=>g.injury>0).length);
+ // 우천 시 양성소·도시 지도에 비 — 전투 화면과 동일한 canvas 빗줄기 모델
+ const raining=(S.weather==='rain');
+ ['mapWrap','cityWrap'].forEach(id=>{const el=$(id);if(el)el.classList.toggle('raining',raining);});
+ if(raining)startMapRain();else stopMapRain();
+}
+/* 지도 우천 빗줄기 — 전투 drawWeatherFg와 동일 모델(결정적 좌표 + 시간 스크롤).
+   canvas 해상도 1000×540 (SVG 지도 viewBox와 일치). */
+const MAP_RAIN_W=1000,MAP_RAIN_H=540;
+let mapRainStreaks=null,mapRainRAF=null,mapRainT=0;
+function initMapRainStreaks(){
+ if(mapRainStreaks)return;
+ mapRainStreaks=[];
+ for(let i=0;i<90;i++)mapRainStreaks.push({
+  x:(i*137%MAP_RAIN_W)+((i*53)%40),
+  y0:(i*89%MAP_RAIN_H),
+  len:14+((i*11)%14),
+  spd:520+((i*29)%180)
+ });
+}
+function drawMapRainOn(cv){
+ if(!cv)return;const ctx=cv.getContext('2d');if(!ctx)return;
+ ctx.clearRect(0,0,MAP_RAIN_W,MAP_RAIN_H);
+ ctx.save();
+ ctx.strokeStyle='rgba(190,205,225,.34)';ctx.lineWidth=1.3;ctx.lineCap='round';
+ mapRainStreaks.forEach(s=>{
+  const y=(s.y0+mapRainT*s.spd)%(MAP_RAIN_H+40)-20;
+  ctx.beginPath();ctx.moveTo(s.x,y);ctx.lineTo(s.x-5,y+s.len);ctx.stroke();
+ });
+ ctx.restore();
+}
+function startMapRain(){
+ initMapRainStreaks();
+ if(mapRainRAF)return; // 이미 돌고 있음
+ let last=performance.now();
+ const loop=(now)=>{
+  const dt=Math.min(0.05,(now-last)/1000);last=now;mapRainT+=dt;
+  // 현재 보이는 화면의 canvas만 그림 (map 또는 city)
+  if(curScreen==='map')drawMapRainOn($('mapRainCv'));
+  else if(curScreen==='city')drawMapRainOn($('cityRainCv'));
+  if(S.weather==='rain'){mapRainRAF=requestAnimationFrame(loop);}else{mapRainRAF=null;}
+ };
+ mapRainRAF=requestAnimationFrame(loop);
+}
+function stopMapRain(){
+ if(mapRainRAF){cancelAnimationFrame(mapRainRAF);mapRainRAF=null;}
+ [$('mapRainCv'),$('cityRainCv')].forEach(cv=>{if(cv){const c=cv.getContext('2d');if(c)c.clearRect(0,0,MAP_RAIN_W,MAP_RAIN_H);}});
 }
 /* ═══════════ 도시 NPC ═══════════ */
 const NPC_SVGS={
@@ -2573,11 +2900,6 @@ function npcSay(loc,text){
  if(el)el.textContent='“'+text+'”';
 }
 function renderCity(){
- const ct=$('cityWeekTxt');if(ct)ct.textContent=`제 ${S.week}주 · 명성 ${S.rep} · 검투사 ${S.gladiators.length}명`;
- setBadge('cityBadgeSlaves',S.market.length);
- setBadge('cityBadgeWeapons',S.wmarket.filter(i=>!['shield','net','laqueus'].includes(i.cat)).length);
- setBadge('cityBadgeShields',S.wmarket.filter(i=>['shield','net','laqueus'].includes(i.cat)).length);
- setBadge('cityBadgeContracts',S.contracts.length);
  const star=$('cityColoStar');
  if(star)star.style.display=S.contracts.some(c=>c.grand)?'':'none';
 }
@@ -2587,11 +2909,11 @@ function shopItemCard(it,loc){
  d.innerHTML=`<div style="display:flex;gap:12px;align-items:flex-start">${itemIconHtml(it,56)}
   <div style="flex:1;min-width:0"><div class="spread"><span style="color:${GRADES[it.grade].c};font-weight:700;font-size:15px">${it.name}</span><span class="small dim">${WCATS[it.cat].n}</span></div>
   <div class="small dim">${itemStatTxt(it)}</div></div></div>
-  <hr><div class="spread"><span class="gold" style="font-weight:700">${fmt(it.price)} 데나리우스</span>
+  <hr><div class="spread"><span class="gold" style="font-weight:700">${den(it.price)}</span>
   <button class="primary sm" ${poor?'disabled':''}>${poor?'자금 부족':'구매'}</button></div>`;
  d.querySelector('button').onclick=e=>{e.stopPropagation();
   S.money-=it.price;S.armory.push(it);S.wmarket=S.wmarket.filter(x=>x.id!==it.id);
-  S.chron.push(`${S.week}주차 — ${it.name} 구입 (${fmt(it.price)}D).`);renderAll();
+  S.chron.push(`${S.week}주차 — ${it.name} 구입 (${den(it.price)}).`);renderAll();
   if(loc&&NPCS[loc])npcSay(loc,pick(NPCS[loc].buy));};
  return d;
 }
@@ -2619,9 +2941,9 @@ function renderColosseum(){
  const grand=S.contracts.find(c=>c.grand);
  let status='';
  if(S.colosseumDone){
-  status=`<div class="notice">👑 당신의 루두스는 이미 이 모래를 제패했다. 로마에서 그 이름을 모르는 자가 없다.</div>`;
+  status=`<div class="notice">${uicon('crown',13)} 당신의 루두스는 이미 이 모래를 제패했다. 로마에서 그 이름을 모르는 자가 없다.</div>`;
  }else if(grand){
-  status=`<div class="notice">★ 초청장이 도착했다 — <b>${grand.tName}</b><br><span class="small dim">출전료 ${fmt(grand.fee)}D · 승리 상금 ${fmt(grand.purse)}D · 상대: ${grand.opp.name}</span></div>
+  status=`<div class="notice">${uicon('star',13)} 초청장이 도착했다 — <b>${grand.tName}</b><br><span class="small dim">출전료 ${den(grand.fee)} · 승리 상금 ${den(grand.purse)} · 상대: ${grand.opp.name}</span></div>
    <button class="primary" id="btnGrandGo">대경기 출전 준비 ▸</button>`;
  }else{
   const pct=clamp(Math.round(S.rep/55*100),0,100);
@@ -2643,6 +2965,19 @@ function renderHeader(){
  const m=$('hMoney');m.textContent=fmt(S.money);m.classList.toggle('neg',S.money<0);
  $('hRep').textContent=S.rep;
  $('hCount').textContent=S.gladiators.length+'/'+FACS.barrack.eff[S.fac.barrack];
+ // 주간 날씨 표시 (아이콘 + 라벨)
+ const hw=$('hWeather');
+ if(hw){const wx=S.weather||'clear';
+  const ic=wx==='rain'?uicon('rain',14):uicon('sun',14);
+  const col=wx==='rain'?'#9ab0c4':'#c8a456';
+  hw.innerHTML=`<span style="color:${col};display:inline-flex;align-items:center;gap:4px">${ic}${WEATHER_LABEL[wx]}</span>`;}
+ // §4 명성 뱃지 — 55 도달(콜로세움 초청 자격) 또는 제패 시 월계관 아이콘만 표시, 그 외엔 숫자만
+ const rb=$('hRepBar');
+ if(rb){
+  if(S.colosseumDone)rb.innerHTML=`<span class="laurel-done">${uicon('laurel',12)} 제패</span>`;
+  else if(S.rep>=55)rb.innerHTML=`<span class="laurel-done">${uicon('laurel',12)}</span>`;
+  else rb.innerHTML='';
+ }
 }
 function statGridHtml(g,hidePot){
  let h='<div class="statgrid">';
@@ -2654,31 +2989,28 @@ function condBars(g){
 }
 function tagsHtml(g){
  let h='';
- if(g.fame>=15)h+=`<span class="tag star">★ 명성 ${g.fame}</span>`;else if(g.fame>0)h+=`<span class="tag">명성 ${g.fame}</span>`;
+ if(g.fame>=15)h+=`<span class="tag star">${uicon('star',10)} 명성 ${g.fame}</span>`;else if(g.fame>0)h+=`<span class="tag">명성 ${g.fame}</span>`;
  if(g.injury>0)h+=`<span class="tag hurt">부상 ${g.injury}주</span>`;
  g.traits.forEach(t=>h+=`<span class="tag">${traitName(t)}</span>`);
  return h;
 }
 function gCardHtml(g,extra){
  return `<div style="display:flex;gap:12px;align-items:flex-start">${portraitHtml(g.pid,'pt-m')}
- <div style="flex:1;min-width:0"><div class="spread"><span class="gname">${g.name}</span><span class="small dim">${g.age}세 · ${g.wins}승 ${g.losses}패</span></div>
+ <div style="flex:1;min-width:0"><div class="spread"><span class="gname">${g.name} ${rankBadge(g.rank||0)}${g.beastId?'':favorBadge(g.favor==null?30:g.favor,true)}</span><span class="small dim">${g.age}세 · ${g.wins}승 ${g.losses}패</span></div>
  <div class="gclass">${CLASSES[g.cls].n} · ${g.origin}</div>${statGridHtml(g)}${condBars(g)}<div style="margin-top:6px">${tagsHtml(g)}</div>${extra||''}</div></div>`;
 }
 function renderLudus(){
  const upkeep=weeklyUpkeep();
  $('financeBox').innerHTML=`<table>
-  <tr><td>보유 자금</td><td style="text-align:right" class="${S.money<0?'red':'gold'}">${fmt(S.money)} 데나리우스</td></tr>
-  <tr><td>주간 유지비 (식비·급여)</td><td style="text-align:right" class="red">−${fmt(upkeep)}</td></tr>
-  <tr><td>명성</td><td style="text-align:right">${S.rep} / 100</td></tr>
-  <tr><td class="dim small">명성 55 이상 → 콜로세움 대경기 초청</td><td></td></tr></table>`;
- $('ludusAlert').innerHTML = S.money<0?'<div class="notice" style="border-color:var(--blood)">⚠ 자금이 바닥났다. 검투사를 팔거나 경기에서 이기지 못하면 양성소는 채권자의 손에 넘어간다. (자금 −200 이하 시 파산)</div>'
-  : (S.rep>=55&&!S.colosseumDone?'<div class="notice">★ 콜로세움에서 초청장이 왔다! 경기 계약 탭을 확인하라.</div>':'');
- const box=$('ludusRoster');box.innerHTML='';
- if(!S.gladiators.length)box.innerHTML='<p class="dim">검투사가 없다. 노예 시장으로 가라.</p>';
- S.gladiators.forEach(g=>{const d=document.createElement('div');d.className='gcard';d.innerHTML=gCardHtml(g);d.onclick=()=>{selGlad=g.id;go('roster');};box.appendChild(d);});
+  <tr><td>보유 자금</td><td style="text-align:right" class="${S.money<0?'red':'gold'}">${den(S.money)}</td></tr>
+  <tr><td>주간 유지비 (식비·급여)</td><td style="text-align:right" class="red">−${den(upkeep)}</td></tr>
+  <tr><td>명성</td><td style="text-align:right">${S.rep} / 100</td></tr></table>`;
+ $('ludusAlert').innerHTML = S.money<0?'<div class="notice" style="border-color:var(--blood)">'+uicon('warn',12)+' 자금이 바닥났다. 검투사를 팔거나 경기에서 이기지 못하면 양성소는 채권자의 손에 넘어간다. (자금 −200 이하 시 파산)</div>'
+  : (S.rep>=55&&!S.colosseumDone?'<div class="notice">'+uicon('star',13)+' 콜로세움에서 초청장이 왔다! 경기 계약 탭을 확인하라.</div>':'');
  const wl=$('weekLog');wl.innerHTML=S.log.length?S.log.map(l=>`<p>${l}</p>`).join(''):'<p class="dim">아직 소식이 없다.</p>';
 }
 let selGlad=null;
+let rosterTab='train'; // §1 로스터 상세 탭: train|arma|arcana|acta (검투사 전환 시 유지)
 const TRAINDEFS=[['str','근력'],['skl','기술'],['spd','민첩'],['sta','지구력'],['wil','정신'],['apt','무기 적성'],['balanced','균형'],['rest','휴식']];
 const TRAINLAT={str:'VIRES',skl:'ARS',spd:'CELERITAS',sta:'LABOR',wil:'ANIMUS',apt:'APTITUDO',balanced:'OMNIA',rest:'OTIUM'};
 function trainAnimHtml(g){
@@ -2737,7 +3069,7 @@ function renderRoster(){
    :g.train==='rest'?'<span class="rtag rs">휴식</span>'
    :`<span class="rtag tr">${TRAINDEFS.find(t=>t[0]===g.train)[1]} 훈련${g.train!=='apt'?' · '+['가벼움','보통','혹독'][g.intensity]:''}</span>`;
   d.innerHTML=`<div class="rcard">${portraitHtml(g.pid,'pt-s')}<div class="rmain">
-   <div class="spread"><span class="gname">${g.name}${g.weapon?' <span class="small" style="color:'+GRADES[g.weapon.grade].c+'">⚔</span>':''}</span><span class="small dim">${CLASSES[g.cls].n}</span></div>
+   <div class="spread"><span class="gname">${g.name}${g.weapon?' <span class="small" style="color:'+GRADES[g.weapon.grade].c+'">'+uicon('swords',11)+'</span>':''}</span><span class="small dim">${CLASSES[g.cls].n}</span></div>
    <div class="small dim">${g.wins}승 ${g.losses}패 · 능력 합 ${statSum(g)}/${g.pot}</div>${st}
    <div class="rbar"><i style="width:${g.cond}%"></i></div></div></div>`;
   d.onclick=()=>{selGlad=g.id;renderRoster();};list.appendChild(d);});
@@ -2746,40 +3078,112 @@ function renderRoster(){
  const det=$('rosterDetail');
  if(!g){det.innerHTML='<p class="dim">왼쪽에서 검투사를 선택하라.</p>';return;}
  const noInt=(g.train==='apt'||g.train==='rest');
- det.innerHTML=gCardHtml(g)+`
-  <div class="sechd">훈련 <span class="lat">DISCIPLINA</span></div>
-  <div class="trgrid" id="trGrid">${TRAINDEFS.map(([v,n])=>`<div class="trbtn${g.train===v?' on':''}" data-tr="${v}" role="button" tabindex="0">${n}${v==='apt'&&!g.talentKnown?` <span class="small dim">(${g.aptTrain||0}/3)</span>`:''}<span class="trlat">${TRAINLAT[v]}</span></div>`).join('')}</div>
-  <div class="trmeta">
-   <div><span class="small dim" style="margin-right:8px">강도</span><span class="seg${noInt?' dis':''}" id="inSeg">${['가벼움','보통','혹독'].map((n,i)=>`<button data-in="${i}" class="${!noInt&&g.intensity===i?'on':''}">${n}</button>`).join('')}</span>${noInt?'<span class="small dim" style="margin-left:8px">이 훈련엔 무관</span>':g.intensity===2?'<span class="small red" style="margin-left:8px">부상 위험</span>':''}</div>
-   <span class="small dim">잠재력 <b class="gold">${statSum(g)} / ${g.pot}</b>${g.age>=28?' · 노장':''}</span>
-  </div>
-  ${trainAnimHtml(g)}
-  <div class="sechd">장비 <span class="lat">ARMA</span> <span class="dim small" style="letter-spacing:0;font-weight:400;text-transform:none">— 죽으면 장비도 함께 잃는다</span></div>
-  <div class="small" style="margin-bottom:8px">${g.talentKnown?`재능: <b class="gold">${WCATS[g.talent].n}</b> — 재능에 맞는 무기를 쥐면 온전한 성능을 낸다`:`재능: <span class="dim">미지 — '무기 적성 훈련'으로 해금 (${g.aptTrain||0}/3)</span>`}</div>
-  <div class="grid2">
-   <div><div class="small dim" style="margin-bottom:4px">무기</div>
-    <select id="eqW"><option value="">기본 — ${WEAPONS[CLASSES[g.cls].weapon].n}</option>${(g.weapon?[g.weapon]:[]).concat(S.armory.filter(i=>!['shield','net','laqueus'].includes(i.cat))).map(i=>`<option value="${i.id}" ${g.weapon&&g.weapon.id===i.id?'selected':''}>[${WCATS[i.cat].n}] ${i.name}</option>`).join('')}</select></div>
-   <div><div class="small dim" style="margin-bottom:4px">보조장비${g.weapon&&g.weapon.cat==='dual'?' <span class="dim">(쌍검 — 불가)</span>':''}</div>
-    <select id="eqS" ${g.weapon&&g.weapon.cat==='dual'?'disabled':''}><option value="">${CLASSES[g.cls].shield==='none'?'없음 (그물 사용)':'기본 '+(CLASSES[g.cls].shield==='large'?'스쿠툼':'파르마')}</option>${(g.shield?[g.shield]:[]).concat(S.armory.filter(i=>['shield','net','laqueus'].includes(i.cat))).map(i=>`<option value="${i.id}" ${g.shield&&g.shield.id===i.id?'selected':''}>[${WCATS[i.cat].n}] ${i.name}</option>`).join('')}</select></div>
-  </div>
-  ${g.weapon?`<div class="eqrow">${itemIconHtml(g.weapon,38)}<div class="small" style="flex:1;min-width:0">${itemNameHtml(g.weapon)} <span class="dim">· ${itemStatTxt(g.weapon)}</span>${g.weapon.desc?`<div class="small dim" style="font-style:italic">${g.weapon.desc}</div>`:''}</div></div>`:''}
-  ${g.shield?`<div class="eqrow">${itemIconHtml(g.shield,38)}<div class="small" style="flex:1;min-width:0">${itemNameHtml(g.shield)} <span class="dim">· ${itemStatTxt(g.shield)}</span>${g.shield.desc?`<div class="small dim" style="font-style:italic">${g.shield.desc}</div>`:''}</div></div>`:''}
-  ${g.weapon&&g.talentKnown?(g.talent===g.weapon.cat?'<div class="small grn" style="margin-top:6px">⚔ 재능 일치 — 무기가 손에 착 붙는다</div>':'<div class="small red" style="margin-top:6px">재능 불일치 — 무기 보정이 절반 가까이 깎인다</div>'):(g.weapon?'<div class="small dim" style="margin-top:6px">이 무기가 맞는지는… 모래 위에서 드러난다.</div>':'')}
-  ${CLASSES[g.cls].shield==='none'&&g.shield?'<div class="small dim" style="margin-top:4px">방패를 들면 그물을 쓰지 못한다.</div>':''}
-  ${skillSectionHtml(g)}
-  <div class="sechd">기록 <span class="lat">ACTA</span></div>
-  <div class="weeklog small">${g.hist.length?g.hist.slice(-8).reverse().map(h=>`<p>${h}</p>`).join(''):'<p class="dim">기록 없음</p>'}</div>
-  <hr><div class="spread"><span class="small dim">몸값 ${fmt(gValue(g))} · 매각가 ${fmt(Math.round(gValue(g)*0.65))} <span class="dim">(장비는 회수)</span></span>
-  <button class="danger sm" id="btnSell">매각</button></div>`;
- $('trGrid').querySelectorAll('.trbtn').forEach(b=>{
-  const set=()=>{g.train=b.dataset.tr;renderRoster();};
-  b.onclick=set;b.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();set();}};});
- $('inSeg').querySelectorAll('button').forEach(b=>b.onclick=()=>{g.intensity=+b.dataset.in;renderRoster();});
- $('eqW').onchange=e=>equipItem(g,'weapon',e.target.value);
- $('eqS').onchange=e=>equipItem(g,'shield',e.target.value);
- bindSkillSection(g);
+ const nextReq=rankReqTxt(g.rank||0);
+ const fav=g.favor==null?30:g.favor;
+ const favT=favorTier(fav);
+ const myRivals=S.rivals.filter(r=>r.vsId===g.id);
+ const winsToNext=(()=>{ // 다음 승급까지 남은 통산 승수(요약용)
+  const req=RANK_REQ[g.rank||0];if(!req)return null;
+  return Math.max(0,(req.w||0)-g.wins);
+ })();
+ const topVenue=[...TIERS].reverse().find(t=>(g.rank||0)>=t.minRank);
+ // ── 요약 행 (항상 표시) ──
+ const summary=`<div class="rsummary">
+   <span class="rs-badge" data-rankinfo="1">${rankBadge(g.rank||0)}</span>
+   <span class="rs-sep">·</span><span class="fameb${g.fame>=15?' hi':''}">명성 ${g.fame}</span>
+   <span class="rs-sep">·</span>${favorBadge(fav,false)||`<span class="favb lo">총애 ${fav}</span>`}
+   <span class="rs-sep">·</span><span class="dim">무대 ${topVenue?topVenue.n:'—'}</span>
+   ${winsToNext!=null?`<span class="rs-sep">·</span><span class="dim">승급까지 ${winsToNext}승</span>`:'<span class="rs-sep">·</span><span class="gold">최고 서열</span>'}
+  </div>`;
+ // ── 탭 헤더 ──
+ const TABS=[['train','훈련'],['arma','장비'],['arcana','깨달음'],['acta','기록']];
+ const tabBar=`<div class="rtabs">${TABS.map(([v,n])=>`<button data-rtab="${v}" class="${rosterTab===v?'on':''}">${n}</button>`).join('')}</div>`;
+ // ── 탭별 본문 ──
+ let tabBody='';
+ if(rosterTab==='train'){
+  tabBody=`
+   <div class="trgrid" id="trGrid">${TRAINDEFS.map(([v,n])=>`<div class="trbtn${g.train===v?' on':''}" data-tr="${v}" role="button" tabindex="0">${n}${v==='apt'&&!g.talentKnown?` <span class="small dim">(${g.aptTrain||0}/3)</span>`:''}<span class="trlat">${TRAINLAT[v]}</span></div>`).join('')}</div>
+   <div class="trmeta">
+    <div><span class="small dim" style="margin-right:8px">강도</span><span class="seg${noInt?' dis':''}" id="inSeg">${['가벼움','보통','혹독'].map((n,i)=>`<button data-in="${i}" class="${!noInt&&g.intensity===i?'on':''}">${n}</button>`).join('')}</span>${noInt?'<span class="small dim" style="margin-left:8px">이 훈련엔 무관</span>':g.intensity===2?'<span class="small red" style="margin-left:8px">부상 위험</span>':''}</div>
+    <span class="small dim">잠재력 <b class="gold">${statSum(g)} / ${g.pot}</b>${g.age>=28?' · 노장':''}</span>
+   </div>
+   ${trainAnimHtml(g)}`;
+ }else if(rosterTab==='arma'){
+  const dualLock=g.weapon&&g.weapon.cat==='dual';
+  // 무기 후보: 무기고의 무기류 + 현재 장착 무기 (기본 무기는 별도 슬롯)
+  const wpnPool=S.armory.filter(i=>!['shield','net','laqueus'].includes(i.cat));
+  const wpnList=(g.weapon?[g.weapon]:[]).concat(wpnPool);
+  // 보조장비 후보: 무기고의 방패/그물/올가미 + 현재 장착분
+  const auxPool=S.armory.filter(i=>['shield','net','laqueus'].includes(i.cat));
+  const auxList=(g.shield?[g.shield]:[]).concat(auxPool);
+  // 슬롯 HTML 생성기 (장착 여부에 따라 오버레이+E)
+  const slotHtml=(it,equipped)=>`<div class="eqslot${equipped?' equipped':''}" data-eq="weapon" data-id="${it.id}" title="${it.name} · ${itemStatTxt(it)}">${itemIconHtml(it,48)}<div class="eqlabel">${it.name}</div></div>`;
+  const auxSlotHtml=(it,equipped)=>`<div class="eqslot${equipped?' equipped':''}" data-eq="shield" data-id="${it.id}" title="${it.name} · ${itemStatTxt(it)}">${itemIconHtml(it,48)}<div class="eqlabel">${it.name}</div></div>`;
+  // 기본 무기 슬롯 (해제 상태 = 기본 무기 사용). 무기종류→아이콘 cat 매핑
+  const WPN_CAT={gladius:'sword',sica:'sica',trident:'trident',hasta:'spear',dual:'dual'};
+  const baseWpnKey=CLASSES[g.cls].weapon;
+  const baseWpn=WEAPONS[baseWpnKey];
+  const baseWpnCat=WPN_CAT[baseWpnKey]||'sword';
+  const baseWpnSlot=`<div class="eqslot eqbase${!g.weapon?' equipped':''}" data-eq="weapon" data-id="" title="기본 무기 — ${baseWpn.n}"><div class="itemicon" style="width:48px;height:48px;border-color:#5a4a2e">${itemSvg(baseWpnCat,0)}</div><div class="eqlabel">기본</div></div>`;
+  const baseAuxLabel=CLASSES[g.cls].shield==='none'?'그물':'기본';
+  const baseAuxSlot=`<div class="eqslot eqbase${!g.shield?' equipped':''}" data-eq="shield" data-id="" title="기본 보조장비"><div class="itemicon" style="width:48px;height:48px;border-color:#5a4a2e">${itemSvg(CLASSES[g.cls].shield==='none'?'net':'shield',0)}</div><div class="eqlabel">${baseAuxLabel}</div></div>`;
+  tabBody=`
+   <div class="small" style="margin-bottom:6px">${g.talentKnown?`재능: <b class="gold">${WCATS[g.talent].n}</b> — 재능에 맞는 무기를 쥐면 온전한 성능을 낸다`:`재능: <span class="dim">미지</span>`}</div>
+   <div class="small dim" style="margin-bottom:2px">무기</div>
+   <div class="eqgrid">${baseWpnSlot}${wpnList.map(it=>slotHtml(it,g.weapon&&g.weapon.id===it.id)).join('')}</div>
+   <div class="small dim" style="margin:6px 0 2px">보조장비${dualLock?' <span class="red">(쌍검 — 사용 불가)</span>':''}</div>
+   <div class="eqgrid" style="${dualLock?'opacity:.4;pointer-events:none':''}">${baseAuxSlot}${auxList.map(it=>auxSlotHtml(it,g.shield&&g.shield.id===it.id)).join('')}</div>
+   ${g.weapon?`<div class="eqrow" style="margin-top:8px">${itemIconHtml(g.weapon,38)}<div class="small" style="flex:1;min-width:0">${itemNameHtml(g.weapon)} <span class="dim">· ${itemStatTxt(g.weapon)}</span>${g.weapon.desc?`<div class="small dim" style="font-style:italic">${g.weapon.desc}</div>`:''}</div></div>`:''}
+   ${g.shield?`<div class="eqrow">${itemIconHtml(g.shield,38)}<div class="small" style="flex:1;min-width:0">${itemNameHtml(g.shield)} <span class="dim">· ${itemStatTxt(g.shield)}</span>${g.shield.desc?`<div class="small dim" style="font-style:italic">${g.shield.desc}</div>`:''}</div></div>`:''}
+   ${g.weapon&&g.talentKnown?(g.talent===g.weapon.cat?'<div class="small grn" style="margin-top:6px">'+uicon('swords',12)+' 재능 일치 — 무기가 손에 착 붙는다</div>':'<div class="small red" style="margin-top:6px">재능 불일치 — 무기 보정이 절반 가까이 깎인다</div>'):(g.weapon?'<div class="small dim" style="margin-top:6px">이 무기가 맞는지는… 모래 위에서 드러난다.</div>':'')}
+   ${CLASSES[g.cls].shield==='none'&&g.shield?'<div class="small dim" style="margin-top:4px">방패를 들면 그물을 쓰지 못한다.</div>':''}`;
+ }else if(rosterTab==='arcana'){
+  tabBody=skillSectionHtml(g);
+ }else if(rosterTab==='acta'){
+  const fanLetter=(fav>=55&&Math.random()<0.2)?pick(FANLETTERS):null;
+  tabBody=`
+   ${fanLetter?`<div class="small" style="margin-bottom:8px;padding:5px 8px;background:rgba(224,138,152,.05);border-left:2px solid #9a5560;font-style:italic;color:#c99aa4">${uicon('letter',12)} "${fanLetter}"</div>`:''}
+   <div class="small" style="margin-bottom:8px;padding:6px 8px;background:rgba(200,164,86,.05);border:1px solid var(--stone-hi);border-radius:3px">
+    ${nextReq?`<span class="dim">다음 계급(${RANKS[(g.rank||0)+1].n}) 조건: ${nextReq} — 현재 통산 ${g.wins}승${RANK_REQ[g.rank||0].t!=null?` · ${TIERS[RANK_REQ[g.rank||0].t].n} 이상 ${tierWinCount(g,RANK_REQ[g.rank||0].t)}승`:''}</span>`
+     :'<span class="gold">양성소 최고 서열 — 더 오를 곳이 없다.</span>'}
+    <br><span class="dim">관중 총애 ${fav} — ${favT?favT.n:'그저 그런 인지도'}</span>
+    ${myRivals.length?`<br><span class="dim">${uicon('vs',12)} 라이벌 — ${myRivals.map(r=>`${r.g.name} (${r.myWins}−${r.theirWins})${r.state!=='active'?' · 결착':''}`).join(' · ')}</span>`:''}</div>
+   <div class="weeklog small">${g.hist.length?g.hist.slice(-10).reverse().map(h=>`<p>${h}</p>`).join(''):'<p class="dim">기록 없음</p>'}</div>`;
+ }
+ det.innerHTML=gCardHtml(g)+summary+tabBar+`<div id="rTabBody">${tabBody}</div>`+
+  `<hr><div class="spread"><span class="small dim">몸값 ${den(gValue(g))} · 매각가 ${den(Math.round(gValue(g)*0.65))} <span class="dim">(장비는 회수)</span></span>
+   <button class="danger sm" id="btnSell">매각</button></div>`;
+ // ── 탭 전환 바인딩 ──
+ det.querySelectorAll('[data-rtab]').forEach(b=>b.onclick=()=>{rosterTab=b.dataset.rtab;renderRoster();});
+ // 계급 배지 클릭 → 상세 모달
+ const rankInfoEl=det.querySelector('[data-rankinfo]');
+ if(rankInfoEl)rankInfoEl.onclick=()=>{
+  const r=g.rank||0;
+  modal(`${RANKS[r].n} · ${RANKS[r].lat}`,
+   `${RANKS[r].d}\n\n출전 가능 무대: ${TIERS.filter(t=>(g.rank||0)>=t.minRank).map(t=>t.n).join(' · ')}`+
+   (nextReq?`\n\n다음 계급(${RANKS[r+1].n}) 조건: ${nextReq}`:'\n\n양성소 최고 서열이다.'));
+ };
+ // ── 탭별 조작 바인딩 (활성 탭에 대해서만) ──
+ if(rosterTab==='train'){
+  $('trGrid').querySelectorAll('.trbtn').forEach(b=>{
+   const set=()=>{g.train=b.dataset.tr;renderRoster();};
+   b.onclick=set;b.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();set();}};});
+  $('inSeg').querySelectorAll('button').forEach(b=>b.onclick=()=>{g.intensity=+b.dataset.in;renderRoster();});
+ }else if(rosterTab==='arma'){
+  det.querySelectorAll('.eqslot').forEach(slot=>{
+   slot.onclick=()=>{
+    const eqSlot=slot.dataset.eq; // 'weapon' | 'shield'
+    const id=slot.dataset.id;     // '' = 기본(해제)
+    // 이미 장착된 슬롯을 다시 누르면 해제(기본으로), 아니면 장착
+    if(slot.classList.contains('equipped'))equipItem(g,eqSlot,'');
+    else equipItem(g,eqSlot,id);
+   };
+  });
+ }else if(rosterTab==='arcana'){
+  bindSkillSection(g);
+ }
  $('btnSell').onclick=()=>{
-  modal('검투사 매각',`${g.name}을(를) ${fmt(Math.round(gValue(g)*0.65))} 데나리우스에 매각하는가? 되돌릴 수 없다.`,[
+  modal('검투사 매각',`${g.name}을(를) ${den(Math.round(gValue(g)*0.65))}에 매각하는가? 되돌릴 수 없다.`,[
    {t:'매각한다',fn:()=>{if(g.weapon){S.armory.push(g.weapon);g.weapon=null;}if(g.shield){S.armory.push(g.shield);g.shield=null;}S.money+=Math.round(gValue(g)*0.65);S.gladiators=S.gladiators.filter(x=>x.id!==g.id);S.chron.push(`${S.week}주차 — ${g.name} 매각.`);selGlad=null;renderAll();}},
    {t:'취소'}]);
  };
@@ -2800,11 +3204,13 @@ function skillSectionHtml(g){
  const pool=owned.length?owned.map(id=>{const sk=SKILLS[id];const eq=equipped.has(id);
    return `<div class="skillchip ${eq?'eq':''}" data-sk="${id}" title="${sk.n} — ${sk.desc}">${skillIconHtml(id,44)}<span class="sk-g">${SKILL_GRADE[sk.grade]}</span></div>`;}).join('')
   :`<p class="small dim" style="margin:2px 0">아직 깨달음을 얻지 못했다 — 모래 위에서 극한을 겪은 자에게만 열린다.</p>`;
- return `<div class="sechd">ARS ARCANA <span class="lat">깨달음</span> <span class="dim small" style="letter-spacing:0;font-weight:400;text-transform:none">— 패시브 1 · 액티브 2</span></div>
+ return `<div class="sechd">ARS ARCANA <span class="lat">깨달음</span></div>
   <div class="grid3" style="gap:8px">${slots}</div>
   ${owned.length?`<div class="small dim" style="margin-top:8px">보유 ${owned.length}/6 — 아이콘을 눌러 빈 슬롯에 장착</div>`:''}
   <div class="skillpool">${pool}</div>
-  <div style="margin-top:8px"><button class="sm" id="dbgSkill" style="font-size:11px;opacity:.7">＋ 스킬 깨달음(임시)</button> <button class="sm" id="dbgSkillArc" style="font-size:11px;opacity:.7">＋ 비전 액티브(임시)</button> <span class="small dim">— 취득 시스템 구현 전 테스트용</span></div>`;
+  <div style="margin-top:8px"><button class="sm" id="dbgSkill" style="font-size:11px;opacity:.7">＋ 스킬 깨달음(임시)</button> <button class="sm" id="dbgSkillArc" style="font-size:11px;opacity:.7">＋ 비전 액티브(임시)</button> <span class="small dim">— 취득 시스템 구현 전 테스트용</span></div>
+  <div style="margin-top:6px"><button class="sm" id="dbgVenatio" style="font-size:11px;opacity:.7">동물전 참가(임시)</button> <span class="small dim">— 계급·주차 무시하고 즉시 베나티오 테스트</span></div>
+  <div style="margin-top:6px"><button class="sm" id="dbgGear" style="font-size:11px;opacity:.7">＋ 장비 획득(임시)</button> <button class="sm" id="dbgWeather" style="font-size:11px;opacity:.7">날씨 조정(임시)</button> <span class="small dim">— 무기고에 장비 지급 · 이번 주 날씨 변경</span></div>`;
 }
 let skillPick={slot:null}; // 슬롯 우선 선택 상태
 function bindSkillSection(g){
@@ -2866,6 +3272,51 @@ function bindSkillSection(g){
   modal('깨달음',`${g.name}이(가) 극한의 순간, 궁극의 경지를 보았다 — <b class="gold">${SKILLS[id].n}</b> (비전)`,[{t:'확인'}],{html:true});
   renderRoster();
  };
+ const dbgVen=$('dbgVenatio');
+ if(dbgVen)dbgVen.onclick=()=>{
+  if(g.injury>0){modal('출전 불가',`${g.name}은(는) 요양 중이다 (남은 ${g.injury}주).`);return;}
+  // 짐승 종류 선택 → 임시 계약 생성 → 즉시 startFight (계급·주차 게이트 우회)
+  const acts=BEAST_IDS.map(bid=>{
+   const B=BEASTS[bid];
+   return {t:`${B.n} (${B.lat}) — 체력${B.hp}·일격${B.dmg}`,fn:()=>{
+    const t=TIERS[clamp(B.minRank,0,3)];
+    const c={id:'dbgV'+RI(1e4,1e5),tier:clamp(B.minRank,0,3),tName:'[디버그] 베나티오 — '+B.n,
+     fee:0,purse:Math.round(R(t.purse[0],t.purse[1])*1.15),
+     beast:bid,opp:mkBeast(bid),scouted:true,scoutCost:0,venatio:true,minRank:B.minRank};
+    startFight(c,g,'bal');
+   }};
+  });
+  acts.push({t:'취소'});
+  modal('동물전 참가 (디버그)',`${g.name}을(를) 어떤 맹수와 붙일 것인가? — 계급·주차 제한 없이 즉시 참가함.`,acts);
+ };
+ // 장비 획득 디버그 — 카테고리·등급 선택해 무기고에 지급
+ const dbgGear=$('dbgGear');
+ if(dbgGear)dbgGear.onclick=()=>{
+  const CATS=[['sword','검'],['great','대검'],['dagger','단검'],['spear','장창'],['sica','곡검'],['trident','삼지창'],['dual','쌍검'],['shield','방패'],['net','그물'],['laqueus','올가미']];
+  const acts=CATS.map(([cat,n])=>({t:`${n} (${WCATS[cat].n})`,fn:()=>{
+   // 등급 선택 2차 모달 (전설 grade4는 고유 아이템이라 genItem 대상 아님 → 0~3)
+   const GLBL=['조악한','보통','정교한','명품'];
+   const gacts=[0,1,2,3].map(gr=>({t:`${GLBL[gr]} 등급`,fn:()=>{
+    const it=genItem(cat,gr);S.armory.push(it);
+    S.chron.push(`${S.week}주차 — [디버그] ${it.name} 지급.`);
+    modal('장비 획득',`무기고에 <b style="color:${GRADES[gr].c}">${it.name}</b> 추가됨 — ${itemStatTxt(it)}`,[{t:'확인'}],{html:true});
+    renderRoster();
+   }}));
+   gacts.push({t:'취소'});
+   modal('장비 등급 선택',`${n} — 어느 등급으로 지급할 것인가?`,gacts);
+  }}));
+  acts.push({t:'취소'});
+  modal('장비 획득 (디버그)','무기고에 지급할 장비 종류를 고르라.',acts);
+ };
+ // 날씨 조정 디버그 — 이번 주 날씨 변경
+ const dbgWeather=$('dbgWeather');
+ if(dbgWeather)dbgWeather.onclick=()=>{
+  const opts=[['clear','맑음'],['rain','우천']].map(([wx,n])=>({t:`${n}${S.weather===wx?' (현재)':''}`,fn:()=>{
+   S.weather=wx;renderAll();
+  }}));
+  opts.push({t:'취소'});
+  modal('날씨 조정 (디버그)','이번 주 날씨를 무엇으로 바꿀 것인가? — 다음 전투부터 적용됨.',opts);
+ };
 }
 
 function renderMarket(){
@@ -2876,30 +3327,74 @@ function renderMarket(){
  S.market.forEach(g=>{
   const d=document.createElement('div');d.className='gcard';
   const full=S.gladiators.length>=cap, poor=S.money<g.price;
-  d.innerHTML=gCardHtml(g,`<hr><div class="spread"><span class="gold" style="font-weight:700">${fmt(g.price)} 데나리우스</span>
+  d.innerHTML=gCardHtml(g,`${g.veteranSale?'<div class="small" style="color:#b8a06a;margin-top:4px">'+uicon('swords',11)+' 경력자 — 다른 루두스에서 계급을 쌓은 몸. 값은 비싸지만 곧바로 높은 무대에 설 수 있다.</div>':''}<hr><div class="spread"><span class="gold" style="font-weight:700">${den(g.price)}</span>
    <button class="primary sm" ${full||poor?'disabled':''}>${full?'숙소 만원':poor?'자금 부족':'구매'}</button></div>`);
   d.querySelector('button').onclick=e=>{e.stopPropagation();
    S.money-=g.price;S.gladiators.push(g);S.market=S.market.filter(x=>x.id!==g.id);
-   S.chron.push(`${S.week}주차 — ${g.name} 영입 (${fmt(g.price)}D).`);renderAll();
+   S.chron.push(`${S.week}주차 — ${g.name} 영입 (${den(g.price)}).`);renderAll();
    npcSay('market',pick(NPCS.market.buy));};
   box.appendChild(d);});
 }
+let openContracts=new Set(); // 펼쳐진 계약 id (주차 갱신 시 초기화)
 function renderContracts(){
  const box=$('contractList');box.innerHTML='';
  if(!S.contracts.length)box.innerHTML='<p class="dim">이번 주 제안이 없다. 다음 주에 새 계약이 들어온다.</p>';
  S.contracts.forEach(c=>{
-  const d=document.createElement('div');d.className='panel';
-  if(c.special)d.style.borderColor='#7a4a8a';
+  const d=document.createElement('div');d.className='panel ccard';
+  const evtCls=c.grand?'evt-champ':c.venatio?'evt-beast':c.rival?'evt-rival':c.special?'evt-special':'';
+  if(evtCls)d.classList.add(evtCls);
   const o=c.opp;
-  const oppInfo=c.scouted?`<div style="display:flex;gap:10px;align-items:flex-start;margin-top:4px">${portraitHtml(o.pid,'pt-s')}<div style="flex:1;min-width:0"><div class="small">상대: <b>${o.name}</b>${c.grand&&!S.champ.defeated?' — <span class="gold">현 챔피언</span>':''} (${CLASSES[o.cls].n}, ${o.wins}승 ${o.losses}패, 명성 ${o.fame})</div>${statGridHtml(o)}</div></div>`
-   :`<div class="small dim">상대: ${o.name} (${CLASSES[o.cls].n}) — 자세한 전력 미상. 소문: "${scoutRumor(o)}"</div>`;
-  d.innerHTML=`<div class="spread"><h3 style="margin:0">${c.grand?'👑 ':''}${c.tName}</h3>
-   <span class="small">출전료 <b class="gold">${fmt(c.fee)}</b> · 승리 상금 <b class="gold">${fmt(c.purse)}</b></span></div>
-   ${c.reward?`<div style="display:flex;gap:10px;align-items:center;margin:6px 0">${itemIconHtml(c.reward,44)}<div class="small" style="color:#b06ad0;flex:1;min-width:0">⚔ 우승 상품: <b>${c.reward.name}</b> — <span class="dim">${itemStatTxt(c.reward)}</span><br><span class="dim" style="font-style:italic">${c.reward.desc}</span></div></div>`:''}
-   ${oppInfo}${c.scouted&&o.weapon?`<div class="small" style="color:${GRADES[o.weapon.grade].c}">상대 장비: ${o.weapon.name}</div>`:''}<hr><div class="row">
-   ${c.scouted?'':`<button class="sm" data-a="scout">정찰 (−${c.scoutCost}D)</button>`}
-   <button class="primary sm" data-a="fight">출전 준비 ▸</button></div>`;
-  d.querySelectorAll('button').forEach(b=>b.onclick=()=>{
+  let oppInfo,mr,hasElig,oppLine;
+  if(c.venatio){
+   const B=BEASTS[c.beast];
+   mr=c.minRank||0;
+   hasElig=S.gladiators.some(g=>g.injury===0&&(g.rank||0)>=mr);
+   oppLine=`상대: <b style="color:${B.color==='#c9a35c'||B.color==='#b8923e'?'#d4a94e':'#c98a5a'}">${B.n}</b> <span class="lat" style="font-size:9px">${B.lat}</span> — 맹수`;
+   oppInfo=`<div class="small" style="margin-top:4px;padding:6px 8px;background:rgba(140,60,30,.08);border:1px solid #5a3a2a;border-radius:3px">
+    <span class="dim">${B.d}</span><br>
+    <span class="dim">위력 대략: 체력 ${B.hp} · 일격 ${B.dmg} · 민첩 ${B.spd}</span></div>`;
+  }else{
+   mr=TIERS[c.tier].minRank;
+   hasElig=S.gladiators.some(g=>g.injury===0&&(g.rank||0)>=mr);
+   oppLine=c.scouted?`상대: <b>${o.name}</b> ${rankBadge(o.rank||c.tier,true)}${c.grand&&!S.champ.defeated?' — <span class="gold">현 챔피언</span>':''} <span class="dim">(${CLASSES[o.cls].n}, ${o.wins}승 ${o.losses}패)</span> <span class="fameb sm">명성 ${o.fame}</span> ${favorBadge(o.favor==null?30:o.favor,true)||`<span class="favb lo sm">총애 ${o.favor==null?30:o.favor}</span>`}`
+    :(hasIdol()?`상대: <b>${o.name}</b> <span class="dim">(${CLASSES[o.cls].n}) — 소문이 먼저 도착</span>`:`상대: ${o.name} <span class="dim">(전력 미상)</span>`);
+   oppInfo=c.scouted?`<div style="display:flex;gap:10px;align-items:flex-start;margin-top:4px">${portraitHtml(o.pid,'pt-s')}<div style="flex:1;min-width:0">${statGridHtml(o)}</div></div>`
+    :(hasIdol()?`<div class="small" style="margin-top:2px"><span style="color:#d09aa4">${uicon('star',12)} 총아의 이름 덕에 소문이 먼저 도착했다</span> — 대략의 전력: ${scoutRumor(o)} <span class="dim">(정찰하면 상세 능력치까지 파악됨)</span></div>`
+      :`<div class="small dim">자세한 전력 미상. 소문: "${scoutRumor(o)}"</div>`);
+  }
+  const evtIcon=c.grand?uicon('crown',14):c.venatio?uicon('beast',14):c.rival?uicon('swords',14):c.special?uicon('star',14):'';
+  const rv=c.rival?S.rivals.find(r=>r.g&&r.g.id===c.rivalOppId):null;
+  const isOpen=openContracts.has(c.id);
+  // 헤더 지표: 출전료 · 상금 · 요구계급 · (라이벌)전적
+  const metrics=`<span class="cm"><span class="dim">출전료</span> ${den(c.fee)}</span>`
+   +`<span class="cm"><span class="dim">상금</span> <b class="gold">${den(c.purse)}</b></span>`
+   +`<span class="cm"><span class="dim">요구계급</span> ${rankBadge(mr,true)}</span>`
+   +(rv?`<span class="cm">${uicon('vs',12)}<b>${rv.myWins}−${rv.theirWins}</b></span>`:'');
+  // 펼침 본문 (상세 배너·상대 그리드·우승상품)
+  const bodyHtml=`
+   ${c.venatio?`<div class="small" style="color:#c98a5a;margin-top:2px">${uicon('warn',12)} 베나티오 — 짐승에겐 항복도 자비도 없다. 패배는 곧 죽음이다.</div>`:''}
+   ${rv?`<div class="small" style="color:#e08a8c;margin-top:2px">${uicon('vs',12)} 숙명의 라이벌 — ${rv.vsName} vs ${rv.g.name} · ${rv.meets}번째 만남</div>`:''}
+   ${c.reward?`<div style="display:flex;gap:10px;align-items:center;margin:6px 0">${itemIconHtml(c.reward,44)}<div class="small" style="color:#b06ad0;flex:1;min-width:0">${uicon('swords',12)} 우승 상품: <b>${c.reward.name}</b> — <span class="dim">${itemStatTxt(c.reward)}</span><br><span class="dim" style="font-style:italic">${c.reward.desc}</span></div></div>`:''}
+   ${oppInfo}${!c.venatio&&c.scouted&&o.weapon?`<div class="small" style="color:${GRADES[o.weapon.grade].c}">상대 장비: ${o.weapon.name}</div>`:''}`;
+  d.innerHTML=`<div class="cbar"></div>
+   <div class="chead">
+    <span class="ctitle">${evtIcon}${c.tName}</span>
+    <span class="cmetrics">${metrics}<span class="cchevron">▸</span></span>
+   </div>
+   <div class="small" style="margin-top:4px">${oppLine}${hasElig?'':' — <span class="red">자격 미달</span>'}</div>
+   <div class="cbody" style="display:${isOpen?'block':'none'}">${bodyHtml}</div>
+   <div class="cfoot"><hr><div class="row">
+    ${c.scouted?'':`<button class="sm" data-a="scout">정찰 (−${den(c.scoutCost)})</button>`}
+    <button class="primary sm" data-a="fight">출전 준비 ▸</button></div></div>`;
+  // 헤더 탭 → 펼침 토글
+  d.querySelector('.chead').onclick=()=>{
+   if(openContracts.has(c.id))openContracts.delete(c.id);else openContracts.add(c.id);
+   const body=d.querySelector('.cbody');const open=openContracts.has(c.id);
+   body.style.display=open?'block':'none';d.classList.toggle('open',open);
+  };
+  if(isOpen)d.classList.add('open');
+  d.querySelectorAll('.cfoot button').forEach(b=>b.onclick=(e)=>{
+   e.stopPropagation();
    if(b.dataset.a==='scout'){if(S.money<c.scoutCost)return modal('자금 부족','정찰꾼을 살 돈이 없다.');S.money-=c.scoutCost;c.scouted=true;renderAll();npcSay('colosseum',pick(NPCS.colosseum.scout));}
    else{npcSay('colosseum',pick(NPCS.colosseum.accept));openFightPrep(c);}});
   box.appendChild(d);});
@@ -2909,15 +3404,23 @@ function scoutRumor(o){
  return s>62?'짐승 같은 자라더군. 조심하게.':s>52?'제법 이름값을 하는 자일세.':s>42?'평범한 실력이라 들었네.':'풋내기라는 소문일세.';
 }
 function openFightPrep(c){
- const ready=S.gladiators.filter(g=>g.injury===0);
- if(!ready.length)return modal('출전 불가','싸울 수 있는 검투사가 없다. 모두 부상 중이거나, 양성소가 비었다.');
+ const minRank=c.venatio?(c.minRank||0):TIERS[c.tier].minRank;
+ const healthy=S.gladiators.filter(g=>g.injury===0);
+ const ready=healthy.filter(g=>(g.rank||0)>=minRank);
+ if(!healthy.length)return modal('출전 불가','싸울 수 있는 검투사가 없다. 모두 부상 중이거나, 양성소가 비었다.');
+ if(!ready.length)return modal('출전 자격 미달',
+  `${c.tName}의 모래는 ${RANKS[minRank].n}(${RANKS[minRank].lat}) 이상만 밟을 수 있다.\n\n`+
+  healthy.map(g=>`${g.name} — ${RANKS[g.rank||0].n}`).join('\n')+
+  `\n\n낮은 무대에서 승수를 쌓아 계급을 올려라.`);
  let selId=ready[0].id,tactic='bal';
- const body=()=>`상대: ${c.opp.name} (${CLASSES[c.opp.cls].n})\n${c.scouted?'전력 파악 완료.':'전력 미상 — 소문뿐이다.'}\n\n클래스 상성: ${CLASSES[COUNTER[c.opp.cls]].n} 계열이 ${CLASSES[c.opp.cls].n}에 유리하다.`;
+ const body=()=>c.venatio
+  ?`상대: ${BEASTS[c.beast].n} — 맹수.\n${BEASTS[c.beast].d}\n\n짐승은 항복하지 않는다. 죽이지 못하면 죽는다.`
+  :`상대: ${c.opp.name} (${CLASSES[c.opp.cls].n})\n${c.scouted?'전력 파악 완료.':'전력 미상 — 소문뿐이다.'}\n\n클래스 상성: ${CLASSES[COUNTER[c.opp.cls]].n} 계열이 ${CLASSES[c.opp.cls].n}에 유리하다.`;
  $('mTitle').textContent='출전 준비 — '+c.tName;
  $('mBody').textContent=body();
  const box=$('mActs');box.innerHTML='';
  const selG=document.createElement('select');
- ready.forEach(g=>{const o=document.createElement('option');o.value=g.id;o.textContent=`${g.name} — ${CLASSES[g.cls].n}, 능력 합 ${statSum(g)}, 컨디션 ${Math.round(g.cond)}%`;selG.appendChild(o);});
+ ready.forEach(g=>{const o=document.createElement('option');o.value=g.id;o.textContent=`${g.name} [${RANKS[g.rank||0].n}] — ${CLASSES[g.cls].n}, 능력 합 ${statSum(g)}, 컨디션 ${Math.round(g.cond)}%`;selG.appendChild(o);});
  selG.onchange=e=>selId=+e.target.value;
  const selT=document.createElement('select');
  [['agg','공격적 — 빠른 승부, 체력 소모 큼'],['bal','균형 — 상황에 맞춰'],['def','수비적 — 상대 지치기를 기다림']].forEach(([v,n])=>{const o=document.createElement('option');o.value=v;o.textContent=n;if(v==='bal')o.selected=true;selT.appendChild(o);});
@@ -2937,7 +3440,7 @@ function renderFacility(){
   const next=lv<f.lv.length-1;
   d.innerHTML=`<h3>${f.n} <span class="dim small" style="font-weight:400">— ${f.d}</span></h3>
    <div>현재: <b>${f.lv[lv]}</b></div>
-   ${next?`<div class="small dim">다음: ${f.lv[lv+1]} (${fmt(f.cost[lv+1])}D)</div><div style="margin-top:8px"><button class="sm primary" ${S.money<f.cost[lv+1]?'disabled':''}>증축</button></div>`:'<div class="small gold">최고 단계</div>'}`;
+   ${next?`<div class="small dim">다음: ${f.lv[lv+1]} (${den(f.cost[lv+1])})</div><div style="margin-top:8px"><button class="sm primary" ${S.money<f.cost[lv+1]?'disabled':''}>증축</button></div>`:'<div class="small gold">최고 단계</div>'}`;
   if(next)d.querySelector('button').onclick=()=>{S.money-=f.cost[lv+1];S.fac[key]++;S.chron.push(`${S.week}주차 — ${f.n} 증축: ${f.lv[lv+1]}.`);renderAll();};
   box.appendChild(d);}
  const ab=$('armoryList');ab.innerHTML='';
@@ -2947,10 +3450,10 @@ function renderFacility(){
   d.innerHTML=`<div style="display:flex;gap:12px;align-items:flex-start">${itemIconHtml(it,52)}
    <div style="flex:1;min-width:0"><div class="spread"><span style="color:${GRADES[it.grade].c};font-weight:700;font-size:15px">${it.name}</span><span class="small dim">${WCATS[it.cat].n}</span></div>
    <div class="small dim">${itemStatTxt(it)}</div>${it.desc?`<div class="small dim" style="font-style:italic">${it.desc}</div>`:''}</div></div>
-   <hr><div class="spread"><span class="small dim">판매가 ${fmt(Math.round(it.price?it.price*0.5:120))}D</span><button class="danger sm">판매</button></div>`;
+   <hr><div class="spread"><span class="small dim">판매가 ${den(Math.round(it.price?it.price*0.5:120))}</span><button class="danger sm">판매</button></div>`;
   d.querySelector('button').onclick=()=>{
    const val=Math.round(it.price?it.price*0.5:120);
-   modal('장비 판매',`${it.name}을(를) ${fmt(val)}D에 판매하는가?${it.grade>=4?'\n전설의 무기다 — 다시 구할 방법은 특별 흥행전뿐이다.':''}`,[
+   modal('장비 판매',`${it.name}을(를) ${den(val)}에 판매하는가?${it.grade>=4?'\n전설의 무기다 — 다시 구할 방법은 특별 흥행전뿐이다.':''}`,[
     {t:'판매한다',fn:()=>{S.money+=val;S.armory=S.armory.filter(x=>x.id!==it.id);renderAll();}},{t:'취소'}]);
   };
   ab.appendChild(d);});
@@ -3016,7 +3519,7 @@ function showPaper(){
  else arenaNews=itemHtml(pick(CHAMP_NEWS()));
  let goal='';
  if(!S.colosseumDone){
-  goal=S.rep>=55?`<div class="goalbox">★ 콜로세움 대경기 — 귀하의 루두스에 초청장이 발송되었다. 챔피언이 기다린다.</div>`
+  goal=S.rep>=55?`<div class="goalbox">${uicon('star',12)} 콜로세움 대경기 — 귀하의 루두스에 초청장이 발송되었다. 챔피언이 기다린다.</div>`
    :`<div class="goalbox">콜로세움 대경기 초청 기준: 양성소 명성 55 — 현재 귀하의 명성 ${S.rep}. 로마는 기다린다.</div>`;
  }
  const mine=(S.newsBuf.length?S.newsBuf.map(h=>itemHtml({h})).join(''):itemHtml({h:'조용한 한 주였다.',s:'담장 너머로 목검 소리만 들려왔다.'}));
@@ -3081,57 +3584,167 @@ function processTraining(g,log){
  if(Math.random()<injP){g.injury=RI(1,3);g.cond=clamp(g.cond-20,0,100);log.push(`<span class="red">${g.name} — 훈련 중 부상! ${g.injury}주간 요양이 필요하다.</span>`);}
  g.cond=clamp(g.cond-[3,7,14][inten],0,100);
 }
+const WEEK_EVENTS=[
+ {id:'escape',w:14,cond:s=>s.gladiators.some(g=>!g.beastId&&!hasTrait(g,'loyal')),run:(log)=>{
+   const g=pick(S.gladiators.filter(x=>!x.beastId&&!hasTrait(x,'loyal')));if(!g)return;
+   if(Math.random()<0.7){g.cond=clamp(g.cond-25,0,100);log.push(`<span class="red">${g.name}이(가) 탈출을 시도하다 붙잡혔다. 채찍질 후 감금 — 컴디션 급락.</span>`);}
+   else{S.gladiators=S.gladiators.filter(x=>x.id!==g.id);log.push(`<span class="red">${g.name}이(가) 밤사이 담을 넘어 사라졌다!</span>`);S.chron.push(`${S.week}주차 — ${g.name} 탈주.`);S.newsBuf.push(`모 양성소에서 검투사 탈주 소동 — 현상금이 걸렸다는 소문`);}
+ }},
+ {id:'noble_offer',w:12,cond:s=>s.gladiators.some(g=>!g.beastId&&g.fame>=10),run:(log)=>{
+   const g=pick(S.gladiators.filter(x=>!x.beastId&&x.fame>=10));if(!g)return;
+   const offer=Math.round(gValue(g)*R(1.1,1.5));
+   log.push(`귀족 하나가 ${g.name}에게 눈독을 들인다.`);
+   modal('귀족의 제안',`원로원 의원의 하인이 찾아왔다.\n"주인님께서 ${g.name}을(를) ${den(offer)}에 사시겠다 한다."`,[
+    {t:`판다 (+${den(offer)})`,fn:()=>{S.money+=offer;S.gladiators=S.gladiators.filter(x=>x.id!==g.id);S.chron.push(`${S.week}주차 — ${g.name}, 귀족에게 매각.`);renderAll();}},
+    {t:'거절한다 (명성 +1)',fn:()=>{S.rep=clamp(S.rep+1,0,100);renderAll();}}]);
+ }},
+ {id:'sponsor',w:14,cond:s=>true,run:(log)=>{
+   const cash=RI(20,60);S.money+=cash;
+   log.push(`지난 경기를 본 상인이 후원금을 보냈다. <span class="gold">+${cash}D</span>`);
+ }},
+ {id:'food',w:10,cond:s=>s.gladiators.some(g=>!g.beastId),run:(log)=>{
+   const g=pick(S.gladiators.filter(x=>!x.beastId));if(!g)return;
+   g.cond=clamp(g.cond-30,0,100);
+   log.push(`<span class="red">${g.name}이(가) 상한 음식에 배탈이 났다. 컴디션 급락.</span>`);
+ }},
+ {id:'mentor',w:12,cond:s=>s.gladiators.some(g=>!g.beastId),run:(log)=>{
+   const g=pick(S.gladiators.filter(x=>!x.beastId));if(!g)return;
+   log.push(`${g.name}이(가) 훈련장에서 후배들을 이끌었다. 사기가 오른다.`);
+   S.gladiators.forEach(x=>{if(!x.beastId)x.cond=clamp(x.cond+6,0,100);});
+ }},
+ {id:'veteran_tip',w:8,cond:s=>s.gladiators.some(g=>!g.beastId&&statSum(g)<g.pot),run:(log)=>{
+   const g=pick(S.gladiators.filter(x=>!x.beastId&&statSum(x)<x.pot));if(!g)return;
+   const k=pick(STATKEYS)[0];
+   if(g[k]<20){g[k]++;log.push(`${g.name}이(가) 은퇴한 노병에게 비법을 배운다. <span class="grn">${STATKEYS.find(s=>s[0]===k)[1]} +1</span>`);}
+ }},
+ {id:'plague',w:8,cond:s=>s.gladiators.filter(g=>!g.beastId).length>=2,run:(log)=>{
+   log.push(`<span class="red">${uicon('warn',12)} 열병이 막사를 휘쏈다 — 검투사들이 앞아누웠다.</span>`);
+   S.newsBuf.push(`도시 변두리에 역병 소문 — 양성소마다 문단속에 나섬다`);
+   const cost=Math.min(120,40+S.gladiators.length*15);
+   modal('역병 발생',`막사에 열병이 돌았다. 이대로면 모두의 컴디션이 크게 상한다.\n\n의원을 불러 격리·치료하겠는가? (−${den(cost)})`,[
+    {t:`의원을 부른다 (−${den(cost)})`,fn:()=>{
+      if(S.money<cost){modal('자금 부족','의원을 부를 돈이 없다. 병세가 번진다.');S.gladiators.forEach(g=>{if(!g.beastId)g.cond=clamp(g.cond-22,0,100);});renderAll();return;}
+      S.money-=cost;S.gladiators.forEach(g=>{if(!g.beastId)g.cond=clamp(g.cond-8,0,100);});
+      S.chron.push(`${S.week}주차 — 역병, 의원의 처치로 진정.`);renderAll();}},
+    {t:'버픸다 (무료·큰 피해)',fn:()=>{S.gladiators.forEach(g=>{if(!g.beastId)g.cond=clamp(g.cond-22,0,100);});S.chron.push(`${S.week}주차 — 역병으로 막사가 앓다.`);renderAll();}}]);
+ }},
+ {id:'crowd_riot',w:9,cond:s=>s.rep>=15,run:(log)=>{
+   const up=Math.random()<0.5;
+   const delta=up?RI(4,9):-RI(4,9);
+   S.gladiators.forEach(g=>{if(!g.beastId&&g.favor!=null)g.favor=clamp(g.favor+delta,0,100);});
+   if(up){log.push(`<span class="gold">${uicon('star',12)} 시내 소요 속에 군중이 검투사에게 열광했다 — 총애가 올랍다.</span>`);S.newsBuf.push(`곡물값 폭동 와중에도 투기장 인기는 식지 않아 — 검투사에 쓸린 민심`);}
+   else{log.push(`<span class="red">시내 소요로 흥행이 얼어붙었다 — 관중의 관심이 식었다.</span>`);S.newsBuf.push(`도시 소요로 투기장 발길 뜼뤬어져 — 흥행주들 울상`);}
+ }},
+ {id:'rival_taunt',w:10,cond:s=>activeRivals().length>0,run:(log)=>{
+   const rv=pick(activeRivals());if(!rv||!rv.g)return;
+   const rivalName=rv.g.name; // 라이벌 NPC
+   const mine=S.gladiators.find(g=>g.id===rv.vsId); // 우리 검투사(vsId)
+   const target=mine||pick(S.gladiators.filter(g=>!g.beastId));
+   log.push(`<span style="color:#e08a8c">${uicon('vs',12)} 라이벌 ${rivalName}이(가) 광장에서 우리 루두스를 조롱했다.</span>`);
+   S.newsBuf.push(`검투사 ${rivalName}, 라이벌 양성소를 공개 조롱 — 다음 대결에 이목 집중`);
+   if(target&&!target.beastId){target.cond=clamp(target.cond+5,0,100);log.push(`${target.name}이(가) 이를 갈며 훈련에 매달린다. <span class="grn">투지가 오른다.</span>`);}
+ }},
+ {id:'wanderer',w:9,cond:s=>s.money>=150&&s.gladiators.filter(g=>!g.beastId).length<FACS.barrack.eff[s.fac.barrack],run:(log)=>{
+   const recruit=genGladiator(R(0.9,1.25));recruit.wins=RI(2,8);recruit.losses=RI(1,5);recruit.fame=RI(3,12);
+   const fee=Math.round(gValue(recruit)*R(0.7,1.0));
+   log.push(`떠돌이 검투사 ${recruit.name}이(가) 문을 두드렸다.`);
+   modal('떠돌이 검투사',`한 검투사가 일자리를 청한다.\n"${recruit.name} — ${CLASSES[recruit.cls].n}, ${recruit.wins}승 ${recruit.losses}패. 계약금 ${den(fee)}면 이 검을 맡기겠소."`,[
+    {t:`받아들인다 (−${den(fee)})`,fn:()=>{
+      if(S.money<fee){modal('자금 부족','계약금이 모자란다. 그는 다른 문을 두드리러 떠났다.');return;}
+      if(S.gladiators.filter(g=>!g.beastId).length>=FACS.barrack.eff[S.fac.barrack]){modal('막사 부족','빈 침상이 없다. 그를 받을 수 없다.');return;}
+      S.money-=fee;S.gladiators.push(recruit);S.chron.push(`${S.week}주차 — 떠돌이 검투사 ${recruit.name} 합류.`);renderAll();}},
+    {t:'거절한다',fn:()=>{}}]);
+ }},
+ {id:'noble_visit',w:10,cond:s=>s.rep>=25,run:(log)=>{
+   log.push(`한 귀족이 예고 없이 양성소를 찾았다.`);
+   const cost=RI(40,70);
+   modal('귀족의 방문',`원로원 의원이 수행원을 이끌고 훈련을 참관하러 왔다.\n환대하겠는가? (연회 비용 −${den(cost)})`,[
+    {t:`환대한다 (−${den(cost)} · 명성 +3)`,fn:()=>{
+      if(S.money<cost){modal('자금 부족','연회를 열 돈이 없어 문전박대한 꿀이 되었다. 명성 −1.');S.rep=clamp(S.rep-1,0,100);renderAll();return;}
+      S.money-=cost;S.rep=clamp(S.rep+3,0,100);S.chron.push(`${S.week}주차 — 귀족을 환대, 명성을 얻다.`);S.newsBuf.push(`유력 원로원 의원, 아무개 양성소를 참관 — 후원설에 무게`);renderAll();}},
+    {t:'정중히 사양한다',fn:()=>{if(Math.random()<0.35){S.rep=clamp(S.rep-1,0,100);log.push(`귀족이 언짬은 기색으로 돌아갔다. <span class="red">명성 −1.</span>`);}renderAll();}}]);
+ }},
+];
+/* 업적 — 달성형 이정표. 달성 시 1회 축하 연출, 이후에도 계속 플레이(기존 제패 설계 유지).
+   S.achievements에 달성 id 기록. 파산(몰락)은 nextWeek에서 별도 처리(게임 종료형). */
+const ACHIEVEMENTS=[
+ {id:'emperor',name:'검투 황제',cond:s=>s.colosseumDone,
+  lines:['콜로세움의 챔피언을 꺾은 자.','8만 관중이 당신의 이름을 연호한다.','로마의 모래 위에서, 당신은 정점에 섰다.']},
+ {id:'magnate',name:'재벌 라니스타',cond:s=>s.money>=5000,
+  lines:['금고가 데나리우스로 넘친다.','검투는 피의 사업 — 그리고 당신은 그 사업의 승자다.','원로원 의원조차 당신의 자금 앞에 고개를 숙인다.']},
+ {id:'immortal',name:'불멸의 이름',cond:s=>s.gladiators.some(g=>!g.beastId&&g.wins>=40&&(g.favor||0)>=80),
+  lines:['한 검투사가 40승을 넘기고 군중의 우상이 되었다.','그의 이름은 대리석에 새겨져 세대를 넘어 회자될 것이다.','검투사는 죽어도, 전설은 죽지 않는다.']},
+];
+function grantAchievement(id,log){
+ if(S.achievements.includes(id))return false;
+ const e=ACHIEVEMENTS.find(x=>x.id===id);if(!e)return false;
+ S.achievements.push(id);
+ S.chron.push(`${S.week}주차 — 【${e.name}】 달성.`);
+ if(log)log.push(`<span class="gold">${uicon('laurel',12)} 업적 달성 — 【${e.name}】</span>`);
+ S.newsBuf.push(`로마가 주목한다 — 아무개 라니스타, 【${e.name}】의 경지에 이르다`);
+ return true;
+}
+function checkAchievements(log){
+ // 파산 외 업적. emperor는 finishFight에서 이미 기록되므로 여기선 자금·명장 위주.
+ ACHIEVEMENTS.forEach(e=>{
+  if(e.id==='emperor')return; // 제패는 전투 종료 시 처리
+  let ok=false;try{ok=e.cond(S);}catch(_){ok=false;}
+  if(ok&&grantAchievement(e.id,log)){
+   const hero=(e.id==='immortal')?S.gladiators.find(g=>!g.beastId&&g.wins>=40&&(g.favor||0)>=80):null;
+   const body=(hero?`${hero.name} — `:'')+e.lines.join('\n');
+   modalQueue.length=0; // 업적은 주간 이벤트보다 우선 (드물고 중대함)
+   modal(`업적 — ${e.name}`,body+'\n\n(양성소 운영은 계속됨)',[{t:'영광을 새긴다',fn:()=>renderAll()}]);
+  }
+ });
+}
 function randomEvent(log){
  if(Math.random()>0.32||!S.gladiators.length)return;
- const g=pick(S.gladiators);
- const roll=Math.random();
- if(roll<0.2&&!hasTrait(g,'loyal')){
-  const caught=Math.random()<0.7;
-  if(caught){g.cond=clamp(g.cond-25,0,100);log.push(`<span class="red">${g.name}이(가) 탈출을 시도하다 붙잡혔다. 채찍질 후 감금 — 컨디션 급락.</span>`);}
-  else{S.gladiators=S.gladiators.filter(x=>x.id!==g.id);log.push(`<span class="red">${g.name}이(가) 밤사이 담을 넘어 사라졌다!</span>`);S.chron.push(`${S.week}주차 — ${g.name} 탈주.`);S.newsBuf.push(`모 양성소에서 검투사 탈주 소동 — 현상금이 걸렸다는 소문`);}
- }else if(roll<0.4&&g.fame>=10){
-  const offer=Math.round(gValue(g)*R(1.1,1.5));
-  log.push(`귀족 하나가 ${g.name}에게 눈독을 들인다.`);
-  modal('귀족의 제안',`원로원 의원의 하인이 찾아왔다.\n"주인님께서 ${g.name}을(를) ${fmt(offer)} 데나리우스에 사시겠다 한다."`,[
-   {t:`판다 (+${fmt(offer)}D)`,fn:()=>{S.money+=offer;S.gladiators=S.gladiators.filter(x=>x.id!==g.id);S.chron.push(`${S.week}주차 — ${g.name}, 귀족에게 매각.`);renderAll();}},
-   {t:'거절한다 (명성 +1)',fn:()=>{S.rep=clamp(S.rep+1,0,100);renderAll();}}]);
- }else if(roll<0.55){
-  const cash=RI(20,60);S.money+=cash;
-  log.push(`지난 경기를 본 상인이 후원금을 보내왔다. <span class="gold">+${cash}D</span>`);
- }else if(roll<0.7){
-  g.cond=clamp(g.cond-30,0,100);
-  log.push(`<span class="red">${g.name}이(가) 상한 음식에 배탈이 났다. 컨디션 급락.</span>`);
- }else if(roll<0.85){
-  log.push(`${g.name}이(가) 훈련장에서 후배들을 이끌었다. 사기가 오른다.`);
-  S.gladiators.forEach(x=>x.cond=clamp(x.cond+6,0,100));
- }else{
-  const k=pick(STATKEYS)[0];
-  if(g[k]<20&&statSum(g)<g.pot){g[k]++;log.push(`${g.name}이(가) 은퇴한 노병에게 비법을 배웠다. <span class="grn">${STATKEYS.find(s=>s[0]===k)[1]} +1</span>`);}
- }
+ const avail=WEEK_EVENTS.filter(e=>{try{return e.cond(S);}catch(_){return false;}});
+ if(!avail.length)return;
+ const total=avail.reduce((a,e)=>a+e.w,0);
+ let r=Math.random()*total;
+ let chosen=avail[avail.length-1];
+ for(const e of avail){if(r<e.w){chosen=e;break;}r-=e.w;}
+ try{chosen.run(log);}catch(ex){}
 }
 function nextWeek(){
- if(arena&&!arena.over)return;
+ if(arena)return; // 전투·결과 화면에서는 주차 진행 불가 (arena는 양성소 복귀 시 null이 됨)
  if($('paperBack').classList.contains('on'))return;
  const log=[];
  const upkeep=weeklyUpkeep();
  S.money-=upkeep;
- log.push(`유지비 <span class="red">−${fmt(upkeep)}D</span> 지출.`);
+ log.push(`유지비 <span class="red">−${den(upkeep)}</span> 지출.`);
  S.gladiators.forEach(g=>{
   if(g.injury>0){
    let rec=1+(S.staff.doctor?1:0);
    g.injury=Math.max(0,g.injury-rec);
    if(g.injury===0)log.push(`<span class="grn">${g.name} — 부상에서 회복했다.</span>`);
    else log.push(`${g.name} — 요양 중 (남은 ${g.injury}주).`);
+   // 결장 중 관중의 망각 — FAVOR 소폭 하락
+   if(g.favor!=null&&g.favor>0)g.favor=clamp(g.favor-1,0,100);
   }
   processTraining(g,log);
   g.cond=clamp(g.cond+FACS.kitchen.eff[S.fac.kitchen]*FACS.med.eff[S.fac.med]*0.6,0,100);
  });
  deferModals=true;
  randomEvent(log);
+ checkAchievements(log);
  deferModals=false;
- refreshMarket();refreshContracts();
+ // ── 후원자 선물 (FAVOR 활용) — 총아(favor 80↑) 보유 시 낮은 확률로 팬이 장비 후원 ──
+ const idols=S.gladiators.filter(g=>!g.beastId&&(g.favor||0)>=80);
+ if(idols.length&&Math.random()<0.08){
+  const idol=pick(idols);
+  const cat=(idol.talentKnown&&idol.talent)?idol.talent:pick(['sword','spear','dagger','great']);
+  const gift=genItem(cat,RI(1,2));
+  S.armory.push(gift);
+  log.push(`<span class="gold">${uicon('letter',12)} ${idol.name}의 팬을 자처하는 후원자가 선물을 보냈다 — ${gift.name} 입수.</span>`);
+  S.newsBuf.push(`『${idol.name}』의 열혈 후원자, 값진 무구를 헌정하다 — 총아의 인기를 실감케 하는 일화`);
+  S.chron.push(`${S.week}주차 — ${idol.name}의 후원자가 ${gift.name}을(를) 헌정.`);
+ }
+ refreshMarket();openContracts.clear();refreshContracts(S.week+1);
  if(!S.champ.defeated&&Math.random()<0.65)S.champ.wins++;
  S.week++;
+ S.weather=rollWeather(); // 새 주의 날씨 결정 (헤더에 표시됨)
  S.log=log;
  if(S.money<=-200){
   modalQueue.length=0;
@@ -3210,12 +3823,31 @@ function startFight(contract,glad,tactic){
  cutinBusy=false;if(typeof cutinTimer!=='undefined')clearTimeout(cutinTimer);
  const cl=document.getElementById('cutinLayer');if(cl)cl.classList.remove('on');
  S.contracts=S.contracts.filter(c=>c.id!==contract.id);
+ const venue=clamp(contract.tier||0,0,3);
+ /* ═══ 날씨 (weather) ═══
+    주간 날씨(S.weather)를 따름 — 헤더에 미리 표시됨. 맑음/우천 2종.
+    수치는 자체 설계값(추정) — 밸런스 확인 필요. */
+ let weather=S.weather||'clear';
+ // 빗줄기·물웅덩이는 결정적 좌표로 사전 생성 (R() 프레임 지글거림 방지 — T3 대리석 결 버그 선례)
+ const rainStreaks=[],puddles=[];
+ if(weather==='rain'){
+  for(let i=0;i<56;i++)rainStreaks.push({x:(i*137%W)+((i*53)%40),y0:(i*89%H),len:R(14,26),spd:520+((i*29)%180)});
+  for(let i=0;i<3;i++)puddles.push({x:120+i*300+((i*71)%80),y:FLOOR+8+((i*23)%18),rx:26+((i*17)%22),ry:5+((i*7)%4)});
+ }
+ /* 티어별 관중 규모·배치 — 무대의 격이 곧 관중의 수 */
+ const VC=[
+  {rows:1,n:15,y0:172,gap:0,rr:[4,6]},        // T0 울타리 뒤 입석
+  {rows:2,n:30,y0:64,gap:30,rr:[5,7]},        // T1 목조 관람석
+  {rows:3,n:38,y0:52,gap:26,rr:[5,7]},        // T2 석조 관람석
+  {rows:4,n:44,y0:46,gap:24,rr:[4.5,6.5]}][venue]; // T3 콜로세움 만석
  const crowd=[];
- for(let row=0;row<3;row++)for(let i=0;i<38;i++)
-  crowd.push({x:20+i*25+R(-6,6),y:52+row*26+R(-3,3),r:R(5,7),c:pick(['#c9b18a','#a88d68','#8a6f52','#d4bc95','#7a5f45','#b39a76']),ph:R(0,6.28),sp:R(4,8),arm:Math.random()<.3});
+ const step=(W-40)/VC.n;
+ for(let row=0;row<VC.rows;row++)for(let i=0;i<VC.n;i++)
+  crowd.push({x:20+i*step+R(-6,6),y:VC.y0+row*VC.gap+R(-3,3),r:R(VC.rr[0],VC.rr[1]),c:pick(['#c9b18a','#a88d68','#8a6f52','#d4bc95','#7a5f45','#b39a76']),ph:R(0,6.28),sp:R(4,8),arm:Math.random()<.3});
  const specks=[];for(let i=0;i<90;i++)specks.push({x:R(0,W),y:R(FLOOR-6,H-8),r:R(.6,1.8),a:R(.05,.18)});
  arena={
-  contract,tactic,over:false,phase:'intro',phaseT:0,t:0,speed:1,shake:0,excite:0.15,
+  contract,tactic,over:false,phase:'intro',phaseT:0,t:0,speed:1,shake:0,excite:contract.rival?0.3:0.15,venue,
+  weather,rainStreaks,puddles,
   particles:[],floats:[],specks,crowd,verdict:null,result:null,bigText:null,bigT:0,
   f:[mkFighter(glad,1,tactic),mkFighter(contract.opp,-1,pick(['agg','bal','def']))],
   // 각성 트리거 추적 (플레이어 파이터 기준)
@@ -3226,19 +3858,38 @@ function startFight(contract,glad,tactic){
  $('arenaTitle').textContent=`${contract.tName} — ${glad.name} 대 ${contract.opp.name}`;
  $('btnFightDone').style.display='none';
  clog(`<span class="sys">— ${contract.tName}. 모래가 골라지고, 나팔이 울린다. —</span>`);
- clog(`<span class="sys">${glad.name}(${CLASSES[glad.cls].n}) 대 ${contract.opp.name}(${CLASSES[contract.opp.cls].n})</span>`);
+ clog(`<span class="sys">${glad.name}(${CLASSES[glad.cls].n}) 대 ${contract.opp.name}${contract.opp.cls?'('+CLASSES[contract.opp.cls].n+')':' — 맹수'}</span>`);
+ if(contract.rival){
+  const rv=S.rivals.find(r=>r.g&&r.g.id===contract.rivalOppId);
+  if(rv)clog(`<span class="crowd">두 사람의 ${rv.meets}번째 만남 — 관중은 이미 이 이름들을 안다. (${rv.myWins}−${rv.theirWins})</span>`);
+ }
+ // 날씨 고지 (전투 시작 시점 결정 — 예고 불가)
+ if(weather==='rain'){
+  clog(`<span class="sys">하늘이 잔뜩 흐렸다 — 빗물에 모래가 무겁고, 발밑이 미끄럽다.</span>`);
+ }
  arena.f.forEach(fx=>{
   if(!fx.g.weapon)return;
   if(fx.wpn.matched)clog(`<span class="grn">${fx.g.name}의 손에 ${fx.g.weapon.name}이(가) 착 감긴다 — 제 주인을 만난 무기다.</span>`);
   else clog(`<span class="sys">${fx.g.name}이(가) ${fx.g.weapon.name}을(를) 어색하게 고쳐 쥔다.</span>`);
  });
+ // §3 지속 배지 — 전투 내내 좌상단 고정 (arena.cap은 순간 이벤트 전용으로 분리)
+ { const bs=$('arenaBadges'); if(bs){
+   let h='';
+   if(weather==='rain')h+=`<span class="abadge rain">${uicon('rain',13)} 우천</span>`;
+   if(contract.rival){const rv=S.rivals.find(r=>r.g&&r.g.id===contract.rivalOppId);
+    if(rv)h+=`<span class="abadge rival">${uicon('vs',13)} 숙명의 재회 ${rv.meets}차</span>`;}
+   if(contract.venatio)h+=`<span class="abadge beast">${uicon('beast',13)} 베나티오 — 자비 없음</span>`;
+   bs.innerHTML=h;
+ }}
  document.querySelectorAll('.screen').forEach(e=>e.classList.remove('on'));
  $('screen-arena').classList.add('on');
+ { const nw=$('btnNextWeek');if(nw)nw.style.display='none'; } // 전투 화면 — 다음 주 버튼 숨김
  window.scrollTo(0,0);
  lastT=performance.now();
  requestAnimationFrame(loop);
 }
 function mkFighter(g,side,tactic){
+ if(g.beastId)return mkBeastFighter(g,side);
  const wpn=effWeapon(g);
  const dualWield=!!(g.weapon&&g.weapon.cat==='dual');
  const shieldSize=dualWield?'none':(g.shield?(CLASSES[g.cls].shield!=='none'?CLASSES[g.cls].shield:'small'):CLASSES[g.cls].shield);
@@ -3253,6 +3904,58 @@ function mkFighter(g,side,tactic){
   condMul:0.75+((g.cond||100)/100)*0.25};
  if(typeof collectPassives==='function')collectPassives(F);
  return F;
+}
+function mkBeastFighter(g,side){
+ const B=BEASTS[g.beastId];
+ const F={g,side,tactic:'agg',beast:true,beastId:g.beastId,B,
+  wpn:{n:'이빨과 발톱',dmg:B.dmg,reach:B.reach,wind:0.5,crit:0.05,vis:'beast'},
+  shieldSize:'none',blockBonus:0,x:side===1?300:660,facing:side,hp:B.hp,mhp:B.hp,stam:100,
+  state:'idle',st:0,cd:0.8+Math.random(),armA:-0.5,armT:-0.5,walk:0,flash:0,lunge:0,
+  netCd:99,lassoCd:99,entangle:0,hasNet:false,hasLasso:false,
+  netStat:{hit:0,entangle:0},lassoStat:{hit:0,stagger:0},
+  hitsLanded:0,dmgDealt:0,heavy:false,down:false,surrender:false,dead:false,
+  condMul:1,pmod:null,buffs:[],actSlots:[],actUsed:{},
+  chargeCd:R(3,5),gaitPhase:R(0,6.28)};
+ // 일부 짐승은 선천적 방어(피해 감쇄) — 악어 등
+ if(B.armor)F.pmod={dmgMul:1,dmgTakenMul:B.armor,crit:0,dodge:0,block:0,stamCostMul:1,atkSpdMul:1,staggerMul:1,critTakenMul:1,fameBonus:0};
+ return F;
+}
+/* 짐승 AI — behavior별 공격 패턴. 항복·그물·스킬 없음. */
+function decideBeast(f,o,dt){
+ f.cd-=dt;
+ if(f.cd>0||f.state!=='idle')return;
+ if(f.entangle>0)return;
+ const dist=Math.abs(o.x-f.x);
+ const range=f.wpn.reach;
+ const B=f.B,bh=B.behavior;
+ f.chargeCd-=dt;
+ // 사거리 밖 → 접근 (짐승은 지치지 않고 집요하게)
+ if(dist>range-4){
+  // 돌진형: 멀리서 차지 개시
+  if((bh==='charge'||bh==='lunge'||bh==='gore')&&f.chargeCd<=0&&dist<range+120){
+   f.charging=true;setState(f,'charge',0.9);f.chargeCd=R(4,6)*(bh==='gore'?0.7:1);f.heavy=true;
+   clog(`${f.g.name}이(가) 몸을 낮추고 달려든다!`);return;
+  }
+  setState(f,'advance',2);f.cd=0.04;return;
+ }
+ // 근접 — 공격 확률
+ let pAtk=bh==='ambush'?0.5:bh==='maul'?0.7:bh==='armor'?0.66:0.6;
+ if(o.entangle>0)pAtk+=0.3;
+ const r=Math.random();
+ if(r<pAtk){
+  // maul(곰)·armor(악어): 가끔 껴안기/데스롤(그랩=속박)
+  if((bh==='maul'||bh==='armor')&&Math.random()<0.3&&o.entangle<=0){
+   setState(f,'windup',0.5);f.beastGrab=true;f.heavy=false;return;
+  }
+  f.heavy=(bh==='maul'||bh==='lunge'||bh==='armor')&&Math.random()<0.4;
+  setState(f,'windup',0.4+(f.heavy?0.25:0));
+ }else if(bh==='ambush'&&r<pAtk+0.35){
+  // 표범: 치고 빠지기
+  setState(f,'retreat',R(0.35,0.6));
+ }else{
+  setState(f,'circle',R(0.3,0.6));
+ }
+ f.cd=R(0.4,0.9)*(bh==='ambush'?0.7:bh==='maul'?1.3:bh==='armor'?1.4:1);
 }
 function fstat(f,k){return f.g[k]*f.condMul;} // 컨디션 반영 실효 능력치
 function clog(html,cls){
@@ -3322,6 +4025,13 @@ function updFighter(f,o,dt){
  const dist=Math.abs(o.x-f.x);
  const wpn=f.wpn;
  if(f.entangle>0){/* 그물에 묶임 */}
+ else if(f.state==='charge'){
+  // 짐승 돌진 — 빠르게 접근, 사거리 들면 공격 개시
+  f.x+=f.facing*spd*2.2*dt;
+  if(dist<=wpn.reach-2){setState(f,'strike',0.14);f.lunge=30;f.charging=false;resolveAttack(f,o,f.heavy);}
+  else if(f.st<=0){f.charging=false;setState(f,'idle',0);f.cd=0.6;
+   if(f.B&&(f.B.behavior==='charge'||f.B.behavior==='gore')){setState(f,'stagger',0.7);clog(`${f.g.name}이(가) 헛돌진하며 크게 휘청인다!`);}}
+ }
  else if(f.state==='advance'){
   if(dist>wpn.reach-6){f.x+=f.facing*spd*dt;f.stam-=dt*2;if(Math.random()<dt*3)dust(f.x,FLOOR,1);}
   else setState(f,'idle',0);
@@ -3335,12 +4045,31 @@ function updFighter(f,o,dt){
  }else if(f.state==='windup'&&f.st<=0){
   if(f.netThrow){f.netThrow=false;resolveNet(f,o);setState(f,'idle',0);f.cd=0.8;}
   else if(f.lassoThrow){f.lassoThrow=false;resolveLasso(f,o);setState(f,'idle',0);f.cd=0.7;}
+  else if(f.beastGrab){f.beastGrab=false;resolveBeastGrab(f,o);setState(f,'idle',0);f.cd=1.2;}
   else{setState(f,'strike',0.13);f.lunge=f.heavy?26:16;resolveAttack(f,o,f.heavy);}
  }else if(f.state==='strike'&&f.st<=0){setState(f,'recoil',0.3+(f.heavy?0.2:0));}
  else if(f.state!=='idle'&&f.state!=='down'&&f.st<=0){setState(f,'idle',0);}
  f.x=clamp(f.x,60,W-60);
  // 경계 밀림 방지: 겹침 해소
  if(dist<34){f.x-=f.facing*20*dt;}
+}
+function resolveBeastGrab(f,o){
+ // 곰의 껴안기 — 붙잡아 조이며 속박 + 지속 피해
+ const hitP=0.55-fstat(o,'spd')*0.02;
+ if(Math.random()<hitP){
+  o.entangle=Math.max(o.entangle,2.2);o.flash=1;
+  const dmg=f.wpn.dmg*0.5*(dmgTakenMul?dmgTakenMul(o):1);
+  o.hp-=dmg;o.lunge=-8;
+  blood(o.x+o.facing*-6,FLOOR-46,10);sfx('thud');arena.shake=6;
+  arena.excite=clamp(arena.excite+0.12,0,1);
+  if(o.side===1&&typeof arena!=='undefined'&&arena){arena.trkTookHit=true;arena.trkEntangled=true;}
+  clog(`<span class="crit">${f.g.name}이(가) ${o.g.name}을(를) 끌어안고 조인다! 빠져나가야 한다!</span>`);
+  crowdRoar('우오오오!');
+  if(o.hp<=0){if(trySkillDeathSave(o,f))return;fighterDown(o,f,true);}
+ }else{
+  dust(o.x,FLOOR,3);sfx('whoosh');
+  clog(`${o.g.name}이(가) ${f.g.name}의 앞발을 피해 물러선다!`);
+ }
 }
 function resolveNet(f,o){
  const ns=f.netStat||{hit:0.35,entangle:1.8};
@@ -3380,9 +4109,12 @@ function resolveAttack(f,o,heavy){
  f.stam-=(heavy?17:9)*(f.pmod?f.pmod.stamCostMul:1);
  f._justAttacked=true; // 스킬 조건 플래그
  if(dist>wpn.reach+18){dust(f.x+f.facing*30,FLOOR,2);sfx('whoosh');return;} // 헛손질
- let counter=COUNTER[o.g.cls]===f.g.cls?0.05:0;
+ let counter=(!o.beast&&!f.beast&&COUNTER[o.g.cls]===f.g.cls)?0.05:0;
  if(hasPassive&&hasPassive(f,'p_beast')&&counter>0)counter=0.09; // 야수의 본능
- let dodgeP=o.entangle>0?0:clamp(0.09+(fstat(o,'spd')-fstat(f,'skl'))*0.013+(o.stam>40?0.04:0)- (heavy?-0.05:0)+(passiveDodgeAdd?passiveDodgeAdd(o):0),0.02,0.45);
+ // 날씨 보정 (우천 시 회피 −0.04 — 미끄러운 바닥. 소폭·양측 공통, 승패 좌우 방지). 짐승전 포함
+ const wx=(typeof arena!=='undefined'&&arena)?arena.weather:'clear';
+ const wxDodge=wx==='rain'?-0.04:0; // 미끄러운 바닥
+ let dodgeP=o.entangle>0?0:clamp(0.09+(fstat(o,'spd')-fstat(f,'skl'))*0.013+(o.stam>40?0.04:0)- (heavy?-0.05:0)+(passiveDodgeAdd?passiveDodgeAdd(o):0)+wxDodge,0.02,0.45);
  let blockP=o.entangle>0?0:o.shieldSize==='none'?0.05:clamp(0.16+fstat(o,'skl')*0.012+(o.state==='guard'?0.32:0)+(o.shieldSize==='large'?0.06:0)+o.blockBonus+(passiveBlockAdd?passiveBlockAdd(o):0),0,0.75);
  if(wpn.vis==='sica')blockP*=0.5; // 시카: 굽은 날이 방패 위·뒤를 감아 든다
  const r=Math.random();
@@ -3433,8 +4165,8 @@ function resolveAttack(f,o,heavy){
    if(o.hp<=0){if(trySkillDeathSave(o,f))return;fighterDown(o,f,true);return;}
   }
   setState(o,'hit',0.3);
-  // 궁지 판정
-  if(o.hp<o.mhp*0.18&&!o.lowWarned){
+  // 궁지 판정 (짐승은 항복하지 않음 — 죽을 때까지 싸운다)
+  if(!o.beast&&o.hp<o.mhp*0.18&&!o.lowWarned){
    o.lowWarned=true;
    const hold=fstat(o,'wil')+(hasTrait(o.g,'veteran')?4:0)-(hasTrait(o.g,'coward')?5:0);
    if(hold<RI(4,16)){
@@ -3499,23 +4231,29 @@ function skillVfx(f,o,id){
  arena.fx=arena.fx||[];
  const sk=SKILLS[id],a=sk.act;
  const midX=(f.x+o.x)/2, tx=o.x, fy=FLOOR-44;
+ const arc=sk.grade===2; // 비전 — 강화 연출
+ if(arc){
+  // 금색 섬광 플래시(화면 전체, 짧게) + 발동자→대상 금 파티클 분출
+  arena.fx.push({t:'flash',life:0.32,max:0.32,c:'255,217,122'});
+  for(let i=0;i<18;i++)arena.particles.push({x:tx+R(-16,16),y:fy+R(-24,14),vx:R(-140,140),vy:R(-200,-50),g:230,r:R(1.0,2.2),c:i%3?'#ffd97a':'#fff1c4',life:R(0.35,0.7)});
+ }
  if(a.kind==='strike'){
   const w=sk.wcat;
   if(w==='sword'||w==='dagger'||w==='sica'){
-   arena.fx.push({t:'slash',x:tx,y:fy,dir:f.facing,life:0.28,max:0.28,c:'#ffe9a8'});
+   arena.fx.push({t:'slash',x:tx,y:fy,dir:f.facing,life:arc?0.42:0.28,max:arc?0.42:0.28,c:arc?'#ffdf8a':'#ffe9a8',big:arc});
   }else if(w==='great'){
-   arena.fx.push({t:'vslash',x:tx,y:fy,dir:f.facing,life:0.32,max:0.32,c:'#f4eeda'});
+   arena.fx.push({t:'vslash',x:tx,y:fy,dir:f.facing,life:arc?0.46:0.32,max:arc?0.46:0.32,c:arc?'#ffe9a8':'#f4eeda',big:arc});
   }else if(w==='spear'||w==='trident'){
-   arena.fx.push({t:'thrust',x:f.x,x2:tx,y:fy,dir:f.facing,life:0.26,max:0.26,c:'#e8edf2'});
+   arena.fx.push({t:'thrust',x:f.x,x2:tx,y:fy,dir:f.facing,life:arc?0.38:0.26,max:arc?0.38:0.26,c:arc?'#fff1c4':'#e8edf2',big:arc});
   }else if(w==='dual'){
-   arena.fx.push({t:'xslash',x:tx,y:fy,dir:f.facing,life:0.3,max:0.3,c:'#ffe9a8'});
+   arena.fx.push({t:'xslash',x:tx,y:fy,dir:f.facing,life:arc?0.44:0.3,max:arc?0.44:0.3,c:arc?'#ffdf8a':'#ffe9a8',big:arc});
   }else{
-   arena.fx.push({t:'burst',x:tx,y:fy,life:0.3,max:0.3,c:'#ffd97a'});
+   arena.fx.push({t:'burst',x:tx,y:fy,life:arc?0.42:0.3,max:arc?0.42:0.3,c:'#ffd97a',big:arc});
   }
  }else if(a.kind==='buff'||a.kind==='stam'){
-  arena.fx.push({t:'riseGlow',x:f.x,y:fy,life:0.6,max:0.6,c:a.kind==='stam'?'#8fd0c4':'#ffd97a'});
+  arena.fx.push({t:'riseGlow',x:f.x,y:fy,life:arc?0.85:0.6,max:arc?0.85:0.6,c:a.kind==='stam'?'#8fd0c4':'#ffd97a',big:arc});
  }else if(a.kind==='debuff'){
-  arena.fx.push({t:'sinkGlow',x:o.x,y:fy,life:0.55,max:0.55,c:'#b06ad0'});
+  arena.fx.push({t:'sinkGlow',x:o.x,y:fy,life:arc?0.8:0.55,max:arc?0.8:0.55,c:'#b06ad0',big:arc});
  }else{ // util
   arena.fx.push({t:'burst',x:midX,y:fy,life:0.28,max:0.28,c:'#c9d8e4'});
  }
@@ -3525,45 +4263,70 @@ function drawSkillFx(){
  if(!arena.fx||!arena.fx.length)return;
  arena.fx.forEach(e=>{
   const t=1-e.life/e.max, a=clamp(e.life/e.max,0,1);
+  const S=e.big?1.6:1; // 비전 강화 스케일
   ctx.save();ctx.globalAlpha=a;
   ctx.strokeStyle=e.c;ctx.lineCap='round';
+  if(e.t==='flash'){ // 비전 발동 섬광 — 화면 전체 금색, 급감쇠
+   ctx.fillStyle=`rgba(${e.c},${(a*a*0.34).toFixed(3)})`;
+   ctx.fillRect(0,0,cv.width,cv.height);
+   ctx.restore();return;
+  }
   if(e.t==='slash'){ // 수평 호 — 진행하며 길어지고 옅어짐
-   ctx.lineWidth=4.5-t*3;
-   ctx.beginPath();ctx.arc(e.x-e.dir*8,e.y,26+t*16,(-0.9+(e.dir<0?Math.PI:0)),(0.7+(e.dir<0?Math.PI:0)));ctx.stroke();
-   ctx.globalAlpha=a*0.5;ctx.lineWidth=1.6;
-   ctx.beginPath();ctx.arc(e.x-e.dir*8,e.y,20+t*14,(-0.7+(e.dir<0?Math.PI:0)),(0.5+(e.dir<0?Math.PI:0)));ctx.stroke();
+   ctx.lineWidth=(4.5-t*3)*S;
+   ctx.beginPath();ctx.arc(e.x-e.dir*8,e.y,(26+t*16)*S,(-0.9+(e.dir<0?Math.PI:0)),(0.7+(e.dir<0?Math.PI:0)));ctx.stroke();
+   ctx.globalAlpha=a*0.5;ctx.lineWidth=1.6*S;
+   ctx.beginPath();ctx.arc(e.x-e.dir*8,e.y,(20+t*14)*S,(-0.7+(e.dir<0?Math.PI:0)),(0.5+(e.dir<0?Math.PI:0)));ctx.stroke();
+   if(e.big){ // 비전: 외곽 백색 잔상 + 후행 호
+    ctx.globalAlpha=a*0.65;ctx.strokeStyle='#fff';ctx.lineWidth=1.8;
+    ctx.beginPath();ctx.arc(e.x-e.dir*8,e.y,(30+t*20)*S,(-0.95+(e.dir<0?Math.PI:0)),(0.75+(e.dir<0?Math.PI:0)));ctx.stroke();
+    ctx.globalAlpha=a*0.3;ctx.strokeStyle=e.c;ctx.lineWidth=8;
+    ctx.beginPath();ctx.arc(e.x-e.dir*8,e.y,(14+t*10)*S,(-0.6+(e.dir<0?Math.PI:0)),(0.4+(e.dir<0?Math.PI:0)));ctx.stroke();
+   }
   }else if(e.t==='vslash'){ // 수직 대형 참격
-   ctx.lineWidth=6-t*4;
-   ctx.beginPath();ctx.moveTo(e.x-e.dir*6,e.y-42+t*10);ctx.quadraticCurveTo(e.x+e.dir*12,e.y-10,e.x-e.dir*4,e.y+26-t*6);ctx.stroke();
-   ctx.globalAlpha=a*0.4;ctx.lineWidth=12-t*8;ctx.stroke();
-  }else if(e.t==='thrust'){ // 찌르기 잔상 라인 3
-   for(let i=0;i<3;i++){
-    ctx.globalAlpha=a*(1-i*0.28);ctx.lineWidth=3-i*0.8;
-    const y=e.y-6+i*6;
+   ctx.lineWidth=(6-t*4)*S;
+   ctx.beginPath();ctx.moveTo(e.x-e.dir*6,e.y-42*S+t*10);ctx.quadraticCurveTo(e.x+e.dir*12*S,e.y-10,e.x-e.dir*4,e.y+26*S-t*6);ctx.stroke();
+   ctx.globalAlpha=a*0.4;ctx.lineWidth=(12-t*8)*S;ctx.stroke();
+   if(e.big){ctx.globalAlpha=a*0.55;ctx.strokeStyle='#fff';ctx.lineWidth=2;
+    ctx.beginPath();ctx.moveTo(e.x-e.dir*12,e.y-50*S+t*10);ctx.quadraticCurveTo(e.x+e.dir*16*S,e.y-10,e.x-e.dir*8,e.y+32*S-t*6);ctx.stroke();}
+  }else if(e.t==='thrust'){ // 찌르기 잔상 라인
+   const n=e.big?5:3;
+   for(let i=0;i<n;i++){
+    ctx.globalAlpha=a*(1-i*(e.big?0.16:0.28));ctx.lineWidth=(3-i*0.5)*S;
+    const y=e.y-(n-1)*3+i*6;
     ctx.beginPath();ctx.moveTo(e.x+e.dir*(10+t*30),y);ctx.lineTo(e.x2+e.dir*(6+t*14),y);ctx.stroke();
    }
    ctx.globalAlpha=a;ctx.fillStyle=e.c;
-   ctx.beginPath();ctx.arc(e.x2+e.dir*(6+t*14),e.y,3.4-t*2,0,7);ctx.fill();
+   ctx.beginPath();ctx.arc(e.x2+e.dir*(6+t*14),e.y,(3.4-t*2)*S,0,7);ctx.fill();
+   if(e.big){ctx.globalAlpha=a*0.6;ctx.strokeStyle='#fff';ctx.lineWidth=1.4;
+    ctx.beginPath();ctx.moveTo(e.x+e.dir*(10+t*34),e.y);ctx.lineTo(e.x2+e.dir*(10+t*18),e.y);ctx.stroke();}
   }else if(e.t==='xslash'){ // X 교차 아크
-   ctx.lineWidth=4-t*2.6;
-   ctx.beginPath();ctx.moveTo(e.x-22,e.y-24+t*6);ctx.lineTo(e.x+22,e.y+20-t*6);ctx.stroke();
-   ctx.beginPath();ctx.moveTo(e.x+22,e.y-24+t*6);ctx.lineTo(e.x-22,e.y+20-t*6);ctx.stroke();
+   ctx.lineWidth=(4-t*2.6)*S;
+   ctx.beginPath();ctx.moveTo(e.x-22*S,e.y-24*S+t*6);ctx.lineTo(e.x+22*S,e.y+20*S-t*6);ctx.stroke();
+   ctx.beginPath();ctx.moveTo(e.x+22*S,e.y-24*S+t*6);ctx.lineTo(e.x-22*S,e.y+20*S-t*6);ctx.stroke();
+   if(e.big){ctx.globalAlpha=a*0.55;ctx.strokeStyle='#fff';ctx.lineWidth=1.6;
+    ctx.beginPath();ctx.moveTo(e.x-28*S,e.y-30*S+t*6);ctx.lineTo(e.x+28*S,e.y+26*S-t*6);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(e.x+28*S,e.y-30*S+t*6);ctx.lineTo(e.x-28*S,e.y+26*S-t*6);ctx.stroke();}
   }else if(e.t==='burst'){ // 방사 임팩트
-   ctx.lineWidth=2.6-t*1.6;
-   for(let i=0;i<8;i++){const ag=i*Math.PI/4+0.3;
-    const r1=8+t*20,r2=16+t*30;
+   const rays=e.big?14:8;
+   ctx.lineWidth=(2.6-t*1.6)*S;
+   for(let i=0;i<rays;i++){const ag=i*(Math.PI*2/rays)+0.3;
+    const r1=(8+t*20)*S,r2=(16+t*30)*S;
     ctx.beginPath();ctx.moveTo(e.x+Math.cos(ag)*r1,e.y+Math.sin(ag)*r1*0.6);
     ctx.lineTo(e.x+Math.cos(ag)*r2,e.y+Math.sin(ag)*r2*0.6);ctx.stroke();}
+   if(e.big){ctx.globalAlpha=a*0.4;ctx.strokeStyle='#fff';ctx.lineWidth=1.2;
+    ctx.beginPath();ctx.ellipse(e.x,e.y,(20+t*34)*S,(20+t*34)*S*0.6,0,0,7);ctx.stroke();}
   }else if(e.t==='riseGlow'){ // 상승 글로우 (버프)
    ctx.fillStyle=e.c;
-   for(let i=0;i<5;i++){ctx.globalAlpha=a*(0.5-i*0.08);
-    ctx.beginPath();ctx.arc(e.x+Math.sin(t*9+i*2)*8,e.y-t*46-i*7,2.6-i*0.35,0,7);ctx.fill();}
-   ctx.globalAlpha=a*0.35;ctx.strokeStyle=e.c;ctx.lineWidth=2;
-   ctx.beginPath();ctx.ellipse(e.x,FLOOR-4,20+t*8,7,0,0,7);ctx.stroke();
+   const n=e.big?9:5;
+   for(let i=0;i<n;i++){ctx.globalAlpha=a*(0.5-i*(e.big?0.045:0.08));
+    ctx.beginPath();ctx.arc(e.x+Math.sin(t*9+i*2)*(8*S),e.y-t*46*S-i*7,(2.6-i*0.25)*S,0,7);ctx.fill();}
+   ctx.globalAlpha=a*0.35;ctx.strokeStyle=e.c;ctx.lineWidth=2*S;
+   ctx.beginPath();ctx.ellipse(e.x,FLOOR-4,(20+t*8)*S,7*S,0,0,7);ctx.stroke();
   }else if(e.t==='sinkGlow'){ // 하강 (디버프)
    ctx.fillStyle=e.c;
-   for(let i=0;i<5;i++){ctx.globalAlpha=a*(0.45-i*0.07);
-    ctx.beginPath();ctx.arc(e.x+Math.sin(t*7+i*2.2)*9,e.y-40+t*40+i*5,2.4-i*0.3,0,7);ctx.fill();}
+   const n=e.big?8:5;
+   for(let i=0;i<n;i++){ctx.globalAlpha=a*(0.45-i*(e.big?0.05:0.07));
+    ctx.beginPath();ctx.arc(e.x+Math.sin(t*7+i*2.2)*(9*S),e.y-40+t*40+i*5,(2.4-i*0.25)*S,0,7);ctx.fill();}
   }
   ctx.restore();
  });
@@ -3575,8 +4338,29 @@ function runVerdict(){
  const [p,e]=arena.f;
  const loser=p.down||p.surrender?p:e;
  const winner=loser===p?e:p;
+ // ── 동물전: 자비 판정 없음 ──
+ if(arena.contract.venatio){
+  if(loser.beast){
+   // 짐승 처치 — 검투사 승리
+   arena.verdict={loser,winner,spared:false,beastKilled:true};
+   bigText('VICTORIA');sfx('roar');
+   clog(`<span class="crit">${winner.g.name}이(가) ${loser.g.name}을(를) 쓰러뜨렸다! 모래가 짐승의 피로 물든다.</span>`);
+   crowdRoar('우오오오오!');
+  }else{
+   // 검투사 사망 — 짐승에겐 자비가 없다
+   loser.dead=true;
+   arena.verdict={loser,winner,spared:false};
+   bigText('MORS');sfx('roar');
+   clog(`<span class="crit">${loser.g.name}이(가) 짐승의 이빨 아래 스러졌다. 베나티오에 자비란 없다.</span>`);
+   blood(loser.x,FLOOR-16,22);
+  }
+  arena.phase='end';arena.phaseT=0;return;
+ }
  const perf=clamp(loser.hitsLanded/7,0,1)*0.22+clamp(arena.t/75,0,1)*0.1;
- let mercy=0.44+loser.g.fame*0.014+arena.excite*0.18+perf
+ // 관중 총애도 보너스 — 패자가 아군 인기 검투사면 자비 확률 소폭 상승 (상한 0.06, 인기만으로 생존 좌우 방지)
+ const favMercy=(loser.side===1&&!loser.beast&&(loser.g.favor||0)>=55)
+  ? clamp(((loser.g.favor||0)-55)/45*0.06,0,0.06) : 0;
+ let mercy=0.44+loser.g.fame*0.014+arena.excite*0.18+perf+favMercy
   +(hasTrait(loser.g,'crowd_fav')?0.16:0)
   +(loser.surrender&&loser.hitsLanded<2?-0.15:0)
   -(arena.contract.tier>=2?0.04:0);
@@ -3595,19 +4379,53 @@ function runVerdict(){
  }
  arena.phase='end';arena.phaseT=0;
 }
+/* 경기 결과 행 → 아이콘+색 HTML (B안: 문자열 패턴 기반 분류, lines 구조 무변경) */
+function fightLineHtml(l){
+ if(!l)return '<div style="height:7px"></div>';
+ const row=(ic,col,txt,bold)=>`<div class="fres"><span class="fres-i" style="color:${col}">${ic}</span><span style="color:${col}${bold?';font-weight:700':''}">${txt}</span></div>`;
+ if(/^(출전료|승리 상금|전리품 획득)/.test(l))return row(uicon('denarius',13),'var(--gold)',l);
+ if(/^몸값 손실/.test(l))return row(uicon('denarius',13),'var(--blood)',l);
+ if(/^명성 \+/.test(l))return row(uicon('star',13),'var(--gold)',l);
+ if(/^실전 경험/.test(l))return row(uicon('swords',13),'#7fa35c',l);
+ if(/^(깊은 상처|패배 — 부상)/.test(l))return row(uicon('warn',13),'var(--blood)',l);
+ if(/^관중 총애/.test(l))return row(uicon('torch',13),'#e0a8b2',l);
+ if(/처치 — 베나토르/.test(l))return row(uicon('beast',13),'#c98a5a',l);
+ if(/^처형 집행/.test(l))return row(uicon('x',13),'var(--blood)',l);
+ if(/^(새로운 숙적|숙적|라이벌 )|오랜 승부/.test(l))return row(uicon('vs',13),'#e08a8c',l);
+ if(/^▲ 승급/.test(l))return row(uicon('rank',13),'var(--gold)',l.replace(/^▲ /,''),true);
+ if(/^◆ 깨달음/.test(l))return row(uicon('star',13),'#b088c8',l.replace(/^◆ /,''),true);
+ if(/돌아오지 못했다/.test(l))return `<div class="fres"><span style="color:var(--blood);font-weight:700">${l}</span></div>`;
+ return `<div class="fres fres-n">${l}</div>`;
+}
 function finishFight(){
  const c=arena.contract,[p,e]=arena.f;
  const won=!(p.down||p.surrender);
  const g=p.g,tier=TIERS[c.tier];
  let lines=[],money=c.fee;
- lines.push(`출전료 +${fmt(c.fee)}D`);
+ lines.push(`출전료 +${den(c.fee)}`);
  if(won){
   money+=c.purse;g.wins++;
-  const fameUp=tier.fameW+(arena.excite>0.7?2:arena.excite>0.4?1:0);
-  g.fame+=fameUp;S.rep=clamp(S.rep+tier.repW,0,100);
-  lines.push(`승리 상금 +${fmt(c.purse)}D`,`명성 +${fameUp} (검투사) · 양성소 명성 +${tier.repW}`);
-  if(arena.verdict&&!arena.verdict.spared){g.kills++;lines.push(`처형 집행 — 통산 ${g.kills}명`);}
-  if(c.reward){S.armory.push(c.reward);lines.push(`⚔ 전리품 획득: ${c.reward.name}!`);S.chron.push(`${S.week}주차 — 특별 흥행전에서 ${c.reward.name} 획득.`);}
+  g.tierWins=g.tierWins||{};g.tierWins[c.tier]=(g.tierWins[c.tier]||0)+1;
+  const fameUp=tier.fameW+(arena.excite>0.7?2:arena.excite>0.4?1:0)+(c.venatio?2:0);
+  g.fame+=fameUp;S.rep=clamp(S.rep+tier.repW+(c.venatio?1:0),0,100);
+  lines.push(`승리 상금 +${den(c.purse)}`,`명성 +${fameUp} (검투사) · 양성소 명성 +${tier.repW+(c.venatio?1:0)}`);
+  if(c.venatio){
+   const B=BEASTS[c.beast];
+   g.beastKills=(g.beastKills||0)+1;
+   lines.push(`${B.n} 처치 — 베나토르로서 통산 ${g.beastKills}마리`);
+  }
+  // ── 계급 승급 판정 ──
+  const promo=checkPromotion(g);
+  promo.forEach(r=>{
+   const rk=RANKS[r];
+   lines.push('', `▲ 승급 — ${g.name}, ${rk.n}(${rk.lat})에 오르다. ${rk.d}.`);
+   if(TIERS.some(t=>t.minRank===r))lines.push(`이제 ${TIERS.filter(t=>t.minRank===r).map(t=>t.n).join(' · ')}의 모래를 밟을 수 있다.`);
+   g.hist.push(`${S.week}주차 — ${rk.n} 승급`);
+   S.newsBuf.push(`『${g.name}』, ${rk.n}에 오르다 — 훈련장의 말뚝이 그 서열을 증언한다`);
+   S.chron.push(`${S.week}주차 — ${g.name}, ${rk.n} 승급.`);
+  });
+  if(arena.verdict&&!arena.verdict.spared&&!c.venatio){g.kills++;lines.push(`처형 집행 — 통산 ${g.kills}명`);}
+  if(c.reward){S.armory.push(c.reward);lines.push(`전리품 획득: ${c.reward.name}!`);S.chron.push(`${S.week}주차 — 특별 흥행전에서 ${c.reward.name} 획득.`);}
   // 성장
   const grow=[];
   ['str','skl','spd','wil'].forEach(k=>{if(g[k]<20&&statSum(g)<g.pot&&Math.random()<0.3){g[k]++;grow.push(STATKEYS.find(s=>s[0]===k)[1]);}});
@@ -3615,17 +4433,20 @@ function finishFight(){
   // 부상 여부
   if(p.hp<p.mhp*0.35&&Math.random()<0.5){g.injury=RI(1,2);lines.push(`깊은 상처 — ${g.injury}주 요양 필요`);}
   g.cond=clamp(g.cond-25,5,100);
-  g.hist.push(`${S.week}주차 ${c.tName} — ${e.g.name}에게 승리`);
-  S.newsBuf.push(`『${g.name}』, ${c.tName}에서 ${e.g.name} 제압${arena.excite>0.7?' — 관중이 그 이름을 연호했다':''}`);
+  g.hist.push(`${S.week}주차 ${c.tName} — ${e.g.name}${c.venatio?' 처치':'에게 승리'}`);
+  const wxTag=arena.weather==='rain'?' — 빗속의 혈투였다':'';
+  S.newsBuf.push((c.venatio
+   ?`『${g.name}』, ${c.tName}에서 ${e.g.name}을(를) 잡다 — 관중이 베나토르의 담력에 환호했다`
+   :`『${g.name}』, ${c.tName}에서 ${e.g.name} 제압${arena.excite>0.7?' — 관중이 그 이름을 연호했다':''}`)+wxTag);
   if(c.reward)S.newsBuf.push(`전설의 무기 '${c.reward.name}', 특별 흥행전의 승자에게 돌아가다`);
-  S.chron.push(`${S.week}주차 — ${g.name}, ${c.tName}에서 승리 (+${fmt(money)}D).`);
+  S.chron.push(`${S.week}주차 — ${g.name}, ${c.tName}에서 승리 (+${den(money)}).`);
   // ── 깨달음(각성) 판정 ──
   if(typeof awakeningCheck==='function'){
    const noHit=!arena.trkTookHit;
    g._noHitStreak=noHit?((g._noHitStreak||0)+1):0;
    // 무기계열 누적 승수 — 장착 무기 계열로만 집계, 정확히 10승 도달 시 1회 마일스톤
    let milestone=null;
-   if(g.weapon&&g.weapon.cat&&WCATS[g.weapon.cat]&&SKILLS['sw_thrust2']){
+   if(!c.venatio&&g.weapon&&g.weapon.cat&&WCATS[g.weapon.cat]&&SKILLS['sw_thrust2']){
     g.wcatWins=g.wcatWins||{};
     const cat=g.weapon.cat;
     g.wcatWins[cat]=(g.wcatWins[cat]||0)+1;
@@ -3655,28 +4476,107 @@ function finishFight(){
     S.chron.push(`${S.week}주차 — ${g.name}, 「${aw.name}」 깨달음.`);
    }
   }
+  // ── 관중 총애도(FAVOR) — 승리 ──
+  g.winStreak=(g.winStreak||0)+1;
+  let fv=3, fvWhy=[];
+  if(arena.excite>0.7){fv+=5;fvWhy.push('열광적 무대');}
+  else if(arena.excite<0.35){fv-=3;fvWhy.push('밋밋한 경기');}
+  if((arena.trkLowestHp!=null?arena.trkLowestHp:1)<0.3){fv+=6;fvWhy.push('극적인 역전');}
+  if(!arena.trkTookHit){fv+=6;fvWhy.push('무결점 승리');}
+  if(arena.awaken){fv+=8;fvWhy.push('각성의 순간');}
+  if(c.venatio){fv+=7;fvWhy.push('맹수를 잡은 담력');}
+  if(g.winStreak>=3){const b=(g.winStreak-2)*2;fv+=b;fvWhy.push(`${g.winStreak}연승의 기세`);}
+  // 자비 없는 처형 승리 — 잔인함을 즐기는 관중도 있으나 대체로 냉담(추정, 밸런스 확인 필요)
+  if(arena.verdict&&!arena.verdict.spared&&!c.venatio){
+   if(hasTrait(g,'brutal')){fv+=2;fvWhy.push('잔혹한 매력');}else{fv-=4;fvWhy.push('자비 없는 마무리');}
+  }
+  const favBefore=g.favor==null?30:g.favor;
+  g.favor=clamp(favBefore+fv,0,100);
+  const favDelta=g.favor-favBefore;
+  if(favDelta!==0)lines.push(`관중 총애 ${favDelta>0?'+':''}${favDelta} (${fvWhy.join('·')})`);
+  const ft=favorTier(g.favor),ftOld=favorTier(favBefore);
+  if(ft&&(!ftOld||ft.n!==ftOld.n)&&ft.c!=='lo'){
+   S.newsBuf.push(`『${g.name}』, 군중의 마음을 사로잡다 — 이제 그를 「${ft.n}」이라 부른다`);
+  }
  }else{
   g.losses++;
   if(arena.verdict&&!arena.verdict.spared&&arena.verdict.loser===p){
    S.gladiators=S.gladiators.filter(x=>x.id!==g.id);
-   lines.push(`${g.name}은(는) 돌아오지 못했다.`,`몸값 손실 −${fmt(gValue(g))}D 상당`);
-   S.newsBuf.push(`${c.tName}의 모래가 『${g.name}』을(를) 삼켰다 — 관중은 이미 다음 경기를 말한다`);
+   lines.push(`${g.name}은(는) 돌아오지 못했다.`,`몸값 손실 −${den(gValue(g))} 상당`);
+   S.newsBuf.push(c.venatio
+    ?`${c.tName}의 짐승이 『${g.name}』을(를) 삼켰다 — 베나티오의 잔혹함을 관중은 즐겼다`
+    :`${c.tName}의 모래가 『${g.name}』을(를) 삼켰다 — 관중은 이미 다음 경기를 말한다`);
    if(g.weapon||g.shield)lines.push(`장착했던 장비${[g.weapon,g.shield].filter(Boolean).map(i=>' '+i.name).join(',')}도 모래에 묻혔다.`);
    S.chron.push(`${S.week}주차 — ${g.name}, ${c.tName}에서 전사.`);
   }else{
    g.injury=RI(2,4);g.cond=clamp(g.cond-40,5,100);g.fame=Math.max(0,g.fame-1);
    lines.push(`패배 — 부상 ${g.injury}주`,`관중의 자비로 목숨은 건졌다`);
+   // ── 관중 총애도(FAVOR) — 패배 ──
+   g.winStreak=0;
+   const favBefore=g.favor==null?30:g.favor;
+   g.favor=clamp(favBefore-10,0,100);
+   if(g.favor!==favBefore)lines.push(`관중 총애 ${g.favor-favBefore} (무릎 꿇은 자를 관중은 오래 기억하지 않는다)`);
    g.hist.push(`${S.week}주차 ${c.tName} — ${e.g.name}에게 패배`);
    S.newsBuf.push(`『${g.name}』, ${c.tName}에서 무릎 꿇다 — 관중의 자비로 목숨은 건져`);
    S.chron.push(`${S.week}주차 — ${g.name}, ${c.tName}에서 패배.`);
   }
   S.rep=clamp(S.rep-1,0,100);
  }
+ // ── 라이벌 시스템 ──
+ if(c.rival){
+  // 라이벌전 결과 처리
+  const rv=S.rivals.find(r=>r.g&&r.g.id===c.rivalOppId);
+  if(rv){
+   if(won){
+    rv.myWins++;
+    const executed=arena.verdict&&!arena.verdict.spared;
+    if(executed){
+     rv.state='dead';
+     lines.push('',`숙적을 베다 — ${rv.g.name}과(와)의 인연은 여기서 끝났다. (통산 ${rv.myWins}−${rv.theirWins})`);
+     S.newsBuf.push(`『${g.name}』, 오랜 숙적 ${rv.g.name}을(를) 끝내 꺾다 — 관중은 두 사람의 마지막을 목격했다`);
+     S.chron.push(`${S.week}주차 — ${g.name}, 라이벌 ${rv.g.name} 격파(결착).`);
+    }else{
+     lines.push('',`라이벌 ${rv.g.name}을(를) 다시 눌렀다. 그는 이를 갈며 물러난다. (통산 ${rv.myWins}−${rv.theirWins})`);
+    }
+   }else{
+    rv.theirWins++;
+    const iDied=!S.gladiators.some(x=>x.id===g.id); // 라이벌전 패배로 전사했는가
+    if(iDied){
+     lines.push('',`숙적 ${rv.g.name}의 손에 스러졌다 — 이 승부는 그의 승리로 끝났다. (통산 ${rv.myWins}−${rv.theirWins})`);
+     S.newsBuf.push(`『${rv.g.name}』, 오랜 숙적 ${g.name}을(를) 끝내 베다 — 관중은 두 사람의 마지막을 목격했다`);
+    }else{
+     lines.push('',`라이벌 ${rv.g.name}에게 당했다 — 다음을 기약한다. (통산 ${rv.myWins}−${rv.theirWins})`);
+     S.newsBuf.push(`『${rv.g.name}』, 숙적 ${g.name}을(를) 무너뜨리다 — 두 이름의 승부는 아직 끝나지 않았다`);
+    }
+   }
+   // 결착: 상호 전적 합 도달 시 승자 기준 은퇴 (사망·처형 케이스 제외 — 이미 종결됨)
+   if(rv.state==='active'&&S.gladiators.some(x=>x.id===g.id)&&(rv.myWins+rv.theirWins)>=RIVAL_SETTLE){
+    rv.state='retired';
+    const iLead=rv.myWins>=rv.theirWins;
+    lines.push(`두 사람의 오랜 승부가 마침내 매듭지어졌다 — ${iLead?g.name+'의 우세':rv.g.name+'의 우세'}로.`);
+    S.chron.push(`${S.week}주차 — ${g.name} vs ${rv.g.name} 라이벌 관계 결착(${rv.myWins}−${rv.theirWins}).`);
+   }
+  }
+ }else if(S.gladiators.some(x=>x.id===g.id)){
+  // 신규 라이벌 성립 (내 검투사가 생존한 경우에만)
+  const newRv=tryFormRival(g,e.g,won,!!(arena.verdict&&arena.verdict.spared),c);
+  if(newRv){
+   if(newRv.reason==='close'){
+    lines.push('',`새로운 숙적 — ${e.g.name}, 간발의 차로 패한 그가 이를 갈며 재대결을 벼른다.`);
+    S.newsBuf.push(`접전 끝에 패한 『${e.g.name}』, 『${g.name}』에게 복수를 다짐하다 — 새로운 라이벌 구도의 탄생`);
+   }else{
+    lines.push('',`새로운 숙적 — 당신을 꺾은 ${e.g.name}, 그 이름을 기억해 두라. 언젠가 되갚아 줄 상대다.`);
+    S.newsBuf.push(`『${e.g.name}』, 『${g.name}』을(를) 꺾다 — 두 검투사의 악연이 시작되었다`);
+   }
+   S.chron.push(`${S.week}주차 — ${g.name}, ${e.g.name}과(와) 라이벌 관계 성립.`);
+  }
+ }
  S.money+=money;
  let title=won?'승리! — '+c.tName:'패배 — '+c.tName;
  if(c.grand&&won){
   S.colosseumDone=true;
-  title='👑 콜로세움 제패!';
+  if(!S.achievements.includes('emperor'))S.achievements.push('emperor');
+  title='콜로세움 제패!';
   lines.push('','챔피언 헤르메스가 무릎을 꿇었다.','8만 관중이 외치는 이름은 이제 하나 — '+g.name+'.','당신의 루두스는 로마에서 모르는 자가 없다.','','원한다면 계속해서 제국 최고의 라니스타로 군림하라.');
   S.champ.defeated=true;S.champ.heir=g.name;S.champ.heirPid=g.pid;
   S.newsBuf.push(`이변! 『${g.name}』, 챔피언 헤르메스를 꺾다 — 새 시대의 개막`);
@@ -3688,7 +4588,7 @@ function finishFight(){
   S.rep=clamp(S.rep+10,0,100);S.gladiators=S.gladiators.filter(x=>x.id!==g.id);
   S.chron.push(`${S.week}주차 — ${g.name}, 자유의 목검을 받고 은퇴. 전설이 되었다.`);
   arena=null;go('map');}});
- modal(title,lines.join('\n'),acts);
+ modal(title,lines.map(fightLineHtml).join(''),acts,{html:true});
  renderHeader();
 }
 $('btnFightDone').onclick=finishFight;
@@ -3729,9 +4629,9 @@ function stepSim(dt){
   if(arena.phaseT>1.6){arena.phase='fight';clog('<span class="crowd">"싸워라!" — 심판(수마 루디스)의 지팡이가 내려간다.</span>');}
  }else if(arena.phase==='fight'){
   const[a,b]=arena.f;
-  if(typeof skillActiveLoop==='function'){skillActiveLoop(a,b,dt);skillActiveLoop(b,a,dt);}
-  if(typeof skillTick==='function'){skillTick(a,dt);skillTick(b,dt);}
-  decide(a,b,dt);decide(b,a,dt);
+  if(typeof skillActiveLoop==='function'){if(!a.beast)skillActiveLoop(a,b,dt);if(!b.beast)skillActiveLoop(b,a,dt);}
+  if(typeof skillTick==='function'){if(!a.beast)skillTick(a,dt);if(!b.beast)skillTick(b,dt);}
+  (a.beast?decideBeast:decide)(a,b,dt);(b.beast?decideBeast:decide)(b,a,dt);
   updFighter(a,b,dt);updFighter(b,a,dt);
   // 각성 트리거 지표 (플레이어 파이터 = side 1)
   const pf=a.side===1?a:b;
@@ -3758,42 +4658,274 @@ function stepSim(dt){
 }
 
 /* ── 렌더링 ── */
-function drawArenaBg(){
- // 하늘·벨라리움(차양)
- const sky=ctx.createLinearGradient(0,0,0,120);sky.addColorStop(0,'#2a2016');sky.addColorStop(1,'#1a1410');
- ctx.fillStyle=sky;ctx.fillRect(0,0,W,140);
- ctx.save();ctx.globalAlpha=.25;
- for(let i=0;i<12;i++){ctx.fillStyle=i%2?'#7a2020':'#c9b48a';ctx.beginPath();ctx.moveTo(i*80,0);ctx.lineTo(i*80+80,0);ctx.lineTo(i*80+64,26);ctx.lineTo(i*80+16,26);ctx.fill();}
- ctx.restore();
- // 관중석 벽
- ctx.fillStyle='#241b12';ctx.fillRect(0,26,W,120);
- // 관중
+/* ═══ 티어별 경기장 배경 — 무대의 격이 눈에 보이도록 ═══ */
+function drawCrowdLayer(){
  const ex=arena.excite;
  arena.crowd.forEach(c=>{
   const jump=ex>0.25?Math.max(0,Math.sin(arena.t*c.sp+c.ph))*ex*9:0;
   ctx.fillStyle=c.c;ctx.beginPath();ctx.arc(c.x,c.y-jump,c.r,0,7);ctx.fill();
   if(c.arm&&ex>0.5){ctx.strokeStyle=c.c;ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(c.x-3,c.y-jump);ctx.lineTo(c.x-6,c.y-jump-9);ctx.moveTo(c.x+3,c.y-jump);ctx.lineTo(c.x+6,c.y-jump-9);ctx.stroke();}
  });
- // 포디움(귀빈석 벽) — 대리석 띠
+}
+function drawSandFloor(c0,c1,c2){
+ const sand=ctx.createLinearGradient(0,232,0,H);sand.addColorStop(0,c0);sand.addColorStop(0.5,c1);sand.addColorStop(1,c2);
+ ctx.fillStyle=sand;ctx.fillRect(0,232,W,H-232);
+}
+function drawTorch(x,y){
+ ctx.fillStyle='#3a2c1a';ctx.fillRect(x-2,y,4,26);
+ const fl=Math.sin(arena.t*9+x)*1.6;
+ ctx.fillStyle='rgba(255,150,40,.8)';ctx.beginPath();ctx.ellipse(x,y-7+fl*0.4,4,7+fl,0,0,7);ctx.fill();
+ ctx.fillStyle='rgba(255,224,140,.9)';ctx.beginPath();ctx.ellipse(x,y-5,2,3.5,0,0,7);ctx.fill();
+}
+/* T0 — 시골 장터: 낮, 흙먼지, 천막과 수레, 나무 울타리 뒤 구경꾼 */
+function drawBgRural(){
+ const sky=ctx.createLinearGradient(0,0,0,200);sky.addColorStop(0,'#6e5c3e');sky.addColorStop(1,'#4a3d28');
+ ctx.fillStyle=sky;ctx.fillRect(0,0,W,200);
+ ctx.fillStyle='rgba(240,220,170,.16)';ctx.beginPath();ctx.arc(790,44,20,0,7);ctx.fill(); // 뿌연 해
+ ctx.fillStyle='#3d3320';ctx.beginPath();ctx.moveTo(0,152);ctx.quadraticCurveTo(240,112,480,148);ctx.quadraticCurveTo(720,118,W,150);ctx.lineTo(W,200);ctx.lineTo(0,200);ctx.closePath();ctx.fill(); // 원경 언덕
+ const tent=(x,y,w,h,col)=>{ // 줄무늬 천막
+  ctx.fillStyle=col;ctx.beginPath();ctx.moveTo(x,y+h);ctx.lineTo(x+w/2,y);ctx.lineTo(x+w,y+h);ctx.closePath();ctx.fill();
+  ctx.fillStyle='rgba(235,225,200,.18)';
+  for(let i=1;i<=3;i+=2){ctx.beginPath();ctx.moveTo(x+w/2,y);ctx.lineTo(x+i*w/4+7,y+h);ctx.lineTo(x+i*w/4-7,y+h);ctx.closePath();ctx.fill();}
+ };
+ tent(120,146,96,44,'#6e3226');tent(700,142,116,48,'#4c5068');
+ // 수레
+ ctx.fillStyle='#4e3a20';ctx.fillRect(420,168,66,18);
+ ctx.strokeStyle='#3a2b16';ctx.lineWidth=3;
+ ctx.beginPath();ctx.arc(436,190,9,0,7);ctx.stroke();ctx.beginPath();ctx.arc(470,190,9,0,7);ctx.stroke();
+ drawCrowdLayer(); // 울타리 뒤 입석 구경꾼 (몸은 울타리에 가려짐)
+ // 나무 울타리
+ for(let x=14;x<W;x+=46){ctx.fillStyle='#443318';ctx.fillRect(x,182,7,50);}
+ ctx.fillStyle='#54422a';ctx.fillRect(0,190,W,8);
+ ctx.fillStyle='#5e4a30';ctx.fillRect(0,208,W,8);
+ ctx.fillStyle='#382c1a';ctx.fillRect(0,222,W,10); // 울타리 밑단 흙
+ drawSandFloor('#93764a','#a08050','#836742'); // 다져진 흙바닥
+ ctx.setLineDash([13,11]);ctx.strokeStyle='rgba(64,46,24,.65)';ctx.lineWidth=3;
+ ctx.beginPath();ctx.ellipse(W/2,FLOOR+14,300,44,0,0,7);ctx.stroke();ctx.setLineDash([]); // 밧줄 경기선
+}
+/* T1 — 지방 도시 축제: 해질녘, 깃발줄, 목조 관람석, 화환과 횃불 */
+function drawBgFestival(){
+ const sky=ctx.createLinearGradient(0,0,0,146);sky.addColorStop(0,'#573a1e');sky.addColorStop(1,'#2c2013');
+ ctx.fillStyle=sky;ctx.fillRect(0,0,W,146);
+ // 삼각 깃발줄 2가닥
+ const bunting=(y,amp)=>{const cols=['#8a3030','#b8963e','#3e6a52','#4c5a8a'];
+  ctx.strokeStyle='rgba(0,0,0,.4)';ctx.lineWidth=1.4;ctx.beginPath();ctx.moveTo(0,y);ctx.quadraticCurveTo(W/2,y+amp,W,y);ctx.stroke();
+  for(let i=0;i<16;i++){const t=(i+0.5)/16,x=t*W,fy=y+amp*4*t*(1-t)*0.5+2;
+   ctx.fillStyle=cols[i%4];ctx.beginPath();ctx.moveTo(x-7,fy);ctx.lineTo(x+7,fy);ctx.lineTo(x,fy+13);ctx.closePath();ctx.fill();}
+ };
+ bunting(8,26);bunting(30,34);
+ // 목조 관람석 벽 (널빤지)
+ ctx.fillStyle='#31261a';ctx.fillRect(0,52,W,94);
+ ctx.strokeStyle='rgba(0,0,0,.3)';ctx.lineWidth=1;
+ for(let y=64;y<146;y+=14){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}
+ drawCrowdLayer();
+ // 전면 목조 난간대
+ const wall=ctx.createLinearGradient(0,146,0,232);wall.addColorStop(0,'#4a3820');wall.addColorStop(1,'#332714');
+ ctx.fillStyle=wall;ctx.fillRect(0,146,W,86);
+ ctx.strokeStyle='rgba(0,0,0,.28)';for(let x=0;x<W;x+=32){ctx.beginPath();ctx.moveTo(x,146);ctx.lineTo(x,232);ctx.stroke();} // 세로 널
+ ctx.fillStyle='#5c4826';ctx.fillRect(0,146,W,6);
+ // 화환(가랜드) 스웨그
+ ctx.strokeStyle='#43603a';ctx.lineWidth=5;ctx.lineCap='round';
+ for(let x=0;x<W;x+=160){ctx.beginPath();ctx.moveTo(x+8,156);ctx.quadraticCurveTo(x+80,186,x+152,156);ctx.stroke();}
+ ctx.fillStyle='#b8963e';for(let x=80;x<W;x+=160){ctx.beginPath();ctx.arc(x,182,3,0,7);ctx.fill();}
+ ctx.fillStyle='#6d5b42';ctx.fillRect(0,226,W,6);
+ for(let x=120;x<W;x+=240)drawTorch(x,196); // 난간 횃불
+ drawSandFloor('#b08a52','#bf9a5e','#9c7a48');
+ ctx.strokeStyle='rgba(235,228,210,.4)';ctx.lineWidth=3;
+ ctx.beginPath();ctx.ellipse(W/2,FLOOR+14,300,44,0,0,7);ctx.stroke(); // 초크 원
+}
+/* T2 — 속주 대경기: 석조 원형경기장 (아치·걸개 깃발) */
+function drawBgProvincial(){
+ const sky=ctx.createLinearGradient(0,0,0,120);sky.addColorStop(0,'#2a2016');sky.addColorStop(1,'#1a1410');
+ ctx.fillStyle=sky;ctx.fillRect(0,0,W,140);
+ ctx.fillStyle='#241b12';ctx.fillRect(0,26,W,120); // 관중석 벽
+ drawCrowdLayer();
+ // 포디움(귀빈석 벽) — 석조 띠
  const wall=ctx.createLinearGradient(0,146,0,230);wall.addColorStop(0,'#4a3d2c');wall.addColorStop(1,'#332a1e');
  ctx.fillStyle=wall;ctx.fillRect(0,146,W,86);
  ctx.fillStyle='#5c4d38';ctx.fillRect(0,146,W,6);
  ctx.fillStyle='rgba(0,0,0,.25)';for(let i=0;i<8;i++)ctx.fillRect(60+i*120,158,42,60); // 아치 그림자
+ // 아치 사이 걸개 깃발
+ ctx.fillStyle='#6e2828';for(let i=0;i<8;i++){const x=118+i*120;ctx.fillRect(x,154,20,44);ctx.beginPath();ctx.moveTo(x,198);ctx.lineTo(x+10,208);ctx.lineTo(x+20,198);ctx.closePath();ctx.fill();}
+ ctx.fillStyle='rgba(212,160,23,.5)';for(let i=0;i<8;i++)ctx.fillRect(118+i*120,154,20,3);
  ctx.fillStyle='#6d5b42';ctx.fillRect(0,226,W,6);
- // 모래 바닥
- const sand=ctx.createLinearGradient(0,232,0,H);sand.addColorStop(0,'#b8935a');sand.addColorStop(0.5,'#c9a566');sand.addColorStop(1,'#a5824c');
- ctx.fillStyle=sand;ctx.fillRect(0,232,W,H-232);
- // 중앙 원
+ drawSandFloor('#b8935a','#c9a566','#a5824c');
  ctx.strokeStyle='rgba(120,90,50,.5)';ctx.lineWidth=3;
+ ctx.beginPath();ctx.ellipse(W/2,FLOOR+14,300,44,0,0,7);ctx.stroke(); // 석회 원
+}
+/* T3 — 콜로세움: 벨라리움, 대리석 포디움, 황제석, 만석 관중 */
+function drawBgColosseum(){
+ const sky=ctx.createLinearGradient(0,0,0,120);sky.addColorStop(0,'#221a10');sky.addColorStop(1,'#130f08');
+ ctx.fillStyle=sky;ctx.fillRect(0,0,W,140);
+ ctx.save();ctx.globalAlpha=.34; // 벨라리움(차양)
+ for(let i=0;i<12;i++){ctx.fillStyle=i%2?'#7a2020':'#c9b48a';ctx.beginPath();ctx.moveTo(i*80,0);ctx.lineTo(i*80+80,0);ctx.lineTo(i*80+64,28);ctx.lineTo(i*80+16,28);ctx.closePath();ctx.fill();}
+ ctx.restore();
+ ctx.fillStyle='#221a10';ctx.fillRect(0,28,W,118);
+ drawCrowdLayer();
+ // 대리석 포디움
+ const wall=ctx.createLinearGradient(0,146,0,232);wall.addColorStop(0,'#7d6f54');wall.addColorStop(1,'#57492f');
+ ctx.fillStyle=wall;ctx.fillRect(0,146,W,86);
+ ctx.fillStyle='rgba(255,255,255,.08)';for(let i=0;i<20;i++)ctx.fillRect((i*173+40)%(W-30),152+(i*37)%66,12+(i*7)%18,1.5); // 대리석 결(고정 패턴)
+ ctx.fillStyle='#c8a456';ctx.fillRect(0,146,W,4);ctx.fillRect(0,224,W,4); // 금 몰딩
+ // 필라스터(붙임기둥)
+ for(let i=0;i<9;i++){const x=40+i*110;
+  ctx.fillStyle='#8a7a5c';ctx.fillRect(x,152,16,72);
+  ctx.fillStyle='rgba(0,0,0,.3)';ctx.fillRect(x+12,152,4,72);
+  ctx.fillStyle='#c8a456';ctx.fillRect(x-2,150,20,4);ctx.fillRect(x-2,220,20,4);}
+ // 황제석 — 중앙 자주색 캐노피
+ const cx=W/2;
+ ctx.fillStyle='rgba(0,0,0,.4)';ctx.fillRect(cx-58,158,116,64); // 좌석 안쪽 그늘
+ ctx.fillStyle='#4b2160';ctx.beginPath();ctx.moveTo(cx-66,168);ctx.lineTo(cx+66,168);ctx.lineTo(cx+58,150);ctx.lineTo(cx-58,150);ctx.closePath();ctx.fill(); // 캐노피
+ ctx.fillStyle='#c8a456';ctx.fillRect(cx-66,166,132,3); // 금 술
+ ctx.fillStyle='#3a1a4a';ctx.fillRect(cx-64,168,5,54);ctx.fillRect(cx+59,168,5,54); // 기둥
+ ctx.fillStyle='#6a3288';ctx.beginPath();ctx.arc(cx,196,6,0,7);ctx.fill(); // 자주 로브의 주최자
+ ctx.fillStyle='#d9ae86';ctx.beginPath();ctx.arc(cx,187,4,0,7);ctx.fill();
+ ctx.strokeStyle='#e8c86a';ctx.lineWidth=2;ctx.beginPath();ctx.arc(cx,184,4.6,Math.PI*1.15,Math.PI*1.85);ctx.stroke(); // 금관
+ drawSandFloor('#c29c60','#d4b070','#ad8952'); // 금빛 모래
+ ctx.strokeStyle='rgba(140,105,50,.55)';ctx.lineWidth=3;
  ctx.beginPath();ctx.ellipse(W/2,FLOOR+14,300,44,0,0,7);ctx.stroke();
+ ctx.strokeStyle='rgba(200,164,86,.25)';ctx.lineWidth=1.5;
+ ctx.beginPath();ctx.ellipse(W/2,FLOOR+14,288,40,0,0,7);ctx.stroke(); // 이중 금선
+}
+function drawArenaBg(){
+ const v=arena.venue||0;
+ if(v===0)drawBgRural();else if(v===1)drawBgFestival();else if(v===2)drawBgProvincial();else drawBgColosseum();
  arena.specks.forEach(s=>{ctx.fillStyle=`rgba(90,70,40,${s.a})`;ctx.beginPath();ctx.arc(s.x,s.y,s.r,0,7);ctx.fill();});
+ drawWeatherBg();
+}
+/* 날씨 배경 레이어 — 인물 뒤. 하늘 어둡게·모래 채도 저하·물웅덩이(비). 빗줄기는 인물 앞(draw 루프). */
+function drawWeatherBg(){
+ const wx=arena.weather;if(!wx||wx==='clear')return;
+ if(wx==='rain'){
+  // 하늘·전경 어둡게
+  ctx.fillStyle='rgba(30,36,48,.28)';ctx.fillRect(0,0,W,232);
+  // 젖은 모래 — 채도 낮추는 반투명 청회색
+  ctx.fillStyle='rgba(60,66,74,.22)';ctx.fillRect(0,232,W,H-232);
+  // 물웅덩이 (결정적 좌표, 반사광)
+  arena.puddles.forEach(p=>{
+   ctx.fillStyle='rgba(120,140,160,.18)';ctx.beginPath();ctx.ellipse(p.x,p.y,p.rx,p.ry,0,0,7);ctx.fill();
+   ctx.fillStyle='rgba(180,200,220,.10)';ctx.beginPath();ctx.ellipse(p.x,p.y-1,p.rx*0.6,p.ry*0.5,0,0,7);ctx.fill();
+  });
+ }
+}
+/* 빗줄기 — 인물 앞. 결정적 좌표 + arena.t 스크롤(프레임 지글거림 없음) */
+function drawWeatherFg(){
+ if(!arena||arena.weather!=='rain')return;
+ ctx.save();
+ ctx.strokeStyle='rgba(190,205,225,.34)';ctx.lineWidth=1.3;ctx.lineCap='round';
+ arena.rainStreaks.forEach(s=>{
+  const y=(s.y0+arena.t*s.spd)%(H+40)-20;
+  ctx.beginPath();ctx.moveTo(s.x,y);ctx.lineTo(s.x-5,y+s.len);ctx.stroke();
+ });
+ ctx.restore();
 }
 function skinFor(g){
  const T=[['#d9ae86','#b98e66'],['#c99b72','#a87c55'],['#b5875e','#946a45'],['#8f6748','#6f4e33']];
  let h=0;for(const ch of g.name)h=(h*31+ch.charCodeAt(0))>>>0;
  return T[h%4];
 }
+function drawBeast(f){
+ const B=f.B,dir=f.facing;
+ const bh=B.behavior;
+ ctx.save();
+ ctx.translate(f.x+dir*f.lunge*0.6,FLOOR);
+ // 그림자
+ ctx.fillStyle='rgba(40,25,10,.35)';ctx.beginPath();ctx.ellipse(0,4,30,7,0,0,7);ctx.fill();
+ ctx.scale(dir,1);
+ if(f.down){ctx.rotate(-0.5);ctx.translate(6,20);ctx.globalAlpha=0.9;}
+ const col=B.color;
+ const dark=shade(col,-28),light=shade(col,24);
+ const moving=f.state==='advance'||f.state==='charge'||f.state==='circle'||f.state==='retreat';
+ const gait=moving?Math.sin(f.walk*1.4)*6:0;
+ const breath=(!moving&&!f.down)?Math.sin(arena.t*2.4+f.gaitPhase)*1.2:0;
+ // 종별 체형 파라미터
+ const bulk=bh==='maul'?1.35:bh==='ambush'?0.82:bh==='charge'?1.15:bh==='gore'?1.28:bh==='armor'?1.2:1;  // 몸집
+ const legLen=bh==='ambush'?26:bh==='maul'?20:bh==='armor'?12:23; // 악어는 다리가 짧고 낮음
+ const bodyY=-legLen-6+breath;
+ const bodyW=44*bulk, bodyH=20*bulk;
+ // ── 뒷다리 2 (원경) ──
+ const legPair=(bx,shade0,ph)=>{
+  ctx.strokeStyle=shade0;ctx.lineWidth=5.5*bulk;ctx.lineCap='round';ctx.lineJoin='round';
+  const sw=moving?Math.sin(f.walk*1.4+ph)*7:0;
+  ctx.beginPath();ctx.moveTo(bx,bodyY+4);ctx.lineTo(bx+sw*0.4,bodyY+legLen*0.55);ctx.lineTo(bx+sw,-2);ctx.stroke();
+ };
+ legPair(-bodyW*0.34,dark,0);          // 뒷다리 안쪽
+ legPair(bodyW*0.30,dark,Math.PI);     // 앞다리 안쪽
+ // ── 몸통 ──
+ ctx.fillStyle=col;
+ ctx.beginPath();
+ ctx.moveTo(-bodyW*0.5,bodyY);
+ ctx.quadraticCurveTo(-bodyW*0.5-4,bodyY-bodyH*0.5,-bodyW*0.34,bodyY-bodyH*0.62); // 엉덩이
+ ctx.quadraticCurveTo(0,bodyY-bodyH*(bh==='maul'?0.95:0.72),bodyW*0.40,bodyY-bodyH*0.55); // 등선(곰은 봉긋)
+ ctx.quadraticCurveTo(bodyW*0.52,bodyY-bodyH*0.3,bodyW*0.5,bodyY+2); // 어깨
+ ctx.quadraticCurveTo(bodyW*0.3,bodyY+bodyH*0.7,0,bodyY+bodyH*0.7); // 배
+ ctx.quadraticCurveTo(-bodyW*0.34,bodyY+bodyH*0.7,-bodyW*0.5,bodyY);
+ ctx.closePath();ctx.fill();
+ // 등 하이라이트
+ ctx.fillStyle='rgba(255,255,255,.08)';ctx.beginPath();
+ ctx.ellipse(-bodyW*0.05,bodyY-bodyH*0.4,bodyW*0.32,bodyH*0.22,0,0,7);ctx.fill();
+ // 표범 반점 / 사자 갈기 / 멧돼지 강모
+ if(bh==='ambush'){ctx.fillStyle=dark;for(let i=0;i<7;i++){const px=-bodyW*0.3+i*bodyW*0.1,py=bodyY-bodyH*0.2+((i%2)?bodyH*0.25:0);ctx.beginPath();ctx.arc(px,py,1.8,0,7);ctx.fill();}}
+ // ── 꼬리 ──
+ ctx.strokeStyle=col;ctx.lineWidth=4*bulk;ctx.lineCap='round';
+ const tw=Math.sin(arena.t*3+f.gaitPhase)*8;
+ ctx.beginPath();ctx.moveTo(-bodyW*0.5,bodyY);
+ if(bh==='charge'){ctx.lineTo(-bodyW*0.5-8,bodyY-4);} // 멧돼지 짧은 꼬리
+ else{ctx.quadraticCurveTo(-bodyW*0.5-14,bodyY-10+tw*0.3,-bodyW*0.5-20,bodyY-2+tw);}
+ ctx.stroke();
+ if(bh==='lunge'){ctx.fillStyle=dark;ctx.beginPath();ctx.arc(-bodyW*0.5-20,bodyY-2+tw,3.5,0,7);ctx.fill();} // 사자 꼬리 술
+ // ── 앞다리 2 (근경) ──
+ legPair(-bodyW*0.30,col,Math.PI*0.6);
+ legPair(bodyW*0.36,col,Math.PI*1.6);
+ // ── 목·머리 ──
+ const headX=bodyW*0.52, headY=bodyY-bodyH*(bh==='maul'?0.1:0.35);
+ const lowered=(f.state==='charge'||f.state==='windup');
+ const hy=headY+(lowered?bodyH*0.5:0);
+ // 목
+ ctx.strokeStyle=col;ctx.lineWidth=(bh==='maul'?15:bh==='lunge'?13:10)*bulk*0.6;ctx.lineCap='round';
+ ctx.beginPath();ctx.moveTo(bodyW*0.36,bodyY-bodyH*0.4);ctx.lineTo(headX,hy);ctx.stroke();
+ // 사자 갈기
+ if(bh==='lunge'){ctx.fillStyle=dark;ctx.beginPath();ctx.arc(headX-6,hy,13,0,7);ctx.fill();
+  ctx.fillStyle=shade(col,-40);for(let i=0;i<9;i++){const a=i/9*6.28;ctx.beginPath();ctx.moveTo(headX-6,hy);ctx.lineTo(headX-6+Math.cos(a)*15,hy+Math.sin(a)*15);ctx.lineTo(headX-6+Math.cos(a+0.5)*11,hy+Math.sin(a+0.5)*11);ctx.closePath();ctx.fill();}}
+ // 머리
+ ctx.fillStyle=light;ctx.beginPath();ctx.ellipse(headX,hy,10,8,0,0,7);ctx.fill();
+ // 주둥이
+ ctx.fillStyle=col;ctx.beginPath();ctx.moveTo(headX+6,hy-3);ctx.lineTo(headX+16,hy+(bh==='charge'?-1:1));ctx.lineTo(headX+6,hy+5);ctx.closePath();ctx.fill();
+ // 귀
+ ctx.fillStyle=dark;
+ if(bh==='charge'){/* 멧돼지 작은 귀 */ctx.beginPath();ctx.arc(headX-4,hy-7,2.5,0,7);ctx.fill();}
+ else{ctx.beginPath();ctx.moveTo(headX-5,hy-7);ctx.lineTo(headX-2,hy-14);ctx.lineTo(headX+1,hy-7);ctx.closePath();ctx.fill();}
+ // 눈 (붉게)
+ ctx.fillStyle=f.flash>0?'#fff':'#e8b020';ctx.beginPath();ctx.arc(headX+2,hy-2,1.6,0,7);ctx.fill();
+ // 멧돼지 엄니
+ if(bh==='charge'){ctx.strokeStyle='#e8dcc0';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(headX+13,hy+2);ctx.lineTo(headX+17,hy-3);ctx.stroke();}
+ // 황소 뿔 (앞으로 굽은 한 쌍)
+ if(bh==='gore'){ctx.strokeStyle='#d8ccae';ctx.lineWidth=3.2;ctx.lineCap='round';
+  ctx.beginPath();ctx.moveTo(headX-3,hy-7);ctx.quadraticCurveTo(headX+8,hy-15,headX+15,hy-9);ctx.stroke(); // 위 뿔
+  ctx.beginPath();ctx.moveTo(headX-3,hy-6);ctx.quadraticCurveTo(headX+7,hy-2,headX+14,hy-6);ctx.stroke(); // 아래로 굽은 뿔
+  ctx.fillStyle='#c9bda0';ctx.beginPath();ctx.arc(headX-3,hy-7,2.6,0,7);ctx.fill();} // 뿔 밑동
+ // 악어 긴 주둥이 + 등 비늘 능선
+ if(bh==='armor'){
+  ctx.fillStyle=col;ctx.beginPath();ctx.moveTo(headX+4,hy-3);ctx.lineTo(headX+26,hy-1);ctx.lineTo(headX+26,hy+3);ctx.lineTo(headX+4,hy+5);ctx.closePath();ctx.fill(); // 긴 주둥이
+  ctx.strokeStyle='#e8dcc0';ctx.lineWidth=1;for(let i=0;i<5;i++){const tx=headX+8+i*3.5;ctx.beginPath();ctx.moveTo(tx,hy+2.5);ctx.lineTo(tx+1,hy+4.5);ctx.stroke();} // 이빨 줄
+  ctx.fillStyle=dark;for(let i=0;i<6;i++){const sx=-bodyW*0.35+i*bodyW*0.14;ctx.beginPath();ctx.moveTo(sx,bodyY-bodyH*0.55);ctx.lineTo(sx+3,bodyY-bodyH*0.85);ctx.lineTo(sx+6,bodyY-bodyH*0.55);ctx.closePath();ctx.fill();} // 등 비늘 능선
+ }
+ // 공격 시 벌린 아가리
+ if(f.state==='strike'||f.state==='windup'){ctx.fillStyle='#3a0e0e';ctx.beginPath();ctx.moveTo(headX+6,hy+1);ctx.lineTo(headX+16,hy-2);ctx.lineTo(headX+16,hy+4);ctx.lineTo(headX+6,hy+5);ctx.closePath();ctx.fill();
+  ctx.strokeStyle='#fff';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(headX+9,hy);ctx.lineTo(headX+10,hy+2);ctx.moveTo(headX+13,hy-1);ctx.lineTo(headX+14,hy+1);ctx.stroke();}
+ // 피격 플래시
+ if(f.flash>0){ctx.globalAlpha=f.flash*0.5;ctx.fillStyle='#fff';ctx.beginPath();ctx.ellipse(0,bodyY,bodyW*0.5,bodyH,0,0,7);ctx.fill();ctx.globalAlpha=1;}
+ // 저체력 핏자국
+ if(!f.down&&f.hp<f.mhp*0.35){ctx.strokeStyle='rgba(140,20,20,.6)';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(-6,bodyY-4);ctx.lineTo(-2,bodyY+6);ctx.moveTo(8,bodyY-2);ctx.lineTo(11,bodyY+7);ctx.stroke();}
+ ctx.restore();
+}
+function shade(hex,d){
+ const m=hex.replace('#','');const r=parseInt(m.slice(0,2),16),g=parseInt(m.slice(2,4),16),b=parseInt(m.slice(4,6),16);
+ const c=v=>clamp(Math.round(v+d),0,255).toString(16).padStart(2,'0');
+ return '#'+c(r)+c(g)+c(b);
+}
 function drawFighter(f){
+ if(f.beast)return drawBeast(f);
  const g=f.g,cls=CLASSES[g.cls];
  const shieldSize=f.shieldSize||cls.shield;
  const vis=(f.wpn&&f.wpn.vis)||cls.weapon;
@@ -3868,6 +5000,20 @@ function drawFighter(f){
   ctx.fillStyle='#8a8a90';ctx.beginPath();ctx.moveTo(-8,-66+br);ctx.quadraticCurveTo(0,-78+br,8,-66+br);ctx.quadraticCurveTo(0,-72+br,-8,-66+br);ctx.fill(); // 낮은 지느러미 볏
   ctx.fillStyle='rgba(255,255,255,.25)';ctx.beginPath();ctx.arc(-3,-67+br,2.6,0,7);ctx.fill();
   ctx.fillStyle='#111';ctx.beginPath();ctx.arc(4.5,-64+br,1.5,0,7);ctx.fill(); // 작은 눈구멍
+ }else if(g.cls==='hoplomachus'){
+  // 넓은 챙 투구 + 곧게 선 깃털볏 (그리스 중장보병풍)
+  ctx.fillStyle='#a89a5a';ctx.beginPath();ctx.arc(0,-64+br,9,Math.PI,0);ctx.fill(); // 청동 돔
+  ctx.beginPath();ctx.ellipse(0,-64+br,12,2.4,0,0,7);ctx.fill(); // 넓은 챙
+  ctx.fillStyle='rgba(255,255,255,.22)';ctx.beginPath();ctx.arc(-3,-68+br,2.6,0,7);ctx.fill();
+  ctx.fillStyle=cls.color;ctx.beginPath(); // 세로로 곧게 선 볏
+  ctx.moveTo(-2,-73+br);ctx.quadraticCurveTo(0,-92+br,4,-92+br);ctx.quadraticCurveTo(6,-78+br,3,-71+br);ctx.closePath();ctx.fill();
+  ctx.fillStyle=BRONZE_D;ctx.beginPath();ctx.roundRect(-7,-65+br,14,7,2);ctx.fill(); // 면갑
+  ctx.fillStyle='#3a3020';for(let i=-4;i<=4;i+=4){ctx.beginPath();ctx.arc(i,-61.5+br,1,0,7);ctx.fill();}
+ }else if(g.cls==='dimachaerus'){
+  // 가벼운 두건 — 투구 없이 민첩 (무른 몸 콘셉트)
+  ctx.fillStyle='#3a2c1c';ctx.beginPath();ctx.arc(0,-65+br,7.5,Math.PI*1.05,Math.PI*1.95);ctx.fill(); // 머리칼
+  ctx.strokeStyle=cls.color;ctx.lineWidth=2.4;ctx.beginPath();ctx.moveTo(-7,-65+br);ctx.quadraticCurveTo(0,-69+br,7,-64+br);ctx.stroke(); // 붉은 머리띠
+  ctx.fillStyle='rgba(255,255,255,.15)';ctx.beginPath();ctx.arc(-2,-67+br,2,0,7);ctx.fill();
  }else{ // 레티아리우스
   ctx.fillStyle='#3a2c1c';ctx.beginPath();ctx.arc(0,-65+br,7.5,Math.PI*1.05,Math.PI*1.95);ctx.fill(); // 머리칼
   ctx.strokeStyle='#8a2a2a';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(-7,-66+br);ctx.lineTo(7,-65+br);ctx.stroke(); // 머리띠
@@ -3891,7 +5037,7 @@ function drawFighter(f){
   ctx.strokeStyle='#8a2a24';ctx.lineWidth=1;ctx.beginPath();ctx.arc(15,-44,8.5,0,7);ctx.stroke();
   ctx.strokeStyle='#d4a017';ctx.lineWidth=1.3;ctx.beginPath();ctx.arc(15,-44,5.6,0,7);ctx.stroke(); // 동심원
   ctx.fillStyle='#d4a017';ctx.beginPath();ctx.arc(15,-44,2,0,7);ctx.fill(); // 중앙 보스
- }else if(f.netCd<=0||f.netCd>3.5){ // 그물 대기
+ }else if(f.hasNet&&(f.netCd<=0||f.netCd>3.5)){ // 그물 대기 (그물 보유자만)
   ctx.strokeStyle=skinD;ctx.lineWidth=5;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(4,-50+br);ctx.lineTo(13,-46);ctx.stroke();
   ctx.strokeStyle='rgba(210,200,170,.75)';ctx.lineWidth=1;
   for(let i=0;i<4;i++){ctx.beginPath();ctx.moveTo(13,-46);ctx.quadraticCurveTo(19+i*2,-38,15+i*2.5,-24);ctx.stroke();} // 세로 그물줄
@@ -4071,6 +5217,7 @@ function draw(){
  });
  arena.particles.filter(p=>p.g).forEach(p=>{ctx.fillStyle=p.c;ctx.globalAlpha=clamp(p.life*1.5,0,1);ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,7);ctx.fill();ctx.globalAlpha=1;});
  if(arena.rope&&arena.rope.life>0){const rp=arena.rope;ctx.strokeStyle=`rgba(154,124,84,${clamp(rp.life*2,0,0.9)})`;ctx.lineWidth=2.2;ctx.beginPath();ctx.moveTo(rp.fx,FLOOR-46);ctx.quadraticCurveTo((rp.fx+rp.ox)/2,FLOOR-58,rp.ox,FLOOR-42);ctx.stroke();rp.life-=0.016;}
+ drawWeatherFg();
  drawHud();
  updateSkillHud(arena.f&&arena.f[0]);
  ctx.restore();
@@ -4187,7 +5334,12 @@ function init(){
   s.style.cssText='position:absolute;width:0;height:0;overflow:hidden';
   s.innerHTML=SKILL_DEFS;document.body.appendChild(s);
  }
+ if(!document.getElementById('uiIconDefs')){
+  const d=document.createElement('div');d.style.cssText='position:absolute;width:0;height:0;overflow:hidden';
+  d.innerHTML=UI_ICONS;document.body.appendChild(d.firstElementChild);
+ }
  S=newState();
+ S.weather=rollWeather(); // 첫 주 날씨
  const a=genGladiator(1.05),b=genGladiator(0.85);
  S.gladiators=[a,b];selGlad=a.id;
  refreshMarket();refreshContracts();
