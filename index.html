@@ -2757,6 +2757,7 @@ function modal(title,body,acts,opts){
   const b=document.createElement('button');b.textContent=a.t;if(a.primary)b.className='primary';
   b.onclick=()=>{$('modalBack').classList.remove('on');a.fn&&a.fn();};box.appendChild(b);});
  $('modalBack').classList.add('on');
+ sfx((opts&&opts.sfxKind)||'uiOpen'); // 모달 열림 효과음 (배선 #2)
  if(opts&&opts.after)setTimeout(opts.after,0);
 }
 function closeModal(){$('modalBack').classList.remove('on');}
@@ -2778,6 +2779,7 @@ function go(s){
  // 전투 화면에서는 '다음 주' 버튼을 숨김 (전투 중 주차 진행 방지)
  const nw=$('btnNextWeek');if(nw)nw.style.display=(s==='arena')?'none':'';
  renderAll();
+ refreshAmbience(s); // 화면 전환 — 앰비언스 조건 재평가 (배선 #10)
  window.scrollTo(0,0);
 }
 document.querySelectorAll('.bld').forEach(b=>{
@@ -2786,6 +2788,14 @@ document.querySelectorAll('.bld').forEach(b=>{
  b.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();enter();}});
 });
 $('backToMap').querySelector('button').onclick=e=>go(e.target.dataset.target||'map');
+/* 전역 버튼 효과음 위임 (배선 #1) — 개별 발화 버튼은 data-nosfx로 제외해 이중 재생 방지 */
+document.addEventListener('click',e=>{
+ const b=e.target.closest('button');if(!b)return;
+ if(b.hasAttribute('data-nosfx'))return;
+ if(b.classList.contains('primary'))sfx('uiConfirm');
+ else if(b.classList.contains('danger'))sfx('uiCancel');
+ else sfx('uiTap');
+},true);
 function setBadge(id,n){const el=$(id);if(!el)return;el.style.display=n?'':'none';el.querySelector('text').textContent=n;}
 function renderMap(){
  setBadge('mapBadgeInjured',S.gladiators.filter(g=>g.injury>0).length);
@@ -2897,7 +2907,7 @@ function renderNpc(loc){
 }
 function npcSay(loc,text){
  const el=$('npcTxt-'+loc);
- if(el)el.textContent='“'+text+'”';
+ if(el){el.textContent='“'+text+'”';sfx('npcMurmur');} // 대사 갱신 효과음 (배선 #8)
 }
 function renderCity(){
  const star=$('cityColoStar');
@@ -2910,9 +2920,9 @@ function shopItemCard(it,loc){
   <div style="flex:1;min-width:0"><div class="spread"><span style="color:${GRADES[it.grade].c};font-weight:700;font-size:15px">${it.name}</span><span class="small dim">${WCATS[it.cat].n}</span></div>
   <div class="small dim">${itemStatTxt(it)}</div></div></div>
   <hr><div class="spread"><span class="gold" style="font-weight:700">${den(it.price)}</span>
-  <button class="primary sm" ${poor?'disabled':''}>${poor?'자금 부족':'구매'}</button></div>`;
+  <button class="primary sm" data-nosfx ${poor?'disabled':''}>${poor?'자금 부족':'구매'}</button></div>`;
  d.querySelector('button').onclick=e=>{e.stopPropagation();
-  S.money-=it.price;S.armory.push(it);S.wmarket=S.wmarket.filter(x=>x.id!==it.id);
+  S.money-=it.price;S.armory.push(it);S.wmarket=S.wmarket.filter(x=>x.id!==it.id);sfx('uiCoin');
   S.chron.push(`${S.week}주차 — ${it.name} 구입 (${den(it.price)}).`);renderAll();
   if(loc&&NPCS[loc])npcSay(loc,pick(NPCS[loc].buy));};
  return d;
@@ -3097,7 +3107,7 @@ function renderRoster(){
   </div>`;
  // ── 탭 헤더 ──
  const TABS=[['train','훈련'],['arma','장비'],['arcana','깨달음'],['acta','기록']];
- const tabBar=`<div class="rtabs">${TABS.map(([v,n])=>`<button data-rtab="${v}" class="${rosterTab===v?'on':''}">${n}</button>`).join('')}</div>`;
+ const tabBar=`<div class="rtabs">${TABS.map(([v,n])=>`<button data-rtab="${v}" data-nosfx class="${rosterTab===v?'on':''}">${n}</button>`).join('')}</div>`;
  // ── 탭별 본문 ──
  let tabBody='';
  if(rosterTab==='train'){
@@ -3154,7 +3164,7 @@ function renderRoster(){
   `<hr><div class="spread"><span class="small dim">몸값 ${den(gValue(g))} · 매각가 ${den(Math.round(gValue(g)*0.65))} <span class="dim">(장비는 회수)</span></span>
    <button class="danger sm" id="btnSell">매각</button></div>`;
  // ── 탭 전환 바인딩 ──
- det.querySelectorAll('[data-rtab]').forEach(b=>b.onclick=()=>{rosterTab=b.dataset.rtab;renderRoster();});
+ det.querySelectorAll('[data-rtab]').forEach(b=>b.onclick=()=>{rosterTab=b.dataset.rtab;sfx('uiTab');renderRoster();});
  // 계급 배지 클릭 → 상세 모달
  const rankInfoEl=det.querySelector('[data-rankinfo]');
  if(rankInfoEl)rankInfoEl.onclick=()=>{
@@ -3184,7 +3194,7 @@ function renderRoster(){
  }
  $('btnSell').onclick=()=>{
   modal('검투사 매각',`${g.name}을(를) ${den(Math.round(gValue(g)*0.65))}에 매각하는가? 되돌릴 수 없다.`,[
-   {t:'매각한다',fn:()=>{if(g.weapon){S.armory.push(g.weapon);g.weapon=null;}if(g.shield){S.armory.push(g.shield);g.shield=null;}S.money+=Math.round(gValue(g)*0.65);S.gladiators=S.gladiators.filter(x=>x.id!==g.id);S.chron.push(`${S.week}주차 — ${g.name} 매각.`);selGlad=null;renderAll();}},
+   {t:'매각한다',fn:()=>{if(g.weapon){S.armory.push(g.weapon);g.weapon=null;}if(g.shield){S.armory.push(g.shield);g.shield=null;}S.money+=Math.round(gValue(g)*0.65);sfx('uiCoin');S.gladiators=S.gladiators.filter(x=>x.id!==g.id);S.chron.push(`${S.week}주차 — ${g.name} 매각.`);selGlad=null;renderAll();}},
    {t:'취소'}]);
  };
 }
@@ -3328,9 +3338,9 @@ function renderMarket(){
   const d=document.createElement('div');d.className='gcard';
   const full=S.gladiators.length>=cap, poor=S.money<g.price;
   d.innerHTML=gCardHtml(g,`${g.veteranSale?'<div class="small" style="color:#b8a06a;margin-top:4px">'+uicon('swords',11)+' 경력자 — 다른 루두스에서 계급을 쌓은 몸. 값은 비싸지만 곧바로 높은 무대에 설 수 있다.</div>':''}<hr><div class="spread"><span class="gold" style="font-weight:700">${den(g.price)}</span>
-   <button class="primary sm" ${full||poor?'disabled':''}>${full?'숙소 만원':poor?'자금 부족':'구매'}</button></div>`);
+   <button class="primary sm" data-nosfx ${full||poor?'disabled':''}>${full?'숙소 만원':poor?'자금 부족':'구매'}</button></div>`);
   d.querySelector('button').onclick=e=>{e.stopPropagation();
-   S.money-=g.price;S.gladiators.push(g);S.market=S.market.filter(x=>x.id!==g.id);
+   S.money-=g.price;S.gladiators.push(g);S.market=S.market.filter(x=>x.id!==g.id);sfx('uiCoin');
    S.chron.push(`${S.week}주차 — ${g.name} 영입 (${den(g.price)}).`);renderAll();
    npcSay('market',pick(NPCS.market.buy));};
   box.appendChild(d);});
@@ -3384,18 +3394,18 @@ function renderContracts(){
    <div class="small" style="margin-top:4px">${oppLine}${hasElig?'':' — <span class="red">자격 미달</span>'}</div>
    <div class="cbody" style="display:${isOpen?'block':'none'}">${bodyHtml}</div>
    <div class="cfoot"><hr><div class="row">
-    ${c.scouted?'':`<button class="sm" data-a="scout">정찰 (−${den(c.scoutCost)})</button>`}
+    ${c.scouted?'':`<button class="sm" data-nosfx data-a="scout">정찰 (−${den(c.scoutCost)})</button>`}
     <button class="primary sm" data-a="fight">출전 준비 ▸</button></div></div>`;
   // 헤더 탭 → 펼침 토글
   d.querySelector('.chead').onclick=()=>{
    if(openContracts.has(c.id))openContracts.delete(c.id);else openContracts.add(c.id);
    const body=d.querySelector('.cbody');const open=openContracts.has(c.id);
-   body.style.display=open?'block':'none';d.classList.toggle('open',open);
+   body.style.display=open?'block':'none';d.classList.toggle('open',open);sfx('uiTab');
   };
   if(isOpen)d.classList.add('open');
   d.querySelectorAll('.cfoot button').forEach(b=>b.onclick=(e)=>{
    e.stopPropagation();
-   if(b.dataset.a==='scout'){if(S.money<c.scoutCost)return modal('자금 부족','정찰꾼을 살 돈이 없다.');S.money-=c.scoutCost;c.scouted=true;renderAll();npcSay('colosseum',pick(NPCS.colosseum.scout));}
+   if(b.dataset.a==='scout'){if(S.money<c.scoutCost)return modal('자금 부족','정찰꾼을 살 돈이 없다.',null,{sfxKind:'uiError'});S.money-=c.scoutCost;c.scouted=true;sfx('uiCoin');renderAll();npcSay('colosseum',pick(NPCS.colosseum.scout));}
    else{npcSay('colosseum',pick(NPCS.colosseum.accept));openFightPrep(c);}});
   box.appendChild(d);});
 }
@@ -3440,8 +3450,8 @@ function renderFacility(){
   const next=lv<f.lv.length-1;
   d.innerHTML=`<h3>${f.n} <span class="dim small" style="font-weight:400">— ${f.d}</span></h3>
    <div>현재: <b>${f.lv[lv]}</b></div>
-   ${next?`<div class="small dim">다음: ${f.lv[lv+1]} (${den(f.cost[lv+1])})</div><div style="margin-top:8px"><button class="sm primary" ${S.money<f.cost[lv+1]?'disabled':''}>증축</button></div>`:'<div class="small gold">최고 단계</div>'}`;
-  if(next)d.querySelector('button').onclick=()=>{S.money-=f.cost[lv+1];S.fac[key]++;S.chron.push(`${S.week}주차 — ${f.n} 증축: ${f.lv[lv+1]}.`);renderAll();};
+   ${next?`<div class="small dim">다음: ${f.lv[lv+1]} (${den(f.cost[lv+1])})</div><div style="margin-top:8px"><button class="sm primary" data-nosfx ${S.money<f.cost[lv+1]?'disabled':''}>증축</button></div>`:'<div class="small gold">최고 단계</div>'}`;
+  if(next)d.querySelector('button').onclick=()=>{S.money-=f.cost[lv+1];S.fac[key]++;sfx('uiCoin');S.chron.push(`${S.week}주차 — ${f.n} 증축: ${f.lv[lv+1]}.`);renderAll();};
   box.appendChild(d);}
  const ab=$('armoryList');ab.innerHTML='';
  if(!S.armory.length)ab.innerHTML='<p class="dim">보관 중인 장비가 없다. 시장의 무기 상인을 찾아가라.</p>';
@@ -3454,7 +3464,7 @@ function renderFacility(){
   d.querySelector('button').onclick=()=>{
    const val=Math.round(it.price?it.price*0.5:120);
    modal('장비 판매',`${it.name}을(를) ${den(val)}에 판매하는가?${it.grade>=4?'\n전설의 무기다 — 다시 구할 방법은 특별 흥행전뿐이다.':''}`,[
-    {t:'판매한다',fn:()=>{S.money+=val;S.armory=S.armory.filter(x=>x.id!==it.id);renderAll();}},{t:'취소'}]);
+    {t:'판매한다',fn:()=>{S.money+=val;S.armory=S.armory.filter(x=>x.id!==it.id);sfx('uiCoin');renderAll();}},{t:'취소'}]);
   };
   ab.appendChild(d);});
  const sb=$('staffList');sb.innerHTML='';
@@ -3693,7 +3703,7 @@ function checkAchievements(log){
    const hero=(e.id==='immortal')?S.gladiators.find(g=>!g.beastId&&g.wins>=40&&(g.favor||0)>=80):null;
    const body=(hero?`${hero.name} — `:'')+e.lines.join('\n');
    modalQueue.length=0; // 업적은 주간 이벤트보다 우선 (드물고 중대함)
-   modal(`업적 — ${e.name}`,body+'\n\n(양성소 운영은 계속됨)',[{t:'영광을 새긴다',fn:()=>renderAll()}]);
+   modal(`업적 — ${e.name}`,body+'\n\n(양성소 운영은 계속됨)',[{t:'영광을 새긴다',fn:()=>renderAll()}],{sfxKind:'chronicle'});
   }
  });
 }
@@ -3752,6 +3762,7 @@ function nextWeek(){
   return;
  }
  renderAll();
+ refreshAmbience(curScreen); // 새 주 날씨 반영 — 우천 시 지도/도시 빗소리 (배선 #13)
  showPaper();
 }
 $('btnNextWeek').onclick=nextWeek;
@@ -3766,57 +3777,163 @@ const FLOOR=352,W=960,H=440;
 let arena=null,soundOn=false,actx=null;
 let lastT=0;
 
-/* 사운드 (WebAudio 합성) */
-function sfx(type){
- if(!soundOn)return;
- if(!actx){
-  try{actx=new (window.AudioContext||window.webkitAudioContext)();}
-  catch(e){soundOn=false;return;} // 오디오 미지원 환경 — 이후 호출 무음 처리
- }
- const t=actx.currentTime;
- const g=actx.createGain();g.connect(actx.destination);
- if(type==='clang'){
-  const o=actx.createOscillator();o.type='square';o.frequency.setValueAtTime(900,t);o.frequency.exponentialRampToValueAtTime(250,t+.12);
-  g.gain.setValueAtTime(.12,t);g.gain.exponentialRampToValueAtTime(.001,t+.15);o.connect(g);o.start(t);o.stop(t+.16);
- }else if(type==='thud'){
-  const o=actx.createOscillator();o.type='sine';o.frequency.setValueAtTime(130,t);o.frequency.exponentialRampToValueAtTime(45,t+.14);
-  g.gain.setValueAtTime(.25,t);g.gain.exponentialRampToValueAtTime(.001,t+.18);o.connect(g);o.start(t);o.stop(t+.2);
- }else if(type==='whoosh'||type==='roar'){
-  const len=type==='roar'?.5:.15;
-  const buf=actx.createBuffer(1,actx.sampleRate*len,actx.sampleRate);
-  const d=buf.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=(Math.random()*2-1)*(1-i/d.length);
-  const src=actx.createBufferSource();src.buffer=buf;
-  const f=actx.createBiquadFilter();f.type=type==='roar'?'lowpass':'bandpass';f.frequency.value=type==='roar'?400:1500;
-  g.gain.setValueAtTime(type==='roar'?.18:.08,t);g.gain.exponentialRampToValueAtTime(.001,t+len);
-  src.connect(f);f.connect(g);src.start(t);
- }else if(type==='cutin'){
-  // 풀 컷인 — 금속 임팩트 + 3음 팡파르 화음 + 저역 붐
-  const hit=actx.createOscillator();hit.type='square';
+/* ═══════════ 사운드 (WebAudio 합성) ═══════════
+   호출부는 오직 sfx('이름')/amb('이름'|null)만 사용함. 합성 레시피는 SFX_RECIPES로 데이터화 —
+   향후 오디오 파일 도입 시 이 테이블만 교체하면 됨.
+   버스 구조: 모든 소리 → sfxBus(마스터) → destination. 환경음은 ambBus → sfxBus 경유.
+   수치는 전부 자체 설계값(추정) — 실기기 청취 튜닝 필요. */
+let sfxBus=null, ambBus=null;
+const sfxLastPlayed={};           // 이름별 마지막 재생 시각(ms) — 스로틀용
+const SFX_NOTHROTTLE={roar:1,cutin:1,cutinMini:1,fanfare:1,dirge:1,chronicle:1,beastGrowl:1};
+
+function ensureAudio(){
+ if(actx)return true;
+ try{
+  actx=new (window.AudioContext||window.webkitAudioContext)();
+  sfxBus=actx.createGain();sfxBus.gain.value=1;sfxBus.connect(actx.destination);
+  ambBus=actx.createGain();ambBus.gain.value=1;ambBus.connect(sfxBus);
+  return true;
+ }catch(e){soundOn=false;return false;} // 오디오 미지원 — 이후 영구 무음
+}
+
+/* 단발 효과음 레시피 — (actx,t,bus) 받아 노드 구성. gain은 전부 bus로 연결. */
+const SFX_RECIPES={
+ // ── 기존 전투음 5종 (이관) ──
+ clang:(a,t,bus)=>{const o=a.createOscillator(),g=a.createGain();g.connect(bus);
+  o.type='square';o.frequency.setValueAtTime(900,t);o.frequency.exponentialRampToValueAtTime(250,t+.12);
+  g.gain.setValueAtTime(.12,t);g.gain.exponentialRampToValueAtTime(.001,t+.15);o.connect(g);o.start(t);o.stop(t+.16);},
+ thud:(a,t,bus)=>{const o=a.createOscillator(),g=a.createGain();g.connect(bus);
+  o.type='sine';o.frequency.setValueAtTime(130,t);o.frequency.exponentialRampToValueAtTime(45,t+.14);
+  g.gain.setValueAtTime(.25,t);g.gain.exponentialRampToValueAtTime(.001,t+.18);o.connect(g);o.start(t);o.stop(t+.2);},
+ whoosh:(a,t,bus)=>noiseBurst(a,t,bus,.15,'bandpass',1500,.08),
+ roar:(a,t,bus)=>noiseBurst(a,t,bus,.5,'lowpass',400,.18),
+ cutin:(a,t,bus)=>{
+  const hit=a.createOscillator();hit.type='square';
   hit.frequency.setValueAtTime(1400,t);hit.frequency.exponentialRampToValueAtTime(320,t+.09);
-  const hg=actx.createGain();hg.gain.setValueAtTime(.10,t);hg.gain.exponentialRampToValueAtTime(.001,t+.12);
-  hit.connect(hg);hg.connect(actx.destination);hit.start(t);hit.stop(t+.13);
-  [220,330,440].forEach((fr,i)=>{
-   const o=actx.createOscillator();o.type='sawtooth';o.frequency.setValueAtTime(fr,t+.05);
-   const og=actx.createGain();og.gain.setValueAtTime(0,t+.05);
+  const hg=a.createGain();hg.gain.setValueAtTime(.10,t);hg.gain.exponentialRampToValueAtTime(.001,t+.12);
+  hit.connect(hg);hg.connect(bus);hit.start(t);hit.stop(t+.13);
+  [220,330,440].forEach((fr,i)=>{const o=a.createOscillator();o.type='sawtooth';o.frequency.setValueAtTime(fr,t+.05);
+   const og=a.createGain();og.gain.setValueAtTime(0,t+.05);
    og.gain.linearRampToValueAtTime(.06-i*.012,t+.09);og.gain.exponentialRampToValueAtTime(.001,t+.5);
-   o.connect(og);og.connect(actx.destination);o.start(t+.05);o.stop(t+.52);
-  });
-  const boom=actx.createOscillator();boom.type='sine';
+   o.connect(og);og.connect(bus);o.start(t+.05);o.stop(t+.52);});
+  const boom=a.createOscillator(),g=a.createGain();g.connect(bus);boom.type='sine';
   boom.frequency.setValueAtTime(95,t);boom.frequency.exponentialRampToValueAtTime(38,t+.3);
   g.gain.setValueAtTime(.22,t);g.gain.exponentialRampToValueAtTime(.001,t+.35);
-  boom.connect(g);boom.start(t);boom.stop(t+.36);
- }else if(type==='cutinMini'){
-  // 미니 컷인 — 짧은 금속 슬라이드 + 단음
-  const o=actx.createOscillator();o.type='square';
+  boom.connect(g);boom.start(t);boom.stop(t+.36);},
+ cutinMini:(a,t,bus)=>{const o=a.createOscillator(),g=a.createGain();g.connect(bus);o.type='square';
   o.frequency.setValueAtTime(880,t);o.frequency.exponentialRampToValueAtTime(440,t+.08);
-  g.gain.setValueAtTime(.09,t);g.gain.exponentialRampToValueAtTime(.001,t+.16);
-  o.connect(g);o.start(t);o.stop(t+.17);
-  const o2=actx.createOscillator();o2.type='triangle';o2.frequency.setValueAtTime(660,t+.06);
-  const g2=actx.createGain();g2.gain.setValueAtTime(.07,t+.06);g2.gain.exponentialRampToValueAtTime(.001,t+.28);
-  o2.connect(g2);g2.connect(actx.destination);o2.start(t+.06);o2.stop(t+.3);
+  g.gain.setValueAtTime(.09,t);g.gain.exponentialRampToValueAtTime(.001,t+.16);o.connect(g);o.start(t);o.stop(t+.17);
+  const o2=a.createOscillator();o2.type='triangle';o2.frequency.setValueAtTime(660,t+.06);
+  const g2=a.createGain();g2.gain.setValueAtTime(.07,t+.06);g2.gain.exponentialRampToValueAtTime(.001,t+.28);
+  o2.connect(g2);g2.connect(bus);o2.start(t+.06);o2.stop(t+.3);},
+ // ── UI 피드백군 (게인은 전투 대비 낮게) ──
+ uiTap:(a,t,bus)=>{const o=a.createOscillator(),g=a.createGain();g.connect(bus);o.type='triangle';
+  o.frequency.setValueAtTime(520,t);o.frequency.exponentialRampToValueAtTime(380,t+.04);
+  g.gain.setValueAtTime(.018,t);g.gain.exponentialRampToValueAtTime(.0005,t+.06);o.connect(g);o.start(t);o.stop(t+.07);},
+ uiConfirm:(a,t,bus)=>{[440,660].forEach((fr,i)=>{const o=a.createOscillator(),g=a.createGain();g.connect(bus);o.type='triangle';
+  o.frequency.setValueAtTime(fr,t+i*.05);g.gain.setValueAtTime(0,t+i*.05);g.gain.linearRampToValueAtTime(.06,t+i*.05+.02);
+  g.gain.exponentialRampToValueAtTime(.0008,t+i*.05+.13);o.connect(g);o.start(t+i*.05);o.stop(t+i*.05+.14);});},
+ uiCancel:(a,t,bus)=>{const o=a.createOscillator(),g=a.createGain();g.connect(bus);o.type='sine';
+  o.frequency.setValueAtTime(400,t);o.frequency.exponentialRampToValueAtTime(260,t+.09);
+  g.gain.setValueAtTime(.05,t);g.gain.exponentialRampToValueAtTime(.0008,t+.11);o.connect(g);o.start(t);o.stop(t+.12);},
+ uiTab:(a,t,bus)=>{const o=a.createOscillator(),g=a.createGain();g.connect(bus);o.type='square';
+  o.frequency.setValueAtTime(700,t);g.gain.setValueAtTime(.03,t);g.gain.exponentialRampToValueAtTime(.0006,t+.03);
+  o.connect(g);o.start(t);o.stop(t+.04);},
+ uiCoin:(a,t,bus)=>{[[1200,0],[1600,.03]].forEach(([fr,dl])=>{const o=a.createOscillator(),g=a.createGain();g.connect(bus);o.type='square';
+  o.frequency.setValueAtTime(fr,t+dl);g.gain.setValueAtTime(.04,t+dl);g.gain.exponentialRampToValueAtTime(.0006,t+dl+.025);
+  o.connect(g);o.start(t+dl);o.stop(t+dl+.03);});},
+ uiError:(a,t,bus)=>{[0,.09].forEach(dl=>{const o=a.createOscillator(),g=a.createGain();g.connect(bus);o.type='sawtooth';
+  o.frequency.setValueAtTime(220,t+dl);g.gain.setValueAtTime(.06,t+dl);g.gain.exponentialRampToValueAtTime(.0008,t+dl+.06);
+  o.connect(g);o.start(t+dl);o.stop(t+dl+.07);});},
+ uiOpen:(a,t,bus)=>{const o=a.createOscillator(),g=a.createGain();g.connect(bus);o.type='sine';
+  o.frequency.setValueAtTime(300,t);o.frequency.exponentialRampToValueAtTime(420,t+.08);
+  g.gain.setValueAtTime(.04,t);g.gain.exponentialRampToValueAtTime(.0008,t+.1);o.connect(g);o.start(t);o.stop(t+.11);},
+ // ── 대화·서사군 ──
+ npcMurmur:(a,t,bus)=>noiseBurst(a,t,bus,.09,'bandpass',800,.03),
+ chronicle:(a,t,bus)=>{[523,659].forEach((fr,i)=>{const o=a.createOscillator(),g=a.createGain();g.connect(bus);o.type='sine';
+  o.frequency.setValueAtTime(fr,t+i*.16);g.gain.setValueAtTime(0,t+i*.16);g.gain.linearRampToValueAtTime(.07,t+i*.16+.03);
+  g.gain.exponentialRampToValueAtTime(.0008,t+i*.16+.16);o.connect(g);o.start(t+i*.16);o.stop(t+i*.16+.17);});},
+ letter:(a,t,bus)=>{[0,.07].forEach(dl=>noiseBurst(a,t+dl,bus,.04,'highpass',3000,.03));},
+ // ── 전투 보강군 ──
+ fanfare:(a,t,bus)=>{[262,330,392].forEach((fr,i)=>{const o=a.createOscillator(),g=a.createGain();g.connect(bus);o.type='sawtooth';
+  const st=t+i*.09,dur=i===2?.4:.12;o.frequency.setValueAtTime(fr,st);g.gain.setValueAtTime(0,st);
+  g.gain.linearRampToValueAtTime(.06,st+.02);g.gain.exponentialRampToValueAtTime(.0008,st+dur);o.connect(g);o.start(st);o.stop(st+dur+.02);});},
+ dirge:(a,t,bus)=>{[220,196].forEach((fr,i)=>{const o=a.createOscillator(),g=a.createGain();g.connect(bus);o.type='sine';
+  const st=t+i*.3;o.frequency.setValueAtTime(fr,st);g.gain.setValueAtTime(0,st);g.gain.linearRampToValueAtTime(.06,st+.04);
+  g.gain.exponentialRampToValueAtTime(.0008,st+.3);o.connect(g);o.start(st);o.stop(st+.32);});},
+ beastGrowl:(a,t,bus)=>{const o=a.createOscillator(),g=a.createGain();g.connect(bus);o.type='sawtooth';
+  o.frequency.setValueAtTime(90,t);g.gain.setValueAtTime(.12,t);g.gain.exponentialRampToValueAtTime(.0008,t+.3);
+  o.connect(g);o.start(t);o.stop(t+.32);noiseBurst(a,t,bus,.3,'lowpass',300,.08);}
+};
+/* 노이즈 버스트 헬퍼 — whoosh/roar/murmur/letter/growl 공용 */
+function noiseBurst(a,t,bus,len,ftype,freq,gain){
+ const buf=a.createBuffer(1,Math.max(1,Math.floor(a.sampleRate*len)),a.sampleRate);
+ const d=buf.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=(Math.random()*2-1)*(1-i/d.length);
+ const src=a.createBufferSource();src.buffer=buf;
+ const f=a.createBiquadFilter();f.type=ftype;f.frequency.value=freq;
+ const g=a.createGain();g.gain.setValueAtTime(gain,t);g.gain.exponentialRampToValueAtTime(.0008,t+len);
+ src.connect(f);f.connect(g);g.connect(bus);src.start(t);
+}
+function sfx(type){
+ if(!soundOn||!ensureAudio())return;
+ const recipe=SFX_RECIPES[type];if(!recipe)return;
+ // 스로틀 — 동일음 연속 재생 억제 (UI 60ms·전투 30ms)
+ if(!SFX_NOTHROTTLE[type]){
+  const now=(actx.currentTime*1000);const gap=/^ui|Murmur/.test(type)?60:30;
+  if(sfxLastPlayed[type]!=null&&now-sfxLastPlayed[type]<gap)return;
+  sfxLastPlayed[type]=now;
+ }
+ try{recipe(actx,actx.currentTime,sfxBus);}catch(e){}
+}
+
+/* ═══════════ 환경음(앰비언스) — 루프형, 현재 1종만 유지 ═══════════
+   amb('ambRain'|'ambCrowd'|null). 전환 시 300ms 크로스페이드. */
+let ambCur=null, ambSrc=null, ambNode=null, ambGainNode=null, ambLFO=null;
+const AMB_GAIN={ambRain:.05, ambCrowd:.06};
+function stopAmb(){
+ if(!actx)return;
+ const old=ambSrc, oldG=ambGainNode, oldLFO=ambLFO;
+ if(oldG){try{oldG.gain.cancelScheduledValues(actx.currentTime);oldG.gain.setValueAtTime(oldG.gain.value,actx.currentTime);
+  oldG.gain.linearRampToValueAtTime(.0001,actx.currentTime+.3);}catch(e){}}
+ setTimeout(()=>{try{old&&old.stop();}catch(e){}try{oldLFO&&oldLFO.stop();}catch(e){}},360);
+ ambCur=null;ambSrc=null;ambGainNode=null;ambLFO=null;ambNode=null;
+}
+function amb(name){
+ if(!soundOn||!ensureAudio()){ambCur=name;return;} // 무음 환경에서도 상태만 기록
+ if(ambCur===name)return;
+ stopAmb();
+ if(!name)return;
+ ambCur=name;
+ // 루프 노이즈 버퍼 2초
+ const len=2, buf=actx.createBuffer(1,actx.sampleRate*len,actx.sampleRate);
+ const d=buf.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;
+ const src=actx.createBufferSource();src.buffer=buf;src.loop=true;
+ const f=actx.createBiquadFilter();f.type='lowpass';f.frequency.value=name==='ambRain'?900:500;
+ const g=actx.createGain();const target=AMB_GAIN[name]||.05;
+ g.gain.setValueAtTime(.0001,actx.currentTime);g.gain.linearRampToValueAtTime(target,actx.currentTime+.3);
+ src.connect(f);f.connect(g);g.connect(ambBus);src.start();
+ ambSrc=src;ambGainNode=g;ambNode=f;
+ // ambCrowd — 8Hz LFO로 gain 미세 요동(함성 고조)
+ if(name==='ambCrowd'){
+  const lfo=actx.createOscillator();lfo.type='sine';lfo.frequency.value=8;
+  const lfoG=actx.createGain();lfoG.gain.value=target*0.4;
+  lfo.connect(lfoG);lfoG.connect(g.gain);lfo.start();ambLFO=lfo;
  }
 }
+/* arena.excite에 따라 군중 함성 게인 조정 (loop에서 호출) */
+function ambCrowdIntensity(excite){
+ if(ambCur!=='ambCrowd'||!ambGainNode||!actx)return;
+ const target=clamp(.04+excite*.05,.04,.09);
+ try{ambGainNode.gain.setTargetAtTime(target,actx.currentTime,.3);}catch(e){}
+}
+/* 화면 전환 시 앰비언스 조건 재평가 — go()에서 호출 */
+function refreshAmbience(scene){
+ if(scene==='arena'){amb('ambCrowd');return;}
+ if((scene==='map'||scene==='city')&&S.weather==='rain'){amb('ambRain');return;}
+ amb(null);
+}
 /* 효과음 버튼 제거됨 — endIntro()에서 자동 on 처리 */
+
 
 /* 전투 개시 */
 function startFight(contract,glad,tactic){
@@ -3883,6 +4000,9 @@ function startFight(contract,glad,tactic){
  }}
  document.querySelectorAll('.screen').forEach(e=>e.classList.remove('on'));
  $('screen-arena').classList.add('on');
+ curScreen='arena';
+ if(contract.venatio)sfx('beastGrowl'); // 베나티오 개시 (배선 #11)
+ amb('ambCrowd');                        // 전투 군중 앰비언스 (배선 #11)
  { const nw=$('btnNextWeek');if(nw)nw.style.display='none'; } // 전투 화면 — 다음 주 버튼 숨김
  window.scrollTo(0,0);
  lastT=performance.now();
@@ -4588,7 +4708,7 @@ function finishFight(){
   S.rep=clamp(S.rep+10,0,100);S.gladiators=S.gladiators.filter(x=>x.id!==g.id);
   S.chron.push(`${S.week}주차 — ${g.name}, 자유의 목검을 받고 은퇴. 전설이 되었다.`);
   arena=null;go('map');}});
- modal(title,lines.map(fightLineHtml).join(''),acts,{html:true});
+ modal(title,lines.map(fightLineHtml).join(''),acts,{html:true,sfxKind:won?'fanfare':'dirge'});
  renderHeader();
 }
 $('btnFightDone').onclick=finishFight;
@@ -5226,6 +5346,7 @@ function loop(now){
  if(!arena)return;
  let dt=Math.min(0.05,(now-lastT)/1000);lastT=now;
  if(!arena.over){for(let i=0;i<arena.speed;i++)stepSim(dt);}
+ ambCrowdIntensity(arena.excite||0); // 함성 고조 — excite 연동
  draw();
  requestAnimationFrame(loop);
 }
