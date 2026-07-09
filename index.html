@@ -2834,13 +2834,19 @@ function refreshContracts(showWeek){
 
 /* ═══════════ 모달 ═══════════ */
 let deferModals=false;const modalQueue=[];
+/* 본문/버튼 라벨에 아이콘 SVG(den() 등)가 포함될 수 있으므로 마크업으로 렌더함.
+   문자열은 전부 게임 내부에서 생성되므로 신뢰 가능. 줄바꿈(\n)은 <br>로 변환해 유지함. */
+function modalMarkup(s){
+ return String(s).split('\n').join('<br>');
+}
 function modal(title,body,acts,opts){
  if(deferModals){modalQueue.push([title,body,acts,opts]);return;}
  $('mTitle').textContent=title;
- if(opts&&opts.html)$('mBody').innerHTML=body;else $('mBody').textContent=body;
+ // opts.html이면 그대로, 아니면 줄바꿈만 <br>로 바꿔 렌더 (아이콘 SVG가 태그 문자열로 노출되던 문제 수정)
+ $('mBody').innerHTML=(opts&&opts.html)?body:modalMarkup(body);
  const box=$('mActs');box.innerHTML='';
  (acts||[{t:'확인'}]).forEach(a=>{
-  const b=document.createElement('button');b.textContent=a.t;if(a.primary)b.className='primary';
+  const b=document.createElement('button');b.innerHTML=modalMarkup(a.t);if(a.primary)b.className='primary';
   b.onclick=()=>{$('modalBack').classList.remove('on');a.fn&&a.fn();};box.appendChild(b);});
  $('modalBack').classList.add('on');
  sfx((opts&&opts.sfxKind)||'uiOpen'); // 모달 열림 효과음 (배선 #2)
@@ -3832,7 +3838,7 @@ function nextWeek(){
   const idol=pick(idols);
   const cat=(idol.talentKnown&&idol.talent)?idol.talent:pick(['sword','spear','dagger','great']);
   const gift=genItem(cat,RI(1,2));
-  S.armory.push(gift);
+  S.armory.push(gift);sfx('letter');
   log.push(`<span class="gold">${uicon('letter',12)} ${idol.name}의 팬을 자처하는 후원자가 선물을 보냈다 — ${gift.name} 입수.</span>`);
   S.newsBuf.push(`『${idol.name}』의 열혈 후원자, 값진 무구를 헌정하다 — 총아의 인기를 실감케 하는 일화`);
   S.chron.push(`${S.week}주차 — ${idol.name}의 후원자가 ${gift.name}을(를) 헌정.`);
@@ -3863,14 +3869,87 @@ const FLOOR=352,W=960,H=440;
 let arena=null,soundOn=false,actx=null;
 let lastT=0;
 
-/* ═══════════ 사운드 (WebAudio 합성) ═══════════
-   호출부는 오직 sfx('이름')/amb('이름'|null)만 사용함. 합성 레시피는 SFX_RECIPES로 데이터화 —
-   향후 오디오 파일 도입 시 이 테이블만 교체하면 됨.
-   버스 구조: 모든 소리 → sfxBus(마스터) → destination. 환경음은 ambBus → sfxBus 경유.
-   수치는 전부 자체 설계값(추정) — 실기기 청취 튜닝 필요. */
+/* ═══════════ 사운드 (실제 파일 우선, WebAudio 합성 폴백) ═══════════
+   호출부는 오직 sfx('이름')/amb('이름'|null)만 사용함.
+   1순위: SFX_FILES/AMB_FILES에 등록된 실제 오디오 파일(sfx/ 폴더) 재생 — 변형 있으면 매번 랜덤 선택.
+   폴백: 파일이 없거나 로드 실패 시 SFX_RECIPES 합성음으로 자동 대체(무음 방지).
+   버스 구조: 모든 소리 → sfxBus(마스터) → destination. 환경음은 ambBus → sfxBus 경유. */
 let sfxBus=null, ambBus=null;
 const sfxLastPlayed={};           // 이름별 마지막 재생 시각(ms) — 스로틀용
 const SFX_NOTHROTTLE={roar:1,cutin:1,cutinMini:1,fanfare:1,dirge:1,chronicle:1,beastGrowl:1};
+
+/* 실제 파일 매핑.
+   sfxVariants(name, n) → ['sfx/name.mp3','sfx/name2.mp3', ... 'sfx/name{n}.mp3']
+   즉 첫 파일은 번호 없이, 두 번째부터 2,3,4… 로 붙임. (업로드된 파일 규칙과 동일)
+   변형이 2개 이상이면 재생할 때마다 무작위로 하나를 골라 반복 지루함을 방지함.
+   ▶ 변형을 더 추가하려면(예: clang3.mp3) 아래 숫자만 올리면 됨. */
+function sfxVariants(name,n){
+ const a=['sfx/'+name+'.mp3'];
+ for(let i=2;i<=n;i++)a.push('sfx/'+name+i+'.mp3');
+ return a;
+}
+const SFX_FILES={
+ clang:sfxVariants('clang',2),
+ thud:sfxVariants('thud',2),
+ whoosh:sfxVariants('whoosh',3),
+ roar:sfxVariants('roar',2),
+ cutin:sfxVariants('cutin',2),
+ cutinMini:sfxVariants('cutinMini',1),
+ uiTap:sfxVariants('uiTap',1),
+ uiConfirm:sfxVariants('uiConfirm',1),
+ uiCancel:sfxVariants('uiCancel',1),
+ uiTab:sfxVariants('uiTab',1),
+ uiCoin:sfxVariants('uiCoin',1),
+ uiError:sfxVariants('uiError',1),
+ uiOpen:sfxVariants('uiOpen',1),
+ npcMurmur:sfxVariants('npcMurmur',3),
+ chronicle:sfxVariants('chronicle',1),
+ letter:sfxVariants('letter',1),
+ fanfare:sfxVariants('fanfare',1),
+ dirge:sfxVariants('dirge',2),
+ beastGrowl:sfxVariants('beastGrowl',3),
+};
+const AMB_FILES={ambRain:'sfx/ambRain.mp3',ambCrowd:'sfx/ambCrowd.mp3'};
+const audioBufferCache={}; // 경로 → Promise<AudioBuffer> (디코딩 1회 후 캐시)
+let sfxFallbackWarned=false; // 파일 로드 실패 경고를 1회만 출력
+function warnSfxFallback(url,err){
+ if(sfxFallbackWarned)return;
+ sfxFallbackWarned=true;
+ const isFile=(location.protocol==='file:');
+ console.warn(
+  '[LANISTA 사운드] 오디오 파일을 불러오지 못해 합성음(시스템음)으로 대체됨: '+url+
+  (isFile?'\n원인: file:// 로 직접 열면 브라우저 보안정책(CORS)이 fetch를 차단함. 로컬 서버로 열어야 함.\n예) 해당 폴더에서  python3 -m http.server  실행 후 http://localhost:8000/ludus.html 접속'
+        :'\n원인: sfx/ 폴더가 ludus.html과 같은 위치에 있는지, 파일명이 정확한지 확인 바람.')+
+  '\n상세: '+(err&&err.message||err)
+ );
+}
+function loadAudioBuffer(url){
+ if(audioBufferCache[url])return audioBufferCache[url];
+ const p=fetch(url).then(r=>{if(!r.ok)throw new Error('fetch 실패('+r.status+'): '+url);return r.arrayBuffer();})
+  .then(buf=>actx.decodeAudioData(buf))
+  .catch(e=>{delete audioBufferCache[url];warnSfxFallback(url,e);throw e;}); // 실패 시 캐시 제거 — 재시도 가능
+ audioBufferCache[url]=p;
+ return p;
+}
+/* 사운드가 켜지는 시점에 전 파일을 미리 로드·디코딩함.
+   (재생 시점에 처음 fetch하면 수십~수백 ms 지연이 생겨 clang/thud 같은 짧은 전투음이 씹히거나 누락됨)
+   완료 후 성공/실패 요약을 콘솔에 남겨, 소리가 안 날 때 원인을 바로 확인할 수 있게 함. */
+let sfxPreloaded=false;
+function preloadSfx(){
+ if(sfxPreloaded||!actx)return;
+ sfxPreloaded=true;
+ const urls=[];
+ Object.keys(SFX_FILES).forEach(k=>SFX_FILES[k].forEach(u=>urls.push(u)));
+ Object.keys(AMB_FILES).forEach(k=>urls.push(AMB_FILES[k]));
+ const failed=[];
+ Promise.all(urls.map(u=>loadAudioBuffer(u).catch(()=>{failed.push(u);}))).then(()=>{
+  if(failed.length===0){
+   console.info('[LANISTA 사운드] 효과음 '+urls.length+'개 로드 완료.');
+  }else{
+   console.warn('[LANISTA 사운드] '+urls.length+'개 중 '+failed.length+'개 로드 실패 — 해당 소리는 합성음으로 대체되거나 무음 처리됨.\n실패 목록: '+failed.join(', '));
+  }
+ });
+}
 
 function ensureAudio(){
  if(actx&&sfxBus&&ambBus)return true;
@@ -3882,7 +3961,7 @@ function ensureAudio(){
  }catch(e){soundOn=false;return false;} // 오디오 미지원 — 이후 영구 무음
 }
 
-/* 단발 효과음 레시피 — (actx,t,bus) 받아 노드 구성. gain은 전부 bus로 연결. */
+/* 단발 효과음 레시피 — (actx,t,bus) 받아 노드 구성. gain은 전부 bus로 연결. 파일 재생 실패 시 폴백으로 쓰임. */
 const SFX_RECIPES={
  // ── 기존 전투음 5종 (이관) ──
  clang:(a,t,bus)=>{const o=a.createOscillator(),g=a.createGain();g.connect(bus);
@@ -3962,21 +4041,38 @@ function noiseBurst(a,t,bus,len,ftype,freq,gain){
 }
 function sfx(type){
  if(!soundOn||!ensureAudio())return;
- const recipe=SFX_RECIPES[type];if(!recipe)return;
+ const files=SFX_FILES[type];
+ const recipe=SFX_RECIPES[type];
+ if(!files&&!recipe)return; // 등록되지 않은 이름 — 무시
  // 스로틀 — 동일음 연속 재생 억제 (UI 60ms·전투 30ms)
  if(!SFX_NOTHROTTLE[type]){
   const now=(actx.currentTime*1000);const gap=/^ui|Murmur/.test(type)?60:30;
   if(sfxLastPlayed[type]!=null&&now-sfxLastPlayed[type]<gap)return;
   sfxLastPlayed[type]=now;
  }
- try{recipe(actx,actx.currentTime,sfxBus);}catch(e){}
+ if(files&&files.length){
+  const url=files[RI(0,files.length-1)]; // 변형 2개 이상이면 매번 무작위 선택 — 반복 지루함 방지
+  loadAudioBuffer(url).then(buf=>{
+   if(!soundOn||!actx||!sfxBus)return; // 로드되는 사이 사운드가 꺼졌을 수 있음
+   const src=actx.createBufferSource();src.buffer=buf;
+   const g=actx.createGain();g.gain.value=1;
+   src.connect(g);g.connect(sfxBus);src.start();
+  }).catch(()=>{ if(recipe){try{recipe(actx,actx.currentTime,sfxBus);}catch(e){}} }); // 파일 실패 → 합성 폴백
+ }else if(recipe){
+  try{recipe(actx,actx.currentTime,sfxBus);}catch(e){}
+ }
 }
 
 /* ═══════════ 환경음(앰비언스) — 루프형, 현재 1종만 유지 ═══════════
    amb('ambRain'|'ambCrowd'|null). 전환 시 300ms 크로스페이드. */
 let ambCur=null, ambSrc=null, ambNode=null, ambGainNode=null, ambLFO=null;
-const AMB_GAIN={ambRain:.05, ambCrowd:.06};
+let ambGen=0; // 세대 토큰 — 비동기 로드 중 전환/재호출이 일어나면 낡은 재생을 폐기함
+/* 실제 녹음 파일 기준 게인. (합성 노이즈 시절엔 백색소음이라 .04~.06으로 억눌렀는데,
+   마스터링된 mp3에는 그 값이 사실상 무음이라 상향함. 효과음은 게인 1.0으로 재생됨.) */
+const AMB_GAIN={ambRain:.45, ambCrowd:.55};
+const AMB_SYNTH_GAIN={ambRain:.05, ambCrowd:.06}; // 합성 폴백용(백색소음이라 매우 낮게)
 function stopAmb(){
+ ambGen++; // 진행 중인 비동기 로드/재생 요청을 무효화함
  if(!actx)return;
  const old=ambSrc, oldG=ambGainNode, oldLFO=ambLFO;
  if(oldG){try{oldG.gain.cancelScheduledValues(actx.currentTime);oldG.gain.setValueAtTime(oldG.gain.value,actx.currentTime);
@@ -3985,36 +4081,60 @@ function stopAmb(){
  ambCur=null;ambSrc=null;ambGainNode=null;ambLFO=null;ambNode=null;
 }
 function amb(name){
- if(!soundOn||!ensureAudio()){ambCur=name;return;} // 무음 환경에서도 상태만 기록
+ // 사운드 미준비 상태에서는 ambCur를 갱신하지 않음.
+ // (예전엔 ambCur=name을 기록해 두어, 나중에 사운드가 켜진 뒤 같은 이름으로 다시 호출해도
+ //  아래 `ambCur===name` 가드에 걸려 영영 재생되지 않는 버그가 있었음)
+ if(!soundOn||!ensureAudio()){ if(!name)ambCur=null; return; }
  if(ambCur===name)return;
  stopAmb();
  if(!name)return;
  ambCur=name;
- // 루프 노이즈 버퍼 2초
+ const myGen=++ambGen;                               // 이번 요청의 세대
+ const target=AMB_GAIN[name]||.4;                    // 파일 재생용 게인
+ const synthTarget=AMB_SYNTH_GAIN[name]||.05;        // 합성 폴백용 게인(백색소음이라 훨씬 낮게)
+ const url=AMB_FILES[name];
+ if(url){
+  loadAudioBuffer(url).then(buf=>{
+   // 로드되는 사이 다른 앰비언스로 전환되었거나 재호출되었으면 이 재생은 폐기함
+   if(myGen!==ambGen||ambCur!==name||!actx||!ambBus)return;
+   const src=actx.createBufferSource();src.buffer=buf;src.loop=true;
+   const g=actx.createGain();
+   g.gain.setValueAtTime(.0001,actx.currentTime);g.gain.linearRampToValueAtTime(target,actx.currentTime+.3);
+   src.connect(g);g.connect(ambBus);src.start();
+   ambSrc=src;ambGainNode=g;ambNode=null;ambLFO=null;
+   // 실제 음원엔 자연스러운 강약이 이미 있으므로 LFO 진동을 걸지 않음(기계음 방지).
+   // 함성 고조는 ambCrowdIntensity()가 excite에 따라 게인을 완만히 조정해 처리함.
+  }).catch(()=>{ if(myGen===ambGen&&ambCur===name)ambSynthFallback(name,synthTarget); }); // 파일 실패 → 합성 폴백
+ }else{
+  ambSynthFallback(name,synthTarget);
+ }
+}
+/* 합성 노이즈 폴백 (파일 부재/로드 실패 시) — 비상용.
+   ambCrowd는 노이즈 합성으로 군중을 흉내낼 수 없고(기계적 엔진음처럼 들림) LFO 진동이 더 악화시켰으므로,
+   폴백에서는 아예 재생하지 않음. 잘못된 소리보다 무음이 나음. */
+function ambSynthFallback(name,target){
+ if(name==='ambCrowd'){ambCur=name;return;} // 군중음은 합성으로 대체하지 않음(무음 유지)
  const len=2, buf=actx.createBuffer(1,actx.sampleRate*len,actx.sampleRate);
  const d=buf.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;
  const src=actx.createBufferSource();src.buffer=buf;src.loop=true;
- const f=actx.createBiquadFilter();f.type='lowpass';f.frequency.value=name==='ambRain'?900:500;
- const g=actx.createGain();const target=AMB_GAIN[name]||.05;
+ const f=actx.createBiquadFilter();f.type='lowpass';f.frequency.value=900; // ambRain 전용
+ const g=actx.createGain();
  g.gain.setValueAtTime(.0001,actx.currentTime);g.gain.linearRampToValueAtTime(target,actx.currentTime+.3);
  src.connect(f);f.connect(g);g.connect(ambBus);src.start();
- ambSrc=src;ambGainNode=g;ambNode=f;
- // ambCrowd — 8Hz LFO로 gain 미세 요동(함성 고조)
- if(name==='ambCrowd'){
-  const lfo=actx.createOscillator();lfo.type='sine';lfo.frequency.value=8;
-  const lfoG=actx.createGain();lfoG.gain.value=target*0.4;
-  lfo.connect(lfoG);lfoG.connect(g.gain);lfo.start();ambLFO=lfo;
- }
+ ambSrc=src;ambGainNode=g;ambNode=f;ambLFO=null;
 }
-/* arena.excite에 따라 군중 함성 게인 조정 (loop에서 호출) */
+/* arena.excite에 따라 군중 함성 게인 조정 (loop에서 호출)
+   기준 게인(AMB_GAIN.ambCrowd)의 80%~130% 범위에서 완만히 오르내림.
+   (예전엔 .04~.09를 하드코딩해 파일 재생 게인을 무음 수준으로 덮어썼음) */
 function ambCrowdIntensity(excite){
  if(ambCur!=='ambCrowd'||!ambGainNode||!actx)return;
- const target=clamp(.04+excite*.05,.04,.09);
- try{ambGainNode.gain.setTargetAtTime(target,actx.currentTime,.3);}catch(e){}
+ const base=AMB_GAIN.ambCrowd;
+ const target=base*clamp(0.8+excite*0.5,0.8,1.3);
+ try{ambGainNode.gain.setTargetAtTime(target,actx.currentTime,.5);}catch(e){}
 }
 /* 화면 전환 시 앰비언스 조건 재평가 — go()에서 호출 */
 function refreshAmbience(scene){
- // ambCrowd(합성 군중음)는 기계적 소음 문제로 비활성 — 실제 음원 파일 도입 시 복원 예정
+ if(scene==='arena'){amb('ambCrowd');return;} // 실제 군중음 파일 도입으로 재활성화
  if((scene==='map'||scene==='city')&&S.weather==='rain'){amb('ambRain');return;}
  amb(null);
 }
@@ -4088,7 +4208,7 @@ function startFight(contract,glad,tactic){
  $('screen-arena').classList.add('on');
  curScreen='arena';
  if(contract.venatio)sfx('beastGrowl'); // 베나티오 개시 (배선 #11)
- amb(null);                              // 군중음(ambCrowd) 비활성 — 실제 음원 도입 시 복원
+ amb('ambCrowd');                        // 전투 군중 앰비언스 — 실제 음원 파일로 재활성화
  { const nw=$('btnNextWeek');if(nw)nw.style.display='none'; } // 전투 화면 — 다음 주 버튼 숨김
  window.scrollTo(0,0);
  lastT=performance.now();
@@ -5527,6 +5647,8 @@ function endIntro(){
  // 게임 시작 — 효과음 자동 on (사용자 제스처 컨텍스트에서 AudioContext·버스 생성)
  soundOn=true;
  ensureAudio(); // sfxBus·ambBus 포함 초기화 (수동 actx 생성 시 버스 누락으로 connect 오류 발생하던 것 수정)
+ preloadSfx();  // 전 파일 미리 로드 — 전투음이 재생 시점 지연으로 씹히는 것 방지
+ refreshAmbience(curScreen); // 사운드가 이제 켜졌으므로 현재 화면 앰비언스를 시작함
 }
 $('introSkip').onclick=()=>endIntro();
 $('introText').onclick=skipTyping;
@@ -5560,8 +5682,8 @@ function showTitle(){
 }
 $('btnTitleStart').onclick=()=>{
  $('titleBack').classList.remove('on');
- // 타이틀은 첫 사용자 제스처 — 여기서 오디오 컨텍스트를 예열해 두면 이후 효과음이 매끄럽게 나옴
- soundOn=true;ensureAudio();sfx('uiConfirm');
+ // 타이틀은 첫 사용자 제스처 — 여기서 오디오 컨텍스트를 예열하고 전 파일을 미리 로드해 둠
+ soundOn=true;ensureAudio();preloadSfx();sfx('uiConfirm');
  showIntro();
 };
 init();
