@@ -3628,6 +3628,7 @@ function showPaper(){
  S.newsBuf=[];
  $('paperCols').innerHTML=`<h4>도시 소식</h4>${world}<h4>투기장</h4>${arenaNews}${goal}<h4>우리 루두스</h4>${mine}`;
  $('paperBack').classList.add('on');
+ sfx('letter'); // 신문 펼치는 종이 소리
  $('paperClose').focus();
 }
 function closePaper(){
@@ -3910,55 +3911,114 @@ const SFX_FILES={
  beastGrowl:sfxVariants('beastGrowl',3),
 };
 const AMB_FILES={ambRain:'sfx/ambRain.mp3',ambCrowd:'sfx/ambCrowd.mp3'};
-const audioBufferCache={}; // 경로 → Promise<AudioBuffer> (디코딩 1회 후 캐시)
-let sfxFallbackWarned=false; // 파일 로드 실패 경고를 1회만 출력
+/* ── 오디오 파일 로드/재생 계층 (하이브리드) ──
+   ▶ webaudio 백엔드 (http/https — GitHub Pages 등 배포 환경)
+       fetch + decodeAudioData로 AudioBuffer를 만들어 씀.
+       루프가 샘플 단위로 이어져 이음매가 전혀 없고, 재생 지연도 가장 낮음. 마스터 버스 사용 가능.
+   ▶ element 백엔드 (file:// — 로컬에서 직접 열었을 때)
+       file:// 에서는 fetch가 교차 출처로 간주되어 전면 차단됨
+       ("Cross origin requests are only supported for HTTP").
+       <audio> 요소는 <img>처럼 로드되므로 이쪽으로 폴백함.
+       단 <audio>.loop은 되감기 간극이 생겨 끊기므로 요소 2개를 교대 재생(더블 버퍼링)함.
+   백엔드는 부팅 시 실제 fetch를 한 번 시도해 판정함(프로토콜 추정보다 확실함).
+   합성음(SFX_RECIPES)은 파일이 아예 없을 때를 위한 최종 폴백. */
+let AUDIO_BACKEND=null;          // 'webaudio' | 'element' (판정 전 null)
+let audioBackendProbe=null;      // 판정 Promise
+const audioBufCache={};          // 경로 → AudioBuffer   (webaudio 백엔드)
+const audioElCache={};           // 경로 → <audio> 원본  (element 백엔드)
+const audioFailed={};            // 경로 → true (로드 실패)
+let sfxFallbackWarned=false;
 function warnSfxFallback(url,err){
  if(sfxFallbackWarned)return;
  sfxFallbackWarned=true;
- const isFile=(location.protocol==='file:');
  console.warn(
-  '[LANISTA 사운드] 오디오 파일을 불러오지 못해 합성음(시스템음)으로 대체됨: '+url+
-  (isFile?'\n원인: file:// 로 직접 열면 브라우저 보안정책(CORS)이 fetch를 차단함. 로컬 서버로 열어야 함.\n예) 해당 폴더에서  python3 -m http.server  실행 후 http://localhost:8000/ludus.html 접속'
-        :'\n원인: sfx/ 폴더가 ludus.html과 같은 위치에 있는지, 파일명이 정확한지 확인 바람.')+
-  '\n상세: '+(err&&err.message||err)
+  '[LANISTA 사운드] 오디오 파일을 불러오지 못해 합성음으로 대체됨: '+url+
+  '\n확인: ludus.html과 같은 위치에 sfx/ 폴더가 있는지, 파일명이 정확한지 확인 바람.'+
+  (err?('\n상세: '+(err.message||err)):'')
  );
 }
-function loadAudioBuffer(url){
- if(audioBufferCache[url])return audioBufferCache[url];
- const p=fetch(url).then(r=>{if(!r.ok)throw new Error('fetch 실패('+r.status+'): '+url);return r.arrayBuffer();})
-  .then(buf=>actx.decodeAudioData(buf))
-  .catch(e=>{delete audioBufferCache[url];warnSfxFallback(url,e);throw e;}); // 실패 시 캐시 제거 — 재시도 가능
- audioBufferCache[url]=p;
- return p;
+/* 실제 fetch를 시도해 백엔드를 결정함. 한 번만 수행하고 결과를 재사용. */
+function detectAudioBackend(){
+ if(audioBackendProbe)return audioBackendProbe;
+ const probeUrl=(AMB_FILES&&AMB_FILES.ambRain)||'sfx/uiTap.mp3';
+ audioBackendProbe=(typeof fetch==='function'
+   ? fetch(probeUrl).then(r=>{if(!r.ok)throw new Error('probe '+r.status);return true;})
+   : Promise.reject(new Error('fetch 없음'))
+ ).then(()=>{
+   AUDIO_BACKEND='webaudio';
+   console.info('[LANISTA 사운드] Web Audio 방식으로 재생함 (이음매 없는 루프, 낮은 지연).');
+   return AUDIO_BACKEND;
+ }).catch(()=>{
+   AUDIO_BACKEND='element';
+   console.info('[LANISTA 사운드] file:// 환경이라 <audio> 방식으로 재생함. '+
+    '루프 이음매를 없애려면 로컬 서버로 열거나(python3 -m http.server) 배포판(https)을 사용 바람.');
+   return AUDIO_BACKEND;
+ });
+ return audioBackendProbe;
 }
-/* 사운드가 켜지는 시점에 전 파일을 미리 로드·디코딩함.
-   (재생 시점에 처음 fetch하면 수십~수백 ms 지연이 생겨 clang/thud 같은 짧은 전투음이 씹히거나 누락됨)
-   완료 후 성공/실패 요약을 콘솔에 남겨, 소리가 안 날 때 원인을 바로 확인할 수 있게 함. */
+/* webaudio 백엔드 — fetch + decodeAudioData */
+function loadAudioBuf(url){
+ if(audioBufCache[url])return Promise.resolve(audioBufCache[url]);
+ if(audioFailed[url])return Promise.reject(new Error('이전 로드 실패: '+url));
+ if(!ensureAudio())return Promise.reject(new Error('AudioContext 없음'));
+ return fetch(url)
+  .then(r=>{if(!r.ok)throw new Error('fetch 실패('+r.status+')');return r.arrayBuffer();})
+  .then(b=>actx.decodeAudioData(b))
+  .then(buf=>{audioBufCache[url]=buf;return buf;})
+  .catch(e=>{audioFailed[url]=true;warnSfxFallback(url,e);throw e;});
+}
+/* element 백엔드 — <audio> 요소를 재생 가능 상태까지 대기 */
+function loadAudioEl(url){
+ if(audioElCache[url])return Promise.resolve(audioElCache[url]);
+ if(audioFailed[url])return Promise.reject(new Error('이전 로드 실패: '+url));
+ return new Promise((res,rej)=>{
+  const a=new Audio();
+  a.preload='auto';
+  const cleanup=()=>{a.removeEventListener('canplaythrough',onOk);a.removeEventListener('error',onErr);};
+  const onOk=()=>{cleanup();audioElCache[url]=a;res(a);};
+  const onErr=()=>{cleanup();audioFailed[url]=true;warnSfxFallback(url,a.error);rej(new Error('로드 실패: '+url));};
+  a.addEventListener('canplaythrough',onOk,{once:true});
+  a.addEventListener('error',onErr,{once:true});
+  a.src=url;
+  a.load();
+ });
+}
+/* 백엔드에 맞는 로더 */
+function loadAudio(url){
+ return detectAudioBackend().then(b=> b==='webaudio' ? loadAudioBuf(url) : loadAudioEl(url));
+}
+/* 사운드가 켜지는 시점에 전 파일을 미리 로드함.
+   (재생 시점에 처음 로드하면 지연으로 짧은 전투음이 씹힘) */
 let sfxPreloaded=false;
 function preloadSfx(){
- if(sfxPreloaded||!actx)return;
+ if(sfxPreloaded)return;
  sfxPreloaded=true;
  const urls=[];
  Object.keys(SFX_FILES).forEach(k=>SFX_FILES[k].forEach(u=>urls.push(u)));
  Object.keys(AMB_FILES).forEach(k=>urls.push(AMB_FILES[k]));
  const failed=[];
- Promise.all(urls.map(u=>loadAudioBuffer(u).catch(()=>{failed.push(u);}))).then(()=>{
-  if(failed.length===0){
-   console.info('[LANISTA 사운드] 효과음 '+urls.length+'개 로드 완료.');
-  }else{
-   console.warn('[LANISTA 사운드] '+urls.length+'개 중 '+failed.length+'개 로드 실패 — 해당 소리는 합성음으로 대체되거나 무음 처리됨.\n실패 목록: '+failed.join(', '));
-  }
+ Promise.all(urls.map(u=>loadAudio(u).catch(()=>{failed.push(u);}))).then(()=>{
+  if(failed.length===0)console.info('[LANISTA 사운드] 효과음 '+urls.length+'개 로드 완료.');
+  else console.warn('[LANISTA 사운드] '+urls.length+'개 중 '+failed.length+'개 로드 실패 — 해당 소리는 합성음으로 대체되거나 무음 처리됨.\n실패 목록: '+failed.join(', '));
  });
 }
 
 function ensureAudio(){
- if(actx&&sfxBus&&ambBus)return true;
+ if(actx&&sfxBus&&ambBus){resumeAudio();return true;}
  try{
   if(!actx)actx=new (window.AudioContext||window.webkitAudioContext)();
   if(!sfxBus){sfxBus=actx.createGain();sfxBus.gain.value=1;sfxBus.connect(actx.destination);}
   if(!ambBus){ambBus=actx.createGain();ambBus.gain.value=1;ambBus.connect(sfxBus);}
+  resumeAudio();
   return true;
  }catch(e){soundOn=false;return false;} // 오디오 미지원 — 이후 영구 무음
+}
+/* 브라우저 자동재생 정책으로 AudioContext가 suspended 상태면 소리가 전혀 나지 않음(합성음 포함).
+   게다가 suspended 중엔 currentTime이 0에 멈춰 스로틀 로직이 이후 재생을 전부 차단함.
+   사용자 제스처 컨텍스트에서 resume()을 호출해 깨움. */
+function resumeAudio(){
+ if(!actx||actx.state!=='suspended')return;
+ try{ actx.resume(); }catch(e){}
 }
 
 /* 단발 효과음 레시피 — (actx,t,bus) 받아 노드 구성. gain은 전부 bus로 연결. 파일 재생 실패 시 폴백으로 쓰임. */
@@ -4039,81 +4099,196 @@ function noiseBurst(a,t,bus,len,ftype,freq,gain){
  const g=a.createGain();g.gain.setValueAtTime(gain,t);g.gain.exponentialRampToValueAtTime(.0008,t+len);
  src.connect(f);f.connect(g);g.connect(bus);src.start(t);
 }
+/* 효과음 볼륨 — 종류별 개별 설정.
+   Web Audio 백엔드는 1.0을 넘겨 증폭할 수 있으나, <audio> 백엔드는 volume 상한이 1.0이라
+   그 이상은 잘림. 그래서 기준(전투음)을 1.0에 두고 나머지를 상대적으로 낮춤. */
+const SFX_VOLUME=0.7;              // 기본값 (테이블에 없는 소리)
+const SFX_VOL={
+ // 전투 임팩트 — 타격감이 살아야 하므로 가장 크게
+ clang:1.0, thud:1.0, whoosh:0.85, roar:0.9,
+ cutin:1.0, cutinMini:0.9, beastGrowl:0.95,
+ // UI — 반복 노출되므로 낮게
+ uiTap:0.35, uiTab:0.4, uiConfirm:0.55, uiCancel:0.5,
+ uiCoin:0.6, uiError:0.6, uiOpen:0.5,
+ // 서사·연출
+ npcMurmur:0.45, chronicle:0.75, letter:0.6,
+ fanfare:0.85, dirge:0.85,
+};
+function sfxVol(type){ return (SFX_VOL[type]!=null)?SFX_VOL[type]:SFX_VOLUME; }
 function sfx(type){
- if(!soundOn||!ensureAudio())return;
+ if(!soundOn)return;
  const files=SFX_FILES[type];
  const recipe=SFX_RECIPES[type];
  if(!files&&!recipe)return; // 등록되지 않은 이름 — 무시
- // 스로틀 — 동일음 연속 재생 억제 (UI 60ms·전투 30ms)
+ // 스로틀 — 동일음 연속 재생 억제 (UI 60ms·전투 30ms). 벽시계 기준.
  if(!SFX_NOTHROTTLE[type]){
-  const now=(actx.currentTime*1000);const gap=/^ui|Murmur/.test(type)?60:30;
+  const now=(typeof performance!=='undefined'&&performance.now)?performance.now():Date.now();
+  const gap=/^ui|Murmur/.test(type)?60:30;
   if(sfxLastPlayed[type]!=null&&now-sfxLastPlayed[type]<gap)return;
   sfxLastPlayed[type]=now;
  }
  if(files&&files.length){
   const url=files[RI(0,files.length-1)]; // 변형 2개 이상이면 매번 무작위 선택 — 반복 지루함 방지
-  loadAudioBuffer(url).then(buf=>{
-   if(!soundOn||!actx||!sfxBus)return; // 로드되는 사이 사운드가 꺼졌을 수 있음
-   const src=actx.createBufferSource();src.buffer=buf;
-   const g=actx.createGain();g.gain.value=1;
-   src.connect(g);g.connect(sfxBus);src.start();
-  }).catch(()=>{ if(recipe){try{recipe(actx,actx.currentTime,sfxBus);}catch(e){}} }); // 파일 실패 → 합성 폴백
- }else if(recipe){
-  try{recipe(actx,actx.currentTime,sfxBus);}catch(e){}
+  loadAudio(url).then(res=>{
+   if(!soundOn)return; // 로드되는 사이 사운드가 꺼졌을 수 있음
+   const vol=sfxVol(type);
+   if(AUDIO_BACKEND==='webaudio'){
+    if(!ensureAudio())return;
+    resumeAudio();
+    const src=actx.createBufferSource();src.buffer=res;
+    const g=actx.createGain();g.gain.value=vol;
+    src.connect(g);g.connect(sfxBus);src.start();
+   }else{
+    // 원본은 캐시로 두고 복제본을 재생 — 같은 소리가 겹쳐 울려도 서로 끊기지 않음
+    const node=res.cloneNode();
+    node.volume=clamp(vol,0,1); // <audio>.volume 상한 1.0
+    const p=node.play();
+    if(p&&p.catch)p.catch(()=>{}); // 자동재생 차단 등은 조용히 무시
+   }
+  }).catch(()=>{ sfxSynth(type); }); // 파일 실패 → 합성 폴백
+ }else{
+  sfxSynth(type);
  }
 }
+/* 합성음 폴백 — 파일이 없거나 로드 실패한 경우에만 사용. AudioContext가 필요함. */
+function sfxSynth(type){
+ const recipe=SFX_RECIPES[type];
+ if(!recipe||!soundOn||!ensureAudio())return;
+ try{resumeAudio();recipe(actx,actx.currentTime,sfxBus);}catch(e){}
+}
 
-/* ═══════════ 환경음(앰비언스) — 루프형, 현재 1종만 유지 ═══════════
-   amb('ambRain'|'ambCrowd'|null). 전환 시 300ms 크로스페이드. */
-let ambCur=null, ambSrc=null, ambNode=null, ambGainNode=null, ambLFO=null;
+/* ═══════════ 환경음(앰비언스) — 루프형, 1종만 유지 ═══════════
+   amb('ambRain'|'ambCrowd'|null).
+   ▶ webaudio: AudioBufferSourceNode.loop=true — 샘플 단위로 이어붙여 이음매가 전혀 없음.
+   ▶ element : <audio>.loop은 되감기 간극(수백 ms)이 생겨 끊기므로,
+               요소 2개를 교대로 재생하며 AMB_LOOP_LEAD초 겹쳐 이음매를 덮음(더블 버퍼링).
+   두 재생기는 동일 인터페이스(start/setVolume/getVolume/stop)를 가짐. */
+let ambCur=null, ambPlayer=null;
+let ambSrc=null, ambNode=null, ambGainNode=null, ambLFO=null; // 합성 폴백 전용 노드
 let ambGen=0; // 세대 토큰 — 비동기 로드 중 전환/재호출이 일어나면 낡은 재생을 폐기함
-/* 실제 녹음 파일 기준 게인. (합성 노이즈 시절엔 백색소음이라 .04~.06으로 억눌렀는데,
-   마스터링된 mp3에는 그 값이 사실상 무음이라 상향함. 효과음은 게인 1.0으로 재생됨.) */
-const AMB_GAIN={ambRain:.45, ambCrowd:.55};
-const AMB_SYNTH_GAIN={ambRain:.05, ambCrowd:.06}; // 합성 폴백용(백색소음이라 매우 낮게)
+const AMB_GAIN={ambRain:.35, ambCrowd:.30};        // 0~1 (전투음이 묻히지 않도록 군중음은 낮게)
+const AMB_SYNTH_GAIN={ambRain:.05, ambCrowd:.06};  // 합성 폴백용(백색소음이라 매우 낮게)
+const AMB_LOOP_LEAD=0.35;                          // element 백엔드에서 겹칠 구간(초)
+
+/* webaudio 재생기 — 이음매 없는 네이티브 루프 */
+function makeAmbPlayerBuf(buffer,startVol){
+ if(!ensureAudio())return null;
+ const pl={
+  vol:startVol, fade:null, src:null, gain:null,
+  start(){
+   resumeAudio();
+   const src=actx.createBufferSource();src.buffer=buffer;src.loop=true;
+   const g=actx.createGain();g.gain.value=this.vol;
+   src.connect(g);g.connect(ambBus);src.start();
+   this.src=src;this.gain=g;
+  },
+  setVolume(v){ this.vol=clamp(v,0,1); if(this.gain){try{this.gain.gain.setTargetAtTime(this.vol,actx.currentTime,.05);}catch(e){}} },
+  getVolume(){ return this.vol; },
+  stop(){
+   if(this.fade){clearInterval(this.fade);this.fade=null;}
+   try{this.src&&this.src.stop();}catch(e){}
+   this.src=null;this.gain=null;
+  },
+ };
+ return pl;
+}
+/* element 재생기 — 더블 버퍼링으로 되감기 간극을 덮음 */
+function makeAmbPlayerEl(srcEl,startVol){
+ const mk=()=>{const c=srcEl.cloneNode();c.loop=false;c.volume=0;return c;};
+ const pl={
+  a:mk(), b:mk(), cur:null, vol:startVol, stopped:false, timer:null, fade:null,
+  _play(node){
+   node.currentTime=0; node.volume=this.vol;
+   const p=node.play(); if(p&&p.catch)p.catch(()=>{});
+   this.cur=node;
+   this._schedule(node);
+  },
+  _schedule(node){
+   clearTimeout(this.timer);
+   const dur=(node.duration&&isFinite(node.duration))?node.duration:30;
+   const lead=Math.max(0.05,dur-AMB_LOOP_LEAD);
+   this.timer=setTimeout(()=>{
+    if(this.stopped)return;
+    const next=(node===this.a)?this.b:this.a;
+    this._play(next);
+    setTimeout(()=>{try{node.pause();node.currentTime=0;}catch(e){}},AMB_LOOP_LEAD*1000+120);
+   },lead*1000);
+  },
+  start(){ this.stopped=false; this._play(this.a); },
+  setVolume(v){ this.vol=clamp(v,0,1); if(this.cur){try{this.cur.volume=this.vol;}catch(e){}} },
+  getVolume(){ return this.vol; },
+  stop(){
+   this.stopped=true;
+   clearTimeout(this.timer); this.timer=null;
+   if(this.fade){clearInterval(this.fade);this.fade=null;}
+   [this.a,this.b].forEach(n=>{try{n.pause();n.currentTime=0;}catch(e){}});
+   this.cur=null;
+  },
+ };
+ return pl;
+}
+/* 재생기 볼륨을 목표치까지 부드럽게 이동 (요소별 타이머 — 전역 공유 시 정지 콜백이 취소되는 버그 발생) */
+function ambFadePlayer(pl,target,ms,onDone){
+ if(!pl)return;
+ if(pl.fade){clearInterval(pl.fade);pl.fade=null;}
+ const start=pl.getVolume(), steps=Math.max(1,Math.round(ms/30));
+ let i=0;
+ pl.fade=setInterval(()=>{
+  i++;
+  pl.setVolume(start+(target-start)*(i/steps));
+  if(i>=steps){clearInterval(pl.fade);pl.fade=null;onDone&&onDone();}
+ },30);
+}
 function stopAmb(){
  ambGen++; // 진행 중인 비동기 로드/재생 요청을 무효화함
- if(!actx)return;
- const old=ambSrc, oldG=ambGainNode, oldLFO=ambLFO;
- if(oldG){try{oldG.gain.cancelScheduledValues(actx.currentTime);oldG.gain.setValueAtTime(oldG.gain.value,actx.currentTime);
-  oldG.gain.linearRampToValueAtTime(.0001,actx.currentTime+.3);}catch(e){}}
- setTimeout(()=>{try{old&&old.stop();}catch(e){}try{oldLFO&&oldLFO.stop();}catch(e){}},360);
- ambCur=null;ambSrc=null;ambGainNode=null;ambLFO=null;ambNode=null;
+ if(ambPlayer){
+  const old=ambPlayer;
+  const kill=()=>{ try{old.stop();}catch(e){} };
+  ambFadePlayer(old,0,300,kill);
+  setTimeout(kill,400); // 안전망 — 페이드가 끊겨도 반드시 정지
+ }
+ // 합성 폴백 노드 정리
+ if(actx){
+  const oldSrc=ambSrc, oldG=ambGainNode, oldLFO=ambLFO;
+  if(oldG){try{oldG.gain.cancelScheduledValues(actx.currentTime);oldG.gain.setValueAtTime(oldG.gain.value,actx.currentTime);
+   oldG.gain.linearRampToValueAtTime(.0001,actx.currentTime+.3);}catch(e){}}
+  setTimeout(()=>{try{oldSrc&&oldSrc.stop();}catch(e){}try{oldLFO&&oldLFO.stop();}catch(e){}},360);
+ }
+ ambCur=null;ambPlayer=null;ambSrc=null;ambGainNode=null;ambLFO=null;ambNode=null;
 }
 function amb(name){
- // 사운드 미준비 상태에서는 ambCur를 갱신하지 않음.
- // (예전엔 ambCur=name을 기록해 두어, 나중에 사운드가 켜진 뒤 같은 이름으로 다시 호출해도
- //  아래 `ambCur===name` 가드에 걸려 영영 재생되지 않는 버그가 있었음)
- if(!soundOn||!ensureAudio()){ if(!name)ambCur=null; return; }
+ // 사운드가 꺼져 있으면 ambCur를 갱신하지 않음.
+ // (기록해 두면 나중에 사운드가 켜진 뒤 같은 이름으로 호출해도 아래 가드에 걸려 영영 재생되지 않음)
+ if(!soundOn){ if(!name)ambCur=null; return; }
  if(ambCur===name)return;
  stopAmb();
  if(!name)return;
  ambCur=name;
- const myGen=++ambGen;                               // 이번 요청의 세대
- const target=AMB_GAIN[name]||.4;                    // 파일 재생용 게인
- const synthTarget=AMB_SYNTH_GAIN[name]||.05;        // 합성 폴백용 게인(백색소음이라 훨씬 낮게)
+ const myGen=++ambGen;
+ const target=AMB_GAIN[name]||.4;
+ const synthTarget=AMB_SYNTH_GAIN[name]||.05;
  const url=AMB_FILES[name];
  if(url){
-  loadAudioBuffer(url).then(buf=>{
+  loadAudio(url).then(res=>{
    // 로드되는 사이 다른 앰비언스로 전환되었거나 재호출되었으면 이 재생은 폐기함
-   if(myGen!==ambGen||ambCur!==name||!actx||!ambBus)return;
-   const src=actx.createBufferSource();src.buffer=buf;src.loop=true;
-   const g=actx.createGain();
-   g.gain.setValueAtTime(.0001,actx.currentTime);g.gain.linearRampToValueAtTime(target,actx.currentTime+.3);
-   src.connect(g);g.connect(ambBus);src.start();
-   ambSrc=src;ambGainNode=g;ambNode=null;ambLFO=null;
-   // 실제 음원엔 자연스러운 강약이 이미 있으므로 LFO 진동을 걸지 않음(기계음 방지).
-   // 함성 고조는 ambCrowdIntensity()가 excite에 따라 게인을 완만히 조정해 처리함.
-  }).catch(()=>{ if(myGen===ambGen&&ambCur===name)ambSynthFallback(name,synthTarget); }); // 파일 실패 → 합성 폴백
+   if(myGen!==ambGen||ambCur!==name)return;
+   const pl=(AUDIO_BACKEND==='webaudio')?makeAmbPlayerBuf(res,0):makeAmbPlayerEl(res,0);
+   if(!pl){ambSynthFallback(name,synthTarget);return;}
+   ambPlayer=pl;
+   pl.start();
+   ambFadePlayer(pl,target,300);
+   // 실제 음원엔 자연스러운 강약이 이미 있으므로 인위적 진동(LFO)을 얹지 않음(기계음 방지).
+   // 함성 고조는 ambCrowdIntensity()가 excite에 따라 볼륨을 완만히 조정해 처리함.
+  }).catch(()=>{ if(myGen===ambGen&&ambCur===name)ambSynthFallback(name,synthTarget); });
  }else{
   ambSynthFallback(name,synthTarget);
  }
 }
-/* 합성 노이즈 폴백 (파일 부재/로드 실패 시) — 비상용.
-   ambCrowd는 노이즈 합성으로 군중을 흉내낼 수 없고(기계적 엔진음처럼 들림) LFO 진동이 더 악화시켰으므로,
-   폴백에서는 아예 재생하지 않음. 잘못된 소리보다 무음이 나음. */
+/* 합성 노이즈 폴백 (파일 부재/로드 실패 시) — 비상용. AudioContext 사용.
+   ambCrowd는 노이즈 합성으로 군중을 흉내낼 수 없어(기계적 엔진음) 아예 재생하지 않음. */
 function ambSynthFallback(name,target){
  if(name==='ambCrowd'){ambCur=name;return;} // 군중음은 합성으로 대체하지 않음(무음 유지)
+ if(!ensureAudio())return;
  const len=2, buf=actx.createBuffer(1,actx.sampleRate*len,actx.sampleRate);
  const d=buf.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;
  const src=actx.createBufferSource();src.buffer=buf;src.loop=true;
@@ -4123,14 +4298,16 @@ function ambSynthFallback(name,target){
  src.connect(f);f.connect(g);g.connect(ambBus);src.start();
  ambSrc=src;ambGainNode=g;ambNode=f;ambLFO=null;
 }
-/* arena.excite에 따라 군중 함성 게인 조정 (loop에서 호출)
-   기준 게인(AMB_GAIN.ambCrowd)의 80%~130% 범위에서 완만히 오르내림.
-   (예전엔 .04~.09를 하드코딩해 파일 재생 게인을 무음 수준으로 덮어썼음) */
+/* arena.excite에 따라 군중 함성 볼륨 조정 (loop에서 호출)
+   기준 볼륨(AMB_GAIN.ambCrowd)의 80%~130% 범위에서 완만히 오르내림. */
+/* arena.excite에 따라 군중 함성 볼륨 조정 (loop에서 호출)
+   기준 볼륨(AMB_GAIN.ambCrowd)의 80%~130% 범위에서 완만히 오르내림. */
 function ambCrowdIntensity(excite){
- if(ambCur!=='ambCrowd'||!ambGainNode||!actx)return;
+ if(ambCur!=='ambCrowd'||!ambPlayer)return;
+ if(ambPlayer.fade)return; // 페이드 진행 중엔 건드리지 않음 (페이드인과 충돌 방지)
  const base=AMB_GAIN.ambCrowd;
- const target=base*clamp(0.8+excite*0.5,0.8,1.3);
- try{ambGainNode.gain.setTargetAtTime(target,actx.currentTime,.5);}catch(e){}
+ const target=clamp(base*clamp(0.8+excite*0.5,0.8,1.3),0,1);
+ ambPlayer.setVolume(ambPlayer.getVolume()+(target-ambPlayer.getVolume())*0.05);
 }
 /* 화면 전환 시 앰비언스 조건 재평가 — go()에서 호출 */
 function refreshAmbience(scene){
@@ -5686,6 +5863,11 @@ $('btnTitleStart').onclick=()=>{
  soundOn=true;ensureAudio();preloadSfx();sfx('uiConfirm');
  showIntro();
 };
+/* 안전망 — 브라우저 자동재생 정책으로 AudioContext가 suspended가 되는 경우가 있어,
+   첫 사용자 제스처(클릭·키 입력·터치) 때 한 번 더 깨움. 이미 running이면 아무 일도 하지 않음. */
+['pointerdown','keydown','touchstart'].forEach(ev=>{
+ document.addEventListener(ev,()=>{ if(soundOn)resumeAudio(); },{passive:true});
+});
 init();
 </script>
 </body>
